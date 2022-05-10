@@ -5,10 +5,10 @@ Screen fxglitch
 
 SKIP default attributes
 FIX attributes order
+FIX Progress Bar
+FIX Joints
 
 Voxscript:
 	Heightmapper + ground.lua
 
-Add maps
-Fix all TODOs
-Fix Progress Bar
+string FloatToString(float f);

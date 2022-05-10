@@ -59,7 +59,10 @@ void XML_Writer::AddBoolAttribute(XMLElement* element, const char* name, bool va
 }
 
 void XML_Writer::AddFloatAttribute(XMLElement* element, const char* name, float value) {
-	element->SetAttribute(name, value);
+	char buffer[32];
+	int ret = snprintf(buffer, sizeof(buffer), "%.3g", value + 0);
+	assert(ret >= 0 && ret < 32);
+	element->SetAttribute(name, buffer);
 }
 
 void XML_Writer::AddIntFloatAttribute(XMLElement* element, const char* name, int value1, float value2) {

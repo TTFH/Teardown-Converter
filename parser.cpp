@@ -59,8 +59,9 @@ Transform GetEntityTransform(Entity* entity) {
 	return transform;
 }
 
-TDBIN::TDBIN(const char* input, string save_folder) {
-	save_path = save_folder;
+TDBIN::TDBIN(const char* input, string save_folder, string level_id) {
+	this->save_path = save_folder;
+	this->level_id = level_id;
 	char* filename = new char[strlen(input) + 3];
 	strcpy(filename, input);
 	if (IsFileCompressed(input)) {
@@ -783,14 +784,14 @@ void TDBIN::parse() {
 	printf("File parsed successfully!\n");
 }
 
-void ParseFile(const char* filename, string map_folder) {
+void ParseFile(const char* filename, string map_folder, string level_id) {
 	if (!exists(map_folder)) {
 		create_directories(map_folder);
 		create_directories(map_folder + "vox");
 		create_directories(map_folder + "compounds");
 	}
 
-	TDBIN parser(filename, map_folder);
+	TDBIN parser(filename, map_folder, level_id);
 	parser.parse();
 	parser.WriteScene();
 	parser.WriteSpawnpoint();
@@ -800,5 +801,5 @@ void ParseFile(const char* filename, string map_folder) {
 	parser.WriteEntities();
 	parser.SaveXML();
 	parser.SaveVoxFiles();
-	printf("Map decompiled!\n");
+	printf("Map successfully converted!\n");
 }

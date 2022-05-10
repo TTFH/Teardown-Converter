@@ -263,7 +263,6 @@ void WriteXML::WriteCompound(MV_FILE* compound_vox, string vox_file, XMLElement*
 
 	xml.AddFloat3Attribute(shape_xml, "pos", pos_x, k * 25.6, 0);
 
-	xml.AddStrAttribute(shape_xml, "name", to_string(part_sizex) + " " + to_string(part_sizey) + " " + to_string(part_sizez)); // TODO: remove DEBUG
 	xml.AddStrAttribute(shape_xml, "file", vox_file);
 	xml.AddStrAttribute(shape_xml, "object", vox_object);
 
@@ -322,8 +321,8 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 			if (body->dynamic == true)
 				xml.AddBoolAttribute(entity_element, "dynamic", body->dynamic);
-			else
-				entity_element = NULL; // Ignore static bodies
+			else if (entity->tags.getSize() == 0)
+				entity_element = NULL; // Ignore static bodies with no tags
 		}
 			break;
 		case KindShape: {
@@ -381,7 +380,14 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		case KindLocation: {
 			Location* location = (Location*)entity->kind;
 			entity_element->SetName("location");
-			WriteTransform(entity_element, location->transform);
+
+			Entity* location_parent = entity->parent;
+			if (location_parent != NULL && location_parent->kind_byte == KindShape) {
+				Shape* parent_shape = (Shape*)location_parent->kind;
+				Transform loc_tr = TransformToLocalTransform(parent_shape->transform, location->transform);
+				WriteTransform(entity_element, loc_tr);
+			} else
+				WriteTransform(entity_element, location->transform);
 		}
 			break;
 		case KindWater: {
@@ -528,7 +534,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddAttribute(entity_element, "resolution", resolution);
 
 			string script_file = screen->script;
-			string prefix = "data/level/lee"; // TODO: get level id
+			string prefix = "data/level/" + level_id;
 			if (script_file.find(prefix) == 0)
 				script_file = "MOD" + script_file.substr(prefix.size());
 
@@ -649,16 +655,19 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 	} else if (entity->kind_byte == KindScript) {
 		Script* script = (Script*)entity->kind;
 		XMLElement* entity_element = xml.CreateElement("script");
-		xml.AddElement(xml.getScene(), entity_element);
 
 		string script_file = script->file;
 		string prefix = "data/script/";
 		if (script_file.find(prefix) == 0)
 			script_file = script_file.substr(prefix.size());
 
-		prefix = "data/level/lee"; // TODO: get level id
+		prefix = "data/level/" + level_id;
 		if (script_file.find(prefix) == 0)
 			script_file = "MOD" + script_file.substr(prefix.size());
+
+		if (script_file == "fx.lua" || script_file == "explosion.lua" || script_file == "spawn.lua")
+			return;
+		xml.AddElement(xml.getScene(), entity_element);
 
 		xml.AddStrAttribute(entity_element, "file", script_file);
 		assert(script->params.getSize() <= 4);

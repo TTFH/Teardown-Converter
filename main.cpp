@@ -75,7 +75,7 @@ int DecompileMap(void* param) {
 	printf("Preview image: %s\n", preview_image.c_str());
 	printf("Script Folder: %s\n", script_folder.c_str());
 
-	ParseFile(data->bin_path.c_str(), data->map_folder);
+	ParseFile(data->bin_path.c_str(), data->map_folder, data->level_id);
 	return 0;
 }
 
@@ -89,48 +89,6 @@ int FakeProgressBar(void* param) {
 	return 1;
 }
 
-/*
-	{"mall_intro", "The old building problem"},
-	{"mall_foodcourt", "Covert chaos"},
-	{"mall_shipping", "The shipping logs"},
-	{"mall_decorations", "Ornament ordeal"},
-	{"mall_radiolink", "Connecting the dots"},
-	{"lee_computers", "The Lee computers"},
-	{"lee_login", "The login devices"},
-	{"lee_safe", "Heavy lifting"},
-	{"lee_tower", "The tower"},
-	{"lee_powerplant", "Power outage"},
-	{"lee_flooding", "Flooding"},
-	{"lee_woonderland", "Malice in Woonderland"},
-	{"marina_demolish", "Making space"},
-	{"marina_gps", "The GPS devices"},
-	{"marina_cars", "Classic cars"},
-	{"marina_tools", "Tool up"},
-	{"marina_art_back", "Art return"},
-	{"mansion_pool", "The car wash"},
-	{"mansion_art", "Fine arts"},
-	{"mansion_fraud", "Insurance fraud"},
-	{"mansion_safe", "A wet affair"},
-	{"mansion_race", "The speed deal"},
-	{"caveisland_computers", "The BlueTide computers"},
-	{"caveisland_propane", "Motivational reminder"},
-	{"caveisland_dishes", "An assortment of dishes"},
-	{"caveisland_ingredients", "The secret ingredients"},
-	{"caveisland_roboclear", "Droid dismount"},
-	{"frustrum_chase", "The chase"},
-	{"frustrum_tornado", "The BlueTide shortage"},
-	{"frustrum_vehicle", "Truckload of trouble"},
-	{"frustrum_pawnshop", "The pawn shop"},
-	{"factory_espionage", "Roborazzi"},
-	{"factory_tools", "The Quilez tools"},
-	{"factory_robot", "The droid abduction"},
-	{"factory_explosive", "Handle with care"},
-	{"carib_alarm", "The alarm system"},
-	{"carib_barrels", "Moving the goods"},
-	{"carib_destroy", "Havoc in paradise"},
-	{"carib_yacht", "Elena's revenge"},
-	{"cullington_bomb", "The final diversion"}
-*/
 vector<LevelInfo> LoadLevels() {
 	vector<LevelInfo> levels;
 
@@ -168,7 +126,6 @@ vector<LevelInfo> LoadLevels() {
 		{"frustrum", "Frustrum"},
 		{"factory", "Quilez Security"},
 		{"carib", "Isla Estocastica"},
-		{"cullington", "Cullington"},
 	};
 	int maps_count = sizeof(maps) / sizeof(maps[0]);
 
@@ -204,8 +161,46 @@ vector<LevelInfo> LoadLevels() {
 	}
 
 	const char* missions[][4] = {
+		{ "mall", "mall_intro", "The old building problem", "" },
+		{ "mall", "mall_foodcourt", "Covert chaos", "" },
+		{ "mall", "mall_shipping", "The shipping logs", "" },
+		{ "mall", "mall_decorations", "Ornament ordeal", "" },
+		{ "mall", "mall_radiolink", "Connecting the dots", "" },
+		{ "lee", "lee_computers", "The Lee computers", "" },
+		{ "lee", "lee_login", "The login devices", "" },
+		{ "lee", "lee_safe", "Heavy lifting", "" },
+		{ "lee", "lee_tower", "The tower", "" },
+		{ "lee", "lee_powerplant", "Power outage", "" },
+		{ "lee", "lee_flooding", "Flooding", "" },
 		{ "lee_woonderland", "lee_woonderland", "Malice in Woonderland", "Help locked up Lee sabotage Gordon's Woonderland. Demolish the rides so they are below the marked threshold. Breaking a neon sign will trigger the alarm." },
-		// TODO: Add all levels
+		{ "marina", "marina_demolish", "Making space", "" },
+		{ "marina", "marina_gps", "The GPS devices", "" },
+		{ "marina", "marina_cars", "Classic cars", "" },
+		{ "marina", "marina_tools", "Tool up", "" },
+		{ "marina", "marina_art_back", "Art return", "" },
+		{ "marina", "mansion_pool", "The car wash", "" },
+		{ "mansion", "mansion_art", "Fine arts", "" },
+		{ "mansion", "mansion_fraud", "Insurance fraud", "" },
+		{ "mansion", "mansion_safe", "A wet affair", "" },
+		{ "mansion", "mansion_race", "The speed deal", "" },
+		{ "caveisland", "caveisland_computers", "The BlueTide computers", "" },
+		{ "caveisland", "caveisland_propane", "Motivational reminder", "" },
+		{ "caveisland", "caveisland_dishes", "An assortment of dishes", "" },
+		{ "caveisland", "caveisland_ingredients", "The secret ingredients", "" },
+		{ "caveisland", "caveisland_roboclear", "Droid dismount", "" },
+		{ "frustrum", "frustrum_chase", "The chase", "" },
+		{ "frustrum", "frustrum_tornado", "The BlueTide shortage", "" },
+		{ "frustrum", "frustrum_vehicle", "Truckload of trouble", "" },
+		{ "frustrum", "frustrum_pawnshop", "The pawn shop", "" },
+		{ "factory", "factory_espionage", "Roborazzi", "" },
+		{ "factory", "factory_tools", "The Quilez tools", "" },
+		{ "factory", "factory_robot", "The droid abduction", "" },
+		{ "factory", "factory_explosive", "Handle with care", "" },
+		{ "carib", "carib_alarm", "The alarm system", "" },
+		{ "carib", "carib_barrels", "Moving the goods", "" },
+		{ "carib", "carib_destroy", "Havoc in paradise", "" },
+		{ "carib", "carib_yacht", "Elena's revenge", "" },
+		{ "cullington", "cullington_bomb", "The final diversion", "" },
 	};
 	int missions_count = sizeof(missions) / sizeof(missions[0]);
 
@@ -238,9 +233,9 @@ int main(int argc, char* argv[]) {
 #endif
 	if (argc == 2) {
 		#ifdef _WIN32
-			ParseFile(argv[1], "test\\");
+			ParseFile(argv[1], "test\\", "");
 		#else
-			ParseFile(argv[1], "test/");
+			ParseFile(argv[1], "test/", "");
 		#endif
 		return 0;
 	}

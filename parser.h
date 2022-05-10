@@ -21,7 +21,7 @@ union dword {
 	float f32;
 };*/
 
-void ParseFile(const char* filename, string save_folder);
+void ParseFile(const char* filename, string save_folder, string level_id);
 Transform GetEntityTransform(Entity* entity);
 
 class WriteXML{
@@ -29,6 +29,7 @@ protected:
 	Scene scene;
 	XML_Writer xml;
 	string save_path;
+	string level_id;
 	list<MV_FILE*> compound_files;
 	map<uint32_t, MV_FILE*> vox_files;
 	map<uint32_t, Entity*> entity_mapping;
@@ -92,7 +93,7 @@ private:
 	void ReadEnvironment();
 	void* ReadEntityKind(uint8_t);
 public:
-	TDBIN(const char* input, string save_folder);
+	TDBIN(const char* input, string save_folder, string level_id);
 	~TDBIN();
 	void parse();
 };

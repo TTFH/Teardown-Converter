@@ -57,7 +57,7 @@ struct Voxel {
 };
 
 struct MVShape {
-	int sizex, sizey, sizez; // TODO: unsigned
+	int sizex, sizey, sizez;
 	uint8_t*** voxels;
 	string name;
 	int pos_x, pos_y, pos_z;
