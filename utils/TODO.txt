@@ -1,0 +1,15 @@
+Shape collide
+Joint Rope slack
+Vehicle driven
+Screen fxglitch
+
+SKIP default attributes
+FIX attributes order
+
+Voxscript:
+	Heightmapper + ground.lua
+
+Fix joint position and rotation
+Add maps
+Fix all TODOs
+Fix Progress Bar

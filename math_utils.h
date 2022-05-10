@@ -1,0 +1,35 @@
+#ifndef MATH_UTILS_H
+#define MATH_UTILS_H
+
+#include <math.h>
+
+#define PI 3.14159265
+
+struct Vector {
+	float x, y, z;
+	Vector() : x(0), y(0), z(0) {}
+	Vector(float x, float y, float z) : x(x), y(y), z(z) {}
+};
+
+struct Quat {
+	float x, y, z, w;
+	Quat() : x(0), y(0), z(0), w(1) {}
+	Quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+};
+
+struct Transform {
+	Vector pos;
+	Quat rot;
+};
+
+double deg(double rad);
+double rad(double deg);
+Quat QuatEuler(double pitch, double yaw, double roll);
+void QuatToEuler(Quat q, float &bank, float &heading, float &attitude);
+Transform TransformToLocalTransform(const Transform& parent, const Transform& child);
+
+Vector operator+(const Vector& u, const Vector& v);
+Quat operator*(const Quat& p, const Quat& q);
+Vector operator*(const Quat& q, const Vector& p1);
+
+#endif
