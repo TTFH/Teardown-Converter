@@ -20,6 +20,8 @@ struct Quat {
 struct Transform {
 	Vector pos;
 	Quat rot;
+	Transform() : pos(), rot() {}
+	Transform(Vector pos, Quat rot) : pos(pos), rot(rot) {}
 };
 
 double deg(double rad);

@@ -260,7 +260,7 @@ void MV_FILE::WriteIMAP() {
 			corrupted = corrupted || !FixMapping(it->material_id, 254, 254);
 	}
 	if (corrupted)
-		printf("ERROR Pallete %s is corrupted.\n", filename.c_str());
+		printf("Warning: Materials in pallete %s are corrupted.\n", filename.c_str());
 
 	WriteChunkHeader(IMAP, 256, 0);
 	fwrite(&mappings[1], sizeof(uint8_t), 255, vox_file);

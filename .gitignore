@@ -1,4 +1,6 @@
+.vscode/
+*.exe
+imgui.ini
+quicksave.bin
 obj/*.o
 release/*.exe
-quicksave.bin
-.vscode/

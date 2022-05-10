@@ -618,10 +618,9 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 					assert(entity->kind_byte == KindShape);
 					Shape* shape = (Shape*)entity->kind;
 					Transform shape_tr = shape->transform;
-					Vector relative_pos = { joint->shape_positions[0][1], joint->shape_positions[0][2], joint->shape_positions[0][3] };
+					Vector relative_pos = { joint->shape_positions[0][3], joint->shape_positions[0][1], joint->shape_positions[0][2] };
+					Transform joint_tr = TransformToLocalTransform(shape_tr, Transform(relative_pos, Quat()));
 
-					Transform joint_tr = TransformToLocalTransform(shape_tr, {relative_pos, {0, 0, 0, 1}});
-					joint_tr.pos = { joint_tr.pos.z, joint_tr.pos.x, joint_tr.pos.y };
 					if (joint->type == Prismatic)
 						joint_tr.rot = joint_tr.rot * QuatEuler(-90, 0, 0);
 					else if (joint->type == Hinge)

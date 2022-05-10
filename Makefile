@@ -12,6 +12,7 @@
 # Figure out how to download that
 
 CXX = g++
+#EXE = teardown-converter
 EXE = release/teardown-converter
 ODIR = obj
 IMGUI_DIR = imgui

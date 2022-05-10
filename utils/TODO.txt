@@ -9,7 +9,6 @@ FIX attributes order
 Voxscript:
 	Heightmapper + ground.lua
 
-Fix joint position and rotation
 Add maps
 Fix all TODOs
 Fix Progress Bar

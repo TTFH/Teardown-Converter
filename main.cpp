@@ -90,138 +90,50 @@ int FakeProgressBar(void* param) {
 }
 
 /*
-map<string, string> LoadLevels() {
-	const char* sandbox[][2] = {
-		{"lee_sandbox", "Lee Chemicals Sandbox"},
-		{"marina_sandbox", "Marina Sandbox"},
-		{"mansion_sandbox", "Villa Gordon Sandbox"},
-		{"caveisland_sandbox", "Hollowrock Sandbox"},
-		{"mall_sandbox", "Evertides Sandbox"},
-		{"frustrum_sandbox", "Frustrum Sandbox"},
-		{"carib_sandbox", "Isla Estocastica Sandbox"},
-		{"factory_sandbox", "Quilez Security Sandbox"},
-		{"cullington_sandbox", "Cullington Sandbox"},
-	};
-	int sandbox_count = sizeof(sandbox) / sizeof(sandbox[0]);
-
-	const char* challenges[][2] = {
-		{"ch_carib_fetch", "Isla Estocastica Fetch"},
-		{"ch_carib_hunted", "Isla Estocastica Hunded"},
-		{"ch_carib_mayhem", "Isla Estocastica Mayhem"},
-		{"ch_caveisland_fetch", "Hollowrock Fetch"},
-		{"ch_caveisland_hunted", "Hollowrock Hunded"},
-		{"ch_caveisland_mayhem", "Hollowrock Mayhem"},
-		{"ch_factory_fetch", "Quilez Security Fetch"},
-		{"ch_factory_hunted", "Quilez Security Hunded"},
-		{"ch_factory_mayhem", "Quilez Security Mayhem"},
-		{"ch_frustrum_fetch", "Frustrum Fetch"},
-		{"ch_frustrum_hunted", "Frustrum Hunded"},
-		{"ch_frustrum_mayhem", "Frustrum Mayhem"},
-		{"ch_lee_fetch", "Lee Chemicals Fetch"},
-		{"ch_lee_hunted", "Lee Chemicals Hunded"},
-		{"ch_lee_mayhem", "Lee Chemicals Mayhem"},
-		{"ch_mall_fetch", "Evertides Fetch"},
-		{"ch_mall_hunted", "Evertides Hunded"},
-		{"ch_mall_mayhem", "Evertides Mayhem"},
-		{"ch_mansion_fetch", "Villa Gordon Fetch"},
-		{"ch_mansion_hunted", "Villa Gordon Hunded"},
-		{"ch_mansion_mayhem", "Villa Gordon Mayhem"},
-		{"ch_marina_fetch", "Marina Fetch"},
-		{"ch_marina_hunted", "Marina Hunded"},
-		{"ch_marina_mayhem", "Marina Mayhem"},
-	};
-	int challenges_count = sizeof(challenges) / sizeof(challenges[0]);
-
-	const char* missions[][2] = {
-		{"mall_intro", "The old building problem"},
-		{"mall_foodcourt", "Covert chaos"},
-		{"mall_shipping", "The shipping logs"},
-		{"mall_decorations", "Ornament ordeal"},
-		{"mall_radiolink", "Connecting the dots"},
-		{"lee_computers", "The Lee computers"},
-		{"lee_login", "The login devices"},
-		{"lee_safe", "Heavy lifting"},
-		{"lee_tower", "The tower"},
-		{"lee_powerplant", "Power outage"},
-		{"lee_flooding", "Flooding"},
-		{"lee_woonderland", "Malice in Woonderland"},
-		{"marina_demolish", "Making space"},
-		{"marina_gps", "The GPS devices"},
-		{"marina_cars", "Classic cars"},
-		{"marina_tools", "Tool up"},
-		{"marina_art_back", "Art return"},
-		{"mansion_pool", "The car wash"},
-		{"mansion_art", "Fine arts"},
-		{"mansion_fraud", "Insurance fraud"},
-		{"mansion_safe", "A wet affair"},
-		{"mansion_race", "The speed deal"},
-		{"caveisland_computers", "The BlueTide computers"},
-		{"caveisland_propane", "Motivational reminder"},
-		{"caveisland_dishes", "An assortment of dishes"},
-		{"caveisland_ingredients", "The secret ingredients"},
-		{"caveisland_roboclear", "Droid dismount"},
-		{"frustrum_chase", "The chase"},
-		{"frustrum_tornado", "The BlueTide shortage"},
-		{"frustrum_vehicle", "Truckload of trouble"},
-		{"frustrum_pawnshop", "The pawn shop"},
-		{"factory_espionage", "Roborazzi"},
-		{"factory_tools", "The Quilez tools"},
-		{"factory_robot", "The droid abduction"},
-		{"factory_explosive", "Handle with care"},
-		{"carib_alarm", "The alarm system"},
-		{"carib_barrels", "Moving the goods"},
-		{"carib_destroy", "Havoc in paradise"},
-		{"carib_yacht", "Elena's revenge"},
-		{"cullington_bomb", "The final diversion"}
-	};
-	int missions_count = sizeof(missions) / sizeof(missions[0]);
-
-	map<string, string> levels;
-	levels["quicksave"] = "Last Saved Level";
-
-	for (int i = 0; i < sandbox_count; i++)
-		levels[sandbox[i][0]] = sandbox[i][1];
-	for (int i = 0; i < missions_count; i++)
-		levels[missions[i][0]] = missions[i][1];
-	for (int i = 0; i < challenges_count; i++)
-		levels[challenges[i][0]] = challenges[i][1];
-
-	for (int v = 0; v <= 46; v++) {
-		string key = "hub" + to_string(v);
-		if (v <= 16) {
-			string value = "Hub Part 1 v" + to_string(v);
-			levels[key] = value;
-		}
-		if ((v >= 20 && v <= 24) || (v >= 40 && v <= 46)) {
-			string value = "Hub Part 2 v" + to_string(v);
-			levels[key] = value;
-		}
-		if (v >= 30 && v <= 34) {
-			string value = "Hub Caribbean v" + to_string(v);
-			levels[key] = value;
-		}
-	}
-	levels["about"] = "About Showcase";
-	levels["ending10"] = "Lee Chemicals Part 1 Ending";
-	levels["ending20"] = "Hub Part 2 Ending";
-	levels["ending21"] = "Villa Gordon Part 2 Ending";
-	levels["ending22"] = "Marina Part 2 Ending";
-
-	//printf("Loaded Levels: %lld / 112\n", levels.size() - 1);
-	return levels;
-}
+	{"mall_intro", "The old building problem"},
+	{"mall_foodcourt", "Covert chaos"},
+	{"mall_shipping", "The shipping logs"},
+	{"mall_decorations", "Ornament ordeal"},
+	{"mall_radiolink", "Connecting the dots"},
+	{"lee_computers", "The Lee computers"},
+	{"lee_login", "The login devices"},
+	{"lee_safe", "Heavy lifting"},
+	{"lee_tower", "The tower"},
+	{"lee_powerplant", "Power outage"},
+	{"lee_flooding", "Flooding"},
+	{"lee_woonderland", "Malice in Woonderland"},
+	{"marina_demolish", "Making space"},
+	{"marina_gps", "The GPS devices"},
+	{"marina_cars", "Classic cars"},
+	{"marina_tools", "Tool up"},
+	{"marina_art_back", "Art return"},
+	{"mansion_pool", "The car wash"},
+	{"mansion_art", "Fine arts"},
+	{"mansion_fraud", "Insurance fraud"},
+	{"mansion_safe", "A wet affair"},
+	{"mansion_race", "The speed deal"},
+	{"caveisland_computers", "The BlueTide computers"},
+	{"caveisland_propane", "Motivational reminder"},
+	{"caveisland_dishes", "An assortment of dishes"},
+	{"caveisland_ingredients", "The secret ingredients"},
+	{"caveisland_roboclear", "Droid dismount"},
+	{"frustrum_chase", "The chase"},
+	{"frustrum_tornado", "The BlueTide shortage"},
+	{"frustrum_vehicle", "Truckload of trouble"},
+	{"frustrum_pawnshop", "The pawn shop"},
+	{"factory_espionage", "Roborazzi"},
+	{"factory_tools", "The Quilez tools"},
+	{"factory_robot", "The droid abduction"},
+	{"factory_explosive", "Handle with care"},
+	{"carib_alarm", "The alarm system"},
+	{"carib_barrels", "Moving the goods"},
+	{"carib_destroy", "Havoc in paradise"},
+	{"carib_yacht", "Elena's revenge"},
+	{"cullington_bomb", "The final diversion"}
 */
 vector<LevelInfo> LoadLevels() {
 	vector<LevelInfo> levels;
-/*	{"", "", "Fetch", "Pick up as many targets as possible and get to your escape vehicle before the time runs out."},
-	{"", "", "Hunted", "Pick up as many targets as possible from randomized positions. Avoid the guard helicopter."},
-	{"", "", "Mayhem", "Destroy as much as possible in 60 seconds. Be careful during preparation because the timer starts when 1000 voxels have been destroyed."},
 
-	{"about", "about", "About", ""},
-	{"hub", "", "Löckelle Teardown Services", "Löckelle Teardown Services", "Family owned demolition company and your home base. Through the computer terminal you can read messages, accept missions and upgrade you tools."},
-	{"hub_carib", "", "Löckelle Teardown Services", "Family owned demolition company and your home base. Through the computer terminal you can read messages, accept missions and upgrade you tools."},
-	{"lee_woonderland", "lee_woonderland", "Malice in Woonderland", "Help locked up Lee sabotage Gordon's Woonderland. Demolish the rides so they are below the marked threshold. Breaking a neon sign will trigger the alarm."},
-*/
 	const char* sandbox[][4] = {
 		{"lee", "lee_sandbox", "Lee Chemicals Sandbox", "Operated by the Lee family for three generations. Lawrence Lee Junior showed a promising start, but developed a weakness for fast cash. He is now a well known name in the criminal underworld."},
 		{"marina", "marina_sandbox", "West Point Marina Sandbox", "The oldest marina in Löckelle municipality. It features an industrial part and a separate section for leisure activities."},
@@ -240,6 +152,83 @@ vector<LevelInfo> LoadLevels() {
 		levels.push_back(info);
 	}
 
+	const char* gamemodes[][3] = {
+		{"fetch", "Fetch", "Pick up as many targets as possible and get to your escape vehicle before the time runs out."},
+		{"hunted", "Hunted", "Pick up as many targets as possible from randomized positions. Avoid the guard helicopter."},
+		{"mayhem", "Mayhem", "Destroy as much as possible in 60 seconds. Be careful during preparation because the timer starts when 1000 voxels have been destroyed."},
+	};
+	int gamemodes_count = sizeof(gamemodes) / sizeof(gamemodes[0]);
+
+	const char* maps[][2] {
+		{"lee", "Lee Chemicals"},
+		{"marina", "West Point Marina"},
+		{"mansion", "Villa Gordon"},
+		{"caveisland", "Hollowrock Island"},
+		{"mall", "The Evertides Mall"},
+		{"frustrum", "Frustrum"},
+		{"factory", "Quilez Security"},
+		{"carib", "Isla Estocastica"},
+		{"cullington", "Cullington"},
+	};
+	int maps_count = sizeof(maps) / sizeof(maps[0]);
+
+	for (int j = 0; j < maps_count; j++)
+		for (int i = 0; i < gamemodes_count; i++) {
+			LevelInfo info = { maps[j][0], "ch_" + string(maps[j][0]) + "_" + string(gamemodes[i][0]), maps[j][1] + string(" ") + gamemodes[i][1], gamemodes[i][2] };
+			levels.push_back(info);
+		}
+
+	int hub_version = 1;
+	int hub_carib_version = 1;
+	string hub_description = "Family owned demolition company and your home base. Through the computer terminal you can read messages, accept missions and upgrade you tools.";
+	for (int v = 0; v <= 46; v++) {
+		string filename = "hub" + to_string(v);
+		if (v <= 16) {
+			string title = "Hub Part 1 v" + to_string(hub_version);
+			LevelInfo info = { "hub", filename, title, hub_description };
+			levels.push_back(info);
+			hub_version++;
+		}
+		if ((v >= 20 && v <= 24) || (v >= 40 && v <= 46)) {
+			string title = "Hub Part 2 v" + to_string(hub_version);
+			LevelInfo info = { "hub", filename, title, hub_description };
+			levels.push_back(info);
+			hub_version++;
+		}
+		if (v >= 30 && v <= 34) {
+			string title = "Hub Caribbean v" + to_string(hub_carib_version);
+			LevelInfo info = { "hub_carib", filename, title, hub_description };
+			levels.push_back(info);
+			hub_carib_version++;
+		}
+	}
+
+	const char* missions[][4] = {
+		{ "lee_woonderland", "lee_woonderland", "Malice in Woonderland", "Help locked up Lee sabotage Gordon's Woonderland. Demolish the rides so they are below the marked threshold. Breaking a neon sign will trigger the alarm." },
+		// TODO: Add all levels
+	};
+	int missions_count = sizeof(missions) / sizeof(missions[0]);
+
+	for (int i = 0; i < missions_count; i++) {
+		LevelInfo info = { missions[i][0], missions[i][1], missions[i][2], missions[i][3] };
+		levels.push_back(info);
+	}
+
+	LevelInfo info;
+	info = { "about", "about", "Credits", "" };
+	levels.push_back(info);
+	info = { "lee", "ending10", "Lee Chemicals Part 1 Ending", "" };
+	levels.push_back(info);
+	info = { "hub", "ending20", "Hub Part 2 Ending", "" };
+	levels.push_back(info);
+	info = { "mansion", "ending21", "Villa Gordon Part 2 Ending", "" };
+	levels.push_back(info);
+	info = { "marina", "ending22", "Marina Part 2 Ending", "" };
+	levels.push_back(info);
+	info = { "", "quicksave", "Last Saved Level", "" };
+	levels.push_back(info);
+
+	printf("Loaded Levels: %lld / 112\n", levels.size() - 1);
 	return levels;
 }
 
