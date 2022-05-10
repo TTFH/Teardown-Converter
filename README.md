@@ -4,7 +4,7 @@ An application for parsing and converting maps of the game Teardown from binary 
 ![UI](https://github.com/TTFH/Teardown-Converter/blob/8878910b36c8e2e56314c35f2178230a7b4aea10/utils/converter_ui.png)  
 
 ## How to Download
-**There are no releases yet**, you will be able to download a precompiled version from: https://github.com/TTFH/Teardown-Converter/releases
+**You can download a precompiled version from:** https://github.com/TTFH/Teardown-Converter/releases
 
 ## How to Compile
 This program needs SDL2 and Zlib, check the Makefile to know how to install them  
@@ -20,10 +20,10 @@ You can find the execulable in the `release` folder
 - [ ] Screen fxglitch
 
 #### Fixes
-- [ ] Fix joints positions
+- [X] Fix joints positions
 - [ ] Add all 112 maps
 - [ ] Clean up XML (default attributes and order)
-- [ ] Fix progress bar
+- [ ] Improve progress bar
 - [ ] Other minor fixes
 
 ![Editor Example](https://github.com/TTFH/Teardown-Converter/blob/8878910b36c8e2e56314c35f2178230a7b4aea10/utils/converter_lee.png)  
