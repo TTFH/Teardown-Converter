@@ -1,5 +1,6 @@
 .vscode/
 *.exe
+*.zip
 imgui.ini
 quicksave.bin
 obj/*.o

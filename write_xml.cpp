@@ -70,7 +70,7 @@ void WriteXML::WriteEnvironment() {
 	xml.AddFloatAttribute(environment, "waterhurt", scene.environment.waterhurt);
 	xml.AddFloat4Attribute(environment, "snowdir", snow->dir[0], snow->dir[1], snow->dir[2], snow->spread);
 	xml.AddFloatAttribute(environment, "snowamount", snow->amount);
-	xml.AddBoolAttribute(environment, "snowonground", "false"); // The map already have snow, don't add more.
+	xml.AddBoolAttribute(environment, "snowonground", false); // The map already have snow, don't add more.
 	xml.AddFloatNAttribute(environment, "wind", scene.environment.wind, 3);
 	if (snow->onground) printf("Here comes the snow!\n");
 }
@@ -172,6 +172,13 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	shape->transform.pos = shape->transform.pos + shape->transform.rot * axis_offset;
 	shape->transform.rot = shape->transform.rot * QuatEuler(90, 0, 0);
 
+	float rot_x, rot_y, rot_z;
+	QuatToEuler(shape->transform.rot, rot_x, rot_y, rot_z);
+	if (fabs(rot_x) < 0.1 && fabs(rot_y) < 0.1 && fabs(rot_z - 90) < 0.1) {
+		shape->transform.rot = QuatEuler(0, 90, 90);
+		xml.AddStrAttribute(entity_element, "name", "ROT TEST");
+	}
+
 	WriteTransform(entity_element, shape->transform);
 
 	if (volume > 0 && sizex <= 256 && sizey <= 256 && sizez <= 256) {
@@ -256,7 +263,7 @@ void WriteXML::WriteCompound(MV_FILE* compound_vox, string vox_file, XMLElement*
 		pos_x = i * 12.8;
 	else if (parts_x == 2)
 		pos_x = shape_offset;
-	else if (parts_x == 3)
+	else if (parts_x == 3 || parts_x == 4)
 		pos_x = -12.8 + 25.6 * i + shape_offset;
 	else
 		pos_x = -12.8 + 25.6 * (i-1) + shape_offset;

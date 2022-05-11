@@ -214,10 +214,10 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 			empty_index++;
 
 		if (empty_index <= i_max) {
-			mappings[index] = empty_index;
-			mappings[empty_index] = index;
 			is_index_used[empty_index] = true;
-			is_index_used[index] = false;
+			is_index_used[index] = true; // TODO: fix
+			mappings[empty_index] = index;
+			mappings[index] = empty_index;
 		} else
 			return false;
 	}
@@ -237,15 +237,19 @@ void MV_FILE::WriteIMAP() {
 			corrupted = corrupted || !FixMapping(it->material_id, 41, 56);
 		else if (it->material_type == MaterialKind::Wood) {
 			bool wood_corrupted = !FixMapping(it->material_id, 57, 72);
-			bool too_much_wood = false;
 			if (wood_corrupted)
-				too_much_wood = !FixMapping(it->material_id, 193, 224);
-			corrupted = corrupted || too_much_wood;
+				wood_corrupted = !FixMapping(it->material_id, 193, 224);
+			if (wood_corrupted)
+				wood_corrupted = !FixMapping(it->material_id, 241, 253);
+			corrupted = corrupted || wood_corrupted;
 		} else if (it->material_type == MaterialKind::Masonry)
 			corrupted = corrupted || !FixMapping(it->material_id, 73, 104);
-		else if (it->material_type == MaterialKind::Plaster)
-			corrupted = corrupted || !FixMapping(it->material_id, 105, 120);
-		else if (it->material_type == MaterialKind::Metal)
+		else if (it->material_type == MaterialKind::Plaster) {
+			bool plaster_corrupted = !FixMapping(it->material_id, 105, 120);
+			if (plaster_corrupted)
+				plaster_corrupted = !FixMapping(it->material_id, 193, 224);
+			corrupted = corrupted || plaster_corrupted;
+		} else if (it->material_type == MaterialKind::Metal)
 			corrupted = corrupted || !FixMapping(it->material_id, 121, 136);
 		else if (it->material_type == MaterialKind::HeavyMetal)
 			corrupted = corrupted || !FixMapping(it->material_id, 137, 152);

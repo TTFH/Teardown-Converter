@@ -65,11 +65,11 @@ int DecompileMap(void* param) {
 	SaveInfoTxt(data->map_folder, data->level_name, data->level_desc);
 
 	string preview_image = "preview\\" + data->level_id + ".jpg";
-	if (exists(preview_image))
+	if (exists(preview_image) && !exists(data->map_folder + "preview.jpg"))
 		copy(preview_image, data->map_folder + "preview.jpg");
 
 	string script_folder = data->game_folder + "data\\level\\" + data->level_id + "\\script";
-	if (exists(script_folder))
+	if (exists(script_folder) && !exists(data->map_folder + "script"))
 		copy(script_folder, data->map_folder + "script");
 
 	printf("Preview image: %s\n", preview_image.c_str());
