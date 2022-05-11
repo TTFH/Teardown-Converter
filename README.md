@@ -20,8 +20,7 @@ You can find the execulable in the `release` folder
 - [ ] Screen fxglitch
 
 #### Fixes
-- [X] Fix joints positions
-- [ ] Add all 112 maps
+- [ ] Fix joints positions
 - [ ] Clean up XML (default attributes and order)
 - [ ] Improve progress bar
 - [ ] Other minor fixes

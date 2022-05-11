@@ -87,6 +87,7 @@ MV_FILE::MV_FILE(string filename) {
 
 	for (int i = 0; i < 256; i++)
 		is_index_used[i] = false;
+	is_index_used[0] = true;
 
 	palette[0] = { 0, 0, 0, 255 };
 	for (int i = 1; i < 256; i++)
@@ -208,7 +209,7 @@ void MV_FILE::WriteRGBA() {
 
 bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 	if (index < i_min || index > i_max) {
-		int empty_index = i_min;
+		unsigned int empty_index = i_min;
 		while (is_index_used[empty_index] && empty_index <= i_max)
 			empty_index++;
 
@@ -234,9 +235,13 @@ void MV_FILE::WriteIMAP() {
 			corrupted = corrupted || !FixMapping(it->material_id, 25, 40);
 		else if (it->material_type == MaterialKind::Rock)
 			corrupted = corrupted || !FixMapping(it->material_id, 41, 56);
-		else if (it->material_type == MaterialKind::Wood)
-			corrupted = corrupted || !FixMapping(it->material_id, 57, 72);
-		else if (it->material_type == MaterialKind::Masonry)
+		else if (it->material_type == MaterialKind::Wood) {
+			bool wood_corrupted = !FixMapping(it->material_id, 57, 72);
+			bool too_much_wood = false;
+			if (wood_corrupted)
+				too_much_wood = !FixMapping(it->material_id, 193, 224);
+			corrupted = corrupted || too_much_wood;
+		} else if (it->material_type == MaterialKind::Masonry)
 			corrupted = corrupted || !FixMapping(it->material_id, 73, 104);
 		else if (it->material_type == MaterialKind::Plaster)
 			corrupted = corrupted || !FixMapping(it->material_id, 105, 120);
@@ -256,11 +261,10 @@ void MV_FILE::WriteIMAP() {
 			corrupted = corrupted || !FixMapping(it->material_id, 193, 224);
 		else if (it->material_type == MaterialKind::Unphysical)
 			corrupted = corrupted || !FixMapping(it->material_id, 225, 240);
-		else if (it->material_type == MaterialKind::Snow)
-			corrupted = corrupted || !FixMapping(it->material_id, 254, 254);
 	}
 	if (corrupted)
 		printf("Warning: Materials in pallete %s are corrupted.\n", filename.c_str());
+	assert(mappings[0] == 0);
 
 	WriteChunkHeader(IMAP, 256, 0);
 	fwrite(&mappings[1], sizeof(uint8_t), 255, vox_file);

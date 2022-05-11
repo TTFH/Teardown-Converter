@@ -21,6 +21,5 @@ const char* MaterialKindName[] = {
 	"hardmetal",
 	"hardmasonry",
 	"ice",
-	"unphysical",
-	"invalid",
+	"unphysical"
 };

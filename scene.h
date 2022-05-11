@@ -23,8 +23,7 @@ enum class MaterialKind : uint8_t {
 	HardMetal,
 	HardMasonry,
 	Ice,
-	Unphysical,
-	Snow,
+	Unphysical
 };
 
 extern const char* MaterialKindName[];

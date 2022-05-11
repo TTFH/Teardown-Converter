@@ -70,7 +70,7 @@ void WriteXML::WriteEnvironment() {
 	xml.AddFloatAttribute(environment, "waterhurt", scene.environment.waterhurt);
 	xml.AddFloat4Attribute(environment, "snowdir", snow->dir[0], snow->dir[1], snow->dir[2], snow->spread);
 	xml.AddFloatAttribute(environment, "snowamount", snow->amount);
-	xml.AddBoolAttribute(environment, "snowonground", snow->onground);
+	xml.AddBoolAttribute(environment, "snowonground", "false"); // The map already have snow, don't add more.
 	xml.AddFloatNAttribute(environment, "wind", scene.environment.wind, 3);
 	if (snow->onground) printf("Here comes the snow!\n");
 }
@@ -149,6 +149,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	}
 
 	Palette palette = scene.palettes[shape->palette];
+	shape->old_transform = shape->transform;
 
 	bool is_filled_voxbox = true;
 	uint8_t index = shape->voxels.palette_index[0];
@@ -167,7 +168,6 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		return;
 	}
 
-	shape->old_transform = shape->transform;
 	Vector axis_offset = { 0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0 };
 	shape->transform.pos = shape->transform.pos + shape->transform.rot * axis_offset;
 	shape->transform.rot = shape->transform.rot * QuatEuler(90, 0, 0);
