@@ -387,7 +387,7 @@ int main(int argc, char* argv[]) {
 			ImGui::Dummy(ImVec2(0, 5));
 
 			if (disable_convert) {
-				if (progress > 1) {
+				if (progress >= 1) {
 					progress = 1;
 					disable_convert = false;
 				}
@@ -395,7 +395,7 @@ int main(int argc, char* argv[]) {
 
 			const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
         	const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
-			if (progress > 0 && progress < 1)
+			if (progress > 0 && progress <= 1)
         		ImGui::BufferingBar("##buffer_bar", progress, ImVec2(600, 8), bg, col);
 
 			ImGui::Dummy(ImVec2(0, 10));

@@ -215,9 +215,9 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 
 		if (empty_index <= i_max) {
 			is_index_used[empty_index] = true;
-			is_index_used[index] = true; // TODO: fix
+			is_index_used[index] = false;
+			mappings[index] = mappings[empty_index];
 			mappings[empty_index] = index;
-			mappings[index] = empty_index;
 		} else
 			return false;
 	}

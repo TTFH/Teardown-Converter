@@ -7,7 +7,7 @@ SKIP default attributes
 FIX attributes order
 FIX Progress Bar
 FIX Joints
-fix metal overflow
+Fix metal and plastic overflow
 
 Voxscript:
 	Heightmapper + ground.lua
