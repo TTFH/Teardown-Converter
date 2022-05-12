@@ -12,13 +12,12 @@
 # Figure out how to download that
 
 CXX = g++
-#EXE = teardown-converter
 EXE = release/teardown-converter
 ODIR = obj
 IMGUI_DIR = imgui
 
 SOURCES = main.cpp
-SOURCES += parser.cpp entity.cpp write_xml.cpp xml_writer.cpp math_utils.cpp lua_table.cpp scene.cpp vox_writer.cpp zlib_inflate.cpp lib/tinyxml2.cpp
+SOURCES += entity.cpp lua_table.cpp math_utils.cpp parser.cpp scene.cpp vox_writer.cpp write_scene.cpp xml_writer.cpp zlib_inflate.cpp lib/tinyxml2.cpp
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(IMGUI_DIR)/backend/imgui_impl_sdl.cpp $(IMGUI_DIR)/backend/imgui_impl_opengl2.cpp
 SOURCES += file_dialog/ImGuiFileDialog.cpp

@@ -227,43 +227,48 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 	return true;
 }
 
+bool MV_FILE::CheckMaterial(uint8_t index, uint8_t i_min, uint8_t i_max) {
+	index = mappings[index];
+	return index >= i_min && index <= i_max;
+}
+
 void MV_FILE::WriteIMAP() {
-	bool corrupted = false;
+	for (int i = 0; i < 2; i++)
 	for (vector<PBR>::iterator it = pbrs.begin(); it != pbrs.end(); it++) {
 		if (it->material_type == MaterialKind::Glass)
-			corrupted = corrupted || !FixMapping(it->material_index, 1, 8);
+			FixMapping(it->material_index, 1, 8);
 		else if (it->material_type == MaterialKind::Foliage)
-			corrupted = corrupted || !FixMapping(it->material_index, 9, 24);
+			FixMapping(it->material_index, 9, 24);
 		else if (it->material_type == MaterialKind::Dirt)
-			corrupted = corrupted || !FixMapping(it->material_index, 25, 40);
+			FixMapping(it->material_index, 25, 40);
 		else if (it->material_type == MaterialKind::Rock)
-			corrupted = corrupted || !FixMapping(it->material_index, 41, 56);
+			FixMapping(it->material_index, 41, 56);
 		else if (it->material_type == MaterialKind::Wood)
-			corrupted = corrupted || !FixMapping(it->material_index, 57, 72);
+			FixMapping(it->material_index, 57, 72);
 		else if (it->material_type == MaterialKind::Masonry)
-			corrupted = corrupted || !FixMapping(it->material_index, 73, 104);
+			FixMapping(it->material_index, 73, 104);
 		else if (it->material_type == MaterialKind::Plaster)
-			corrupted = corrupted || !FixMapping(it->material_index, 105, 120);
+			FixMapping(it->material_index, 105, 120);
 		else if (it->material_type == MaterialKind::Metal)
-			corrupted = corrupted || !FixMapping(it->material_index, 121, 136);
+			FixMapping(it->material_index, 121, 136);
 		else if (it->material_type == MaterialKind::HeavyMetal)
-			corrupted = corrupted || !FixMapping(it->material_index, 137, 152);
+			FixMapping(it->material_index, 137, 152);
 		else if (it->material_type == MaterialKind::Plastic)
-			corrupted = corrupted || !FixMapping(it->material_index, 153, 168);
+			FixMapping(it->material_index, 153, 168);
 		else if (it->material_type == MaterialKind::HardMetal)
-			corrupted = corrupted || !FixMapping(it->material_index, 169, 176);
+			FixMapping(it->material_index, 169, 176);
 		else if (it->material_type == MaterialKind::HardMasonry)
-			corrupted = corrupted || !FixMapping(it->material_index, 177, 184);
+			FixMapping(it->material_index, 177, 184);
 		else if (it->material_type == MaterialKind::Ice)
-			corrupted = corrupted || !FixMapping(it->material_index, 185, 192);
+			FixMapping(it->material_index, 185, 192);
 		else if ( it->material_type == MaterialKind::None)
-			corrupted = corrupted || !FixMapping(it->material_index, 193, 224);
+			FixMapping(it->material_index, 193, 224);
 		else if (it->material_type == MaterialKind::Unphysical)
-			corrupted = corrupted || !FixMapping(it->material_index, 225, 240);	
+			FixMapping(it->material_index, 225, 240);	
 	}
 
-	if (corrupted)
-		printf("Warning: Materials in pallete %s are corrupted.\n", filename.c_str());
+	// TODO: CheckMaterial with short circuit evaluation
+	//printf("Warning: Materials in pallete %s are corrupted.\n", filename.c_str());
 
 	WriteChunkHeader(IMAP, 256, 0);
 	fwrite(&mappings[1], sizeof(uint8_t), 255, vox_file);

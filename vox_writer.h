@@ -85,6 +85,7 @@ private:
 	void WriteMain_nTRN();
 	void WriteRGBA();
 	bool FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max);
+	bool CheckMaterial(uint8_t index, uint8_t i_min, uint8_t i_max);
 	void WriteIMAP();
 	void WriteMATL(PBR pbr);
 	void WriteNOTE();
