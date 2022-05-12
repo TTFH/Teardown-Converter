@@ -173,6 +173,17 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	shape->transform.rot = shape->transform.rot * QuatEuler(90, 0, 0);
 	WriteTransform(entity_element, shape->transform);
 
+	/*float roll, yaw, pitch;
+	QuatToEuler(shape->transform.rot, roll, yaw, pitch);
+	if (fabs(roll) < 0.1 && fabs(yaw) < 0.1 && fabs(pitch + 90) < 0.1) {
+		shape->transform.rot = QuatEuler(0, 90, -90);
+		xml.AddStrAttribute(entity_element, "name", "FIXED? -90");
+	}
+	if (fabs(roll) < 0.1 && fabs(yaw) < 0.1 && fabs(pitch - 90) < 0.1) {
+		shape->transform.rot = QuatEuler(0, -90, 90);
+		xml.AddStrAttribute(entity_element, "name", "FIXED? +90");
+	}*/
+
 	if (volume > 0 && sizex <= 256 && sizey <= 256 && sizez <= 256) {
 		string vox_filename = save_path + "vox\\palette" + to_string(shape->palette) + ".vox";
 		string vox_path = "MOD/vox/palette" + to_string(shape->palette) + ".vox";

@@ -8,22 +8,11 @@ Voxscript:
 
 string FloatToString(float f);
 
-
 SKIP default attributes
 FIX attributes order
 FIX Progress Bar
-FIX Joints
-Fix metal and plastic overflow
 Improve split shapes performance
-Fix material imap
-Fix progress bar
-Linux: loaded levels %ld
-Test environment attributes
-Material Overflow common code
-Add description to all missions
-Fix gimbal lock
+Fix material IMAP
 Fix float precision errors on shape positions
-Fix XML float atr
-
-
-
+Fix rotation of shapes with -90° or 90° rotation on z axis (pitch)
+Fix locations inside a shape inside a body

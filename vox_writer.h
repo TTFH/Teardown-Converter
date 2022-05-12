@@ -42,7 +42,7 @@ struct Color {
 };
 
 struct PBR {
-	int material_id;
+	int material_index;
 	uint8_t material_type;
 	string type; // _diffuse, _metal, _glass, _emit
 	float rough;

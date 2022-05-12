@@ -37,23 +37,23 @@ Vector operator*(const Quat& q, const Vector& p1) {
 	return Vector(result.x, result.y, result.z);
 }
 
-Quat QuatEuler(double pitch, double yaw, double roll) {
-	double c1 = cos(rad(pitch) / 2);
-	double s1 = sin(rad(pitch) / 2);
+Quat QuatEuler(double roll, double yaw, double pitch) {
+	double c1 = cos(rad(roll) / 2);
+	double s1 = sin(rad(roll) / 2);
 	double c2 = cos(rad(yaw) / 2);
 	double s2 = sin(rad(yaw) / 2);
-	double c3 = cos(rad(roll) / 2);
-	double s3 = sin(rad(roll) / 2);
+	double c3 = cos(rad(pitch) / 2);
+	double s3 = sin(rad(pitch) / 2);
 
 	return Quat(
-		s1*c2*c3 + c1*s2*s3,
-		c1*s2*c3 + s1*c2*s3,
-		c1*c2*s3 - s1*s2*c3,
-		c1*c2*c3 - s1*s2*s3
+		s1 * c2 * c3 + c1 * s2 * s3,
+		c1 * s2 * c3 + s1 * c2 * s3,
+		c1 * c2 * s3 - s1 * s2 * c3,
+		c1 * c2 * c3 - s1 * s2 * s3
 	);
 }
 
-// Save range:
+// Safe range:
 // x, y = [0, 360], z = [-90, 90]
 // x, y = (-180, 180), z = (-90, 90)
 void QuatToEuler(Quat q, float &bank, float &heading, float &attitude) {
@@ -66,7 +66,7 @@ void QuatToEuler(Quat q, float &bank, float &heading, float &attitude) {
 	} else if (s <= -1) {
 		bank = 0;
 		heading = -2 * atan2(x, w);
-		attitude = PI / -2;
+		attitude = -PI / 2;
 	} else {
 		bank = atan2(2 * x * w - 2 * y * z, 1 - 2 * x * x - 2 * z * z);
 		heading = atan2(2 * y * w - 2 * x * z, 1 - 2 * y * y - 2 * z * z);

@@ -12,7 +12,7 @@
 using namespace std;
 
 const char* notes[] = {
-	"snow/hole",
+	"hole",
 	"reserved",
 	"unphysical",
 	"unphysical",
@@ -83,18 +83,15 @@ bool MVShape::operator==(const MVShape& other) const {
 
 MV_FILE::MV_FILE(string filename) {
 	this->filename = filename;
-	vox_file = NULL;
-
-	for (int i = 0; i < 256; i++)
-		is_index_used[i] = false;
-	is_index_used[0] = true;
 
 	palette[0] = { 0, 0, 0, 255 };
 	for (int i = 1; i < 256; i++)
 		palette[i] = { 75, 75, 75, 255};
 	
-	for (int i = 0; i < 256; i++)
+	for (int i = 0; i < 256; i++) {
+		is_index_used[i] = false;
 		mappings[i] = i;
+	}
 }
 
 void MV_FILE::WriteDICT(DICT dict) {
@@ -208,6 +205,7 @@ void MV_FILE::WriteRGBA() {
 }
 
 bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
+	index = mappings[index];
 	if (index < i_min || index > i_max) {
 		unsigned int empty_index = i_min;
 		while (is_index_used[empty_index] && empty_index <= i_max)
@@ -218,8 +216,13 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 			is_index_used[index] = false;
 			mappings[index] = mappings[empty_index];
 			mappings[empty_index] = index;
-		} else
+		} else {
+			if (FixMapping(index, 193, 224))
+				return true;
+			if (FixMapping(index, 241, 253))
+				return true;
 			return false;
+		}
 	}
 	return true;
 }
@@ -228,47 +231,39 @@ void MV_FILE::WriteIMAP() {
 	bool corrupted = false;
 	for (vector<PBR>::iterator it = pbrs.begin(); it != pbrs.end(); it++) {
 		if (it->material_type == MaterialKind::Glass)
-			corrupted = corrupted || !FixMapping(it->material_id, 1, 8);
+			corrupted = corrupted || !FixMapping(it->material_index, 1, 8);
 		else if (it->material_type == MaterialKind::Foliage)
-			corrupted = corrupted || !FixMapping(it->material_id, 9, 24);
+			corrupted = corrupted || !FixMapping(it->material_index, 9, 24);
 		else if (it->material_type == MaterialKind::Dirt)
-			corrupted = corrupted || !FixMapping(it->material_id, 25, 40);
+			corrupted = corrupted || !FixMapping(it->material_index, 25, 40);
 		else if (it->material_type == MaterialKind::Rock)
-			corrupted = corrupted || !FixMapping(it->material_id, 41, 56);
-		else if (it->material_type == MaterialKind::Wood) {
-			bool wood_corrupted = !FixMapping(it->material_id, 57, 72);
-			if (wood_corrupted)
-				wood_corrupted = !FixMapping(it->material_id, 193, 224);
-			if (wood_corrupted)
-				wood_corrupted = !FixMapping(it->material_id, 241, 253);
-			corrupted = corrupted || wood_corrupted;
-		} else if (it->material_type == MaterialKind::Masonry)
-			corrupted = corrupted || !FixMapping(it->material_id, 73, 104);
-		else if (it->material_type == MaterialKind::Plaster) {
-			bool plaster_corrupted = !FixMapping(it->material_id, 105, 120);
-			if (plaster_corrupted)
-				plaster_corrupted = !FixMapping(it->material_id, 193, 224);
-			corrupted = corrupted || plaster_corrupted;
-		} else if (it->material_type == MaterialKind::Metal)
-			corrupted = corrupted || !FixMapping(it->material_id, 121, 136);
+			corrupted = corrupted || !FixMapping(it->material_index, 41, 56);
+		else if (it->material_type == MaterialKind::Wood)
+			corrupted = corrupted || !FixMapping(it->material_index, 57, 72);
+		else if (it->material_type == MaterialKind::Masonry)
+			corrupted = corrupted || !FixMapping(it->material_index, 73, 104);
+		else if (it->material_type == MaterialKind::Plaster)
+			corrupted = corrupted || !FixMapping(it->material_index, 105, 120);
+		else if (it->material_type == MaterialKind::Metal)
+			corrupted = corrupted || !FixMapping(it->material_index, 121, 136);
 		else if (it->material_type == MaterialKind::HeavyMetal)
-			corrupted = corrupted || !FixMapping(it->material_id, 137, 152);
+			corrupted = corrupted || !FixMapping(it->material_index, 137, 152);
 		else if (it->material_type == MaterialKind::Plastic)
-			corrupted = corrupted || !FixMapping(it->material_id, 153, 168);
+			corrupted = corrupted || !FixMapping(it->material_index, 153, 168);
 		else if (it->material_type == MaterialKind::HardMetal)
-			corrupted = corrupted || !FixMapping(it->material_id, 169, 176);
+			corrupted = corrupted || !FixMapping(it->material_index, 169, 176);
 		else if (it->material_type == MaterialKind::HardMasonry)
-			corrupted = corrupted || !FixMapping(it->material_id, 177, 184);
+			corrupted = corrupted || !FixMapping(it->material_index, 177, 184);
 		else if (it->material_type == MaterialKind::Ice)
-			corrupted = corrupted || !FixMapping(it->material_id, 185, 192);
-		else if (it->material_type == MaterialKind::None)
-			corrupted = corrupted || !FixMapping(it->material_id, 193, 224);
+			corrupted = corrupted || !FixMapping(it->material_index, 185, 192);
+		else if ( it->material_type == MaterialKind::None)
+			corrupted = corrupted || !FixMapping(it->material_index, 193, 224);
 		else if (it->material_type == MaterialKind::Unphysical)
-			corrupted = corrupted || !FixMapping(it->material_id, 225, 240);
+			corrupted = corrupted || !FixMapping(it->material_index, 225, 240);	
 	}
+
 	if (corrupted)
 		printf("Warning: Materials in pallete %s are corrupted.\n", filename.c_str());
-	assert(mappings[0] == 0);
 
 	WriteChunkHeader(IMAP, 256, 0);
 	fwrite(&mappings[1], sizeof(uint8_t), 255, vox_file);
@@ -293,7 +288,7 @@ void MV_FILE::WriteMATL(PBR pbr) {
 		matl_size += it->first.length() + it->second.length();
 
 	WriteChunkHeader(MATL, matl_size, 0);
-	WriteInt(pbr.material_id);
+	WriteInt(pbr.material_index);
 	WriteDICT(material_attr);
 }
 
@@ -344,13 +339,13 @@ void MV_FILE::AddColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
 void MV_FILE::AddPBR(uint8_t index, uint8_t type, float reflectivity, float shinyness, float metalness, float emissive, float alpha) {
 	(void)reflectivity;
 	PBR pbr;
-	pbr.material_id = index;
+	pbr.material_index = index;
 	pbr.material_type = type;
 
 	if (alpha != 0 && alpha != 1) {
 		pbr.type = "_glass";
 		pbr.alpha = alpha;
-	} else if (emissive > 0.0f) {
+	} else if (emissive > 0) {
 		pbr.type = "_emit";
 		if (emissive > 100)
 			pbr.flux = 4;
@@ -361,10 +356,10 @@ void MV_FILE::AddPBR(uint8_t index, uint8_t type, float reflectivity, float shin
 		else
 			pbr.flux = 1;
 		pbr.emit = emissive / pow(10, pbr.flux - 1);
-	} else if (shinyness > 0.0f) {
+	} else if (shinyness > 0) {
 		pbr.type = "_metal";
 		pbr.rough = 1.0 - shinyness;
-		pbr.metal = metalness;
+		pbr.metal = metalness != 1 ? metalness : 0;
 	} else
 		pbr.type = "_diffuse";
 
