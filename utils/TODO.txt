@@ -3,13 +3,27 @@ Joint Rope slack
 Vehicle driven
 Screen fxglitch
 
+Voxscript:
+	Heightmapper + ground.lua
+
+string FloatToString(float f);
+
+
 SKIP default attributes
 FIX attributes order
 FIX Progress Bar
 FIX Joints
 Fix metal and plastic overflow
+Improve split shapes performance
+Fix material imap
+Fix progress bar
+Linux: loaded levels %ld
+Test environment attributes
+Material Overflow common code
+Add description to all missions
+Fix gimbal lock
+Fix float precision errors on shape positions
+Fix XML float atr
 
-Voxscript:
-	Heightmapper + ground.lua
 
-string FloatToString(float f);
+

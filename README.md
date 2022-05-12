@@ -15,7 +15,6 @@ You can find the execulable in the `release` folder
 ## Know Bugs
 - Some shapes are rotated 90° on the y axis from the correct position.  
 - There are some lines on the terrain where tiles are split a few voxels apart.  
-- Joints are all over the place and not on the correct location.  
 
 ## Task list
 #### Add the next attributes to the xml file:
@@ -25,8 +24,7 @@ You can find the execulable in the `release` folder
 - [ ] Screen fxglitch
 
 #### Fixes
-- [ ] Fix joints positions
-- [ ] Fix shape (vox, voxbox) positions
+- [ ] Fix vox rotation
 - [ ] Clean up XML (default attributes and order)
 - [ ] Improve progress bar
 - [ ] Other minor fixes
