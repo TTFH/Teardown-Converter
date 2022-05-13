@@ -5,6 +5,9 @@
 #include <assert.h>
 #include <map>
 #include <string>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
 
 #include "entity.h"
 #include "xml_writer.h"
@@ -13,12 +16,17 @@
 using namespace std;
 using namespace tinyxml2;
 
-static string FloatToString(float f) {
-    if (fabs(f) < 0.0001) f = 0;
-    char buffer[32];
-	int ret = snprintf(buffer, sizeof(buffer), "%.9g", f);
-	assert(ret >= 0 && ret < 32);
-    return buffer;
+static string FloatToString(float value) {
+	if (fabs(value) < 0.0001) value = 0;
+	stringstream ss;
+	ss << fixed << setprecision(4) << value;
+	string str = ss.str();
+	if (str.find('.') != string::npos) {
+		str = str.substr(0, str.find_last_not_of('0') + 1);
+		if (str.find('.') == str.size() - 1)
+			str = str.substr(0, str.size() - 1);
+	}
+	return str;
 }
 
 XML_Writer::XML_Writer() {

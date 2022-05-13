@@ -175,12 +175,12 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	float roll, yaw, pitch;
 	QuatToEuler(shape->transform.rot, roll, yaw, pitch);
 	if (fabs(roll) < 0.1 && fabs(yaw) < 0.1 && fabs(pitch + 90) < 0.1) {
-		shape->transform.rot = QuatEuler(0, 90, -90);
-		xml.AddStrAttribute(entity_element, "name", "FIXED-");
+		//shape->transform.rot = QuatEuler(0, 90, -90);
+		xml.AddStrAttribute(entity_element, "name", "FIXME1");
 	}
 	if (fabs(roll) < 0.1 && fabs(yaw) < 0.1 && fabs(pitch - 90) < 0.1) {
 		shape->transform.rot = QuatEuler(0, 90, 90);
-		xml.AddStrAttribute(entity_element, "name", "FIXED+");
+		xml.AddStrAttribute(entity_element, "name", "FIXME2");
 	}
 
 	WriteTransform(entity_element, shape->transform);
@@ -646,6 +646,15 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 					else if (joint->type == Ball)
 						joint_tr.rot = Quat();
 					WriteTransform(entity_element, joint_tr);
+
+					//xml.AddFloat3Attribute(entity_element, "pos", joint_tr.pos.x, joint_tr.pos.y, joint_tr.pos.z);
+					if (joint->type != Ball) {
+						xml.AddFloat3Attribute(entity_element, "name",
+							joint->shape_axes[1][0],
+							joint->shape_axes[1][1],
+							joint->shape_axes[1][2]
+						);
+					}
 				}
 			}
 			if (joint->type == Ball)

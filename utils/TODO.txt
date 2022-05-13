@@ -6,13 +6,19 @@ Screen fxglitch
 Voxscript:
 	Heightmapper + ground.lua
 
-string FloatToString(float f);
-
 SKIP default attributes
 FIX attributes order
 FIX Progress Bar
 Improve split shapes performance
 Fix material IMAP
-Fix float precision errors on shape positions
-Fix rotation of shapes with -90° or 90° rotation on z axis (pitch)
 Fix locations inside a shape inside a body
+Fix joint rotation
+
+1 2 3 4 5 6 7 8
+A A B B C C D D 	Mat
+1 2 3 4 5 6 7 8 	IMAP
+1 1 1 1 0 0 0 0 	Used
+
+1 2 3 4 5 6 7 8 	Index
+C B A A
+
