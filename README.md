@@ -24,7 +24,6 @@ You can find the execulable in the `release` folder
 - [ ] Screen fxglitch
 
 #### Fixes
-- [ ] Fix vox rotation
 - [ ] Clean up XML (default attributes and order)
 - [ ] Improve progress bar
 - [ ] Other minor fixes

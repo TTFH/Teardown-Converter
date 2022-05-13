@@ -1,5 +1,5 @@
 Shape collide
-Joint Rope slack
+Rope slack
 Vehicle driven
 Screen fxglitch
 
@@ -7,13 +7,14 @@ Voxscript:
 	Heightmapper + ground.lua
 
 SKIP default attributes
-	Do not print 0 0 limit on joint
-
 FIX attributes order
 FIX Progress Bar
 Fix material IMAP
 Improve split shapes performance
 Fix locations inside a shape inside a body inside a... ok
+Fix terrain in Factory: Add index 255 in two opposite corners of the terrain tiles, how to determine if something is a terrain tile??? size maybe?
+Move source to src/ and add missing .h
+
 
 	IMAP TEST
 1 2 3 4 5 6 7 8

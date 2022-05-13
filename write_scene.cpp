@@ -381,7 +381,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				Shape* parent_shape = (Shape*)location_parent->kind;
 				Transform loc_tr = TransformToLocalTransform(parent_shape->transform, location->transform);
 				WriteTransform(entity_element, loc_tr);
-				// TODO: fix for dynamic bodies
+				// TODO: fix location position on dynamic bodies
 			} else if (location_parent != NULL && location_parent->kind_byte == KindBody) {
 				Body* parent_body = (Body*)location_parent->kind;
 				Transform loc_tr = TransformToLocalTransform(parent_body->transform, location->transform);

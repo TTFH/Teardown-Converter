@@ -229,7 +229,7 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 }
 
 bool MV_FILE::CheckMaterial(uint8_t index, uint8_t i_min, uint8_t i_max) {
-	index = mappings[index]; // TODO: Use reverse mapping???
+	index = mappings[index];
 	return index >= i_min && index <= i_max;
 }
 
