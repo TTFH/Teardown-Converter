@@ -92,6 +92,7 @@ MV_FILE::MV_FILE(string filename) {
 		is_index_used[i] = false;
 		mappings[i] = i;
 	}
+	is_index_used[0] = true;
 }
 
 void MV_FILE::WriteDICT(DICT dict) {
@@ -205,7 +206,6 @@ void MV_FILE::WriteRGBA() {
 }
 
 bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
-	index = mappings[index];
 	if (index < i_min || index > i_max) {
 		unsigned int empty_index = i_min;
 		while (is_index_used[empty_index] && empty_index <= i_max)
@@ -214,8 +214,9 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 		if (empty_index <= i_max) {
 			is_index_used[empty_index] = true;
 			is_index_used[index] = false;
+			uint8_t temp = mappings[index];
 			mappings[index] = mappings[empty_index];
-			mappings[empty_index] = index;
+			mappings[empty_index] = temp;
 		} else {
 			if (FixMapping(index, 193, 224))
 				return true;
@@ -228,12 +229,12 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 }
 
 bool MV_FILE::CheckMaterial(uint8_t index, uint8_t i_min, uint8_t i_max) {
-	index = mappings[index];
+	index = mappings[index]; // TODO: Use reverse mapping???
 	return index >= i_min && index <= i_max;
 }
 
 void MV_FILE::WriteIMAP() {
-	for (int i = 0; i < 2; i++)
+	//for (int i = 0; i < 2; i++)
 	for (vector<PBR>::iterator it = pbrs.begin(); it != pbrs.end(); it++) {
 		if (it->material_type == MaterialKind::Glass)
 			FixMapping(it->material_index, 1, 8);
@@ -267,8 +268,43 @@ void MV_FILE::WriteIMAP() {
 			FixMapping(it->material_index, 225, 240);	
 	}
 
-	// TODO: CheckMaterial with short circuit evaluation
-	//printf("Warning: Materials in pallete %s are corrupted.\n", filename.c_str());
+	bool corrupted = false;
+	for (vector<PBR>::iterator it = pbrs.begin(); it != pbrs.end() && !corrupted; it++) {
+		if (it->material_type == MaterialKind::Glass)
+			corrupted = !CheckMaterial(it->material_index, 1, 8);
+		else if (it->material_type == MaterialKind::Foliage)
+			corrupted = !CheckMaterial(it->material_index, 9, 24);
+		else if (it->material_type == MaterialKind::Dirt)
+			corrupted = !CheckMaterial(it->material_index, 25, 40);
+		else if (it->material_type == MaterialKind::Rock)
+			corrupted = !CheckMaterial(it->material_index, 41, 56);
+		else if (it->material_type == MaterialKind::Wood)
+			corrupted = !CheckMaterial(it->material_index, 57, 72);
+		else if (it->material_type == MaterialKind::Masonry)
+			corrupted = !CheckMaterial(it->material_index, 73, 104);
+		else if (it->material_type == MaterialKind::Plaster)
+			corrupted = !CheckMaterial(it->material_index, 105, 120);
+		else if (it->material_type == MaterialKind::Metal)
+			corrupted = !CheckMaterial(it->material_index, 121, 136);
+		else if (it->material_type == MaterialKind::HeavyMetal)
+			corrupted = !CheckMaterial(it->material_index, 137, 152);
+		else if (it->material_type == MaterialKind::Plastic)
+			corrupted = !CheckMaterial(it->material_index, 153, 168);
+		else if (it->material_type == MaterialKind::HardMetal)
+			corrupted = !CheckMaterial(it->material_index, 169, 176);
+		else if (it->material_type == MaterialKind::HardMasonry)
+			corrupted = !CheckMaterial(it->material_index, 177, 184);
+		else if (it->material_type == MaterialKind::Ice)
+			corrupted = !CheckMaterial(it->material_index, 185, 192);
+		else if ( it->material_type == MaterialKind::None)
+			corrupted = !CheckMaterial(it->material_index, 193, 224) && !CheckMaterial(it->material_index, 241, 253);
+		else if (it->material_type == MaterialKind::Unphysical)
+			corrupted = !CheckMaterial(it->material_index, 225, 240);	
+	}
+
+	if (corrupted)
+		printf("Warning: Materials in pallete %s are corrupted.\n", filename.c_str());
+	assert(mappings[0] == 0);
 
 	WriteChunkHeader(IMAP, 256, 0);
 	fwrite(&mappings[1], sizeof(uint8_t), 255, vox_file);

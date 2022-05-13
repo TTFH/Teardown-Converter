@@ -176,11 +176,11 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	QuatToEuler(shape->transform.rot, roll, yaw, pitch);
 	if (fabs(roll) < 0.1 && fabs(yaw) < 0.1 && fabs(pitch + 90) < 0.1) {
 		shape->transform.rot = QuatEuler(0, 90, -90);
-		xml.AddStrAttribute(entity_element, "name", "FIXED? -90");
+		xml.AddStrAttribute(entity_element, "name", "FIXED-");
 	}
 	if (fabs(roll) < 0.1 && fabs(yaw) < 0.1 && fabs(pitch - 90) < 0.1) {
-		shape->transform.rot = QuatEuler(0, -90, 90);
-		xml.AddStrAttribute(entity_element, "name", "FIXED? +90");
+		shape->transform.rot = QuatEuler(0, 90, 90);
+		xml.AddStrAttribute(entity_element, "name", "FIXED+");
 	}
 
 	WriteTransform(entity_element, shape->transform);
@@ -393,6 +393,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				Shape* parent_shape = (Shape*)location_parent->kind;
 				Transform loc_tr = TransformToLocalTransform(parent_shape->transform, location->transform);
 				WriteTransform(entity_element, loc_tr);
+				// TODO: fix for dynamic bodies
 			} else if (location_parent != NULL && location_parent->kind_byte == KindBody) {
 				Body* parent_body = (Body*)location_parent->kind;
 				Transform loc_tr = TransformToLocalTransform(parent_body->transform, location->transform);
