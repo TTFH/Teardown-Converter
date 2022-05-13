@@ -59,11 +59,11 @@ Quat QuatEuler(double roll, double yaw, double pitch) {
 void QuatToEuler(Quat q, float &bank, float &heading, float &attitude) {
 	double x = q.x, y = q.y, z = q.z, w = q.w;
 	double s = 2 * x * y + 2 * z * w;
-	if (s >= 1) {
+	if (s >= 0.999) {
 		bank = 0;
 		heading = 2 * atan2(x, w);
 		attitude = PI / 2;
-	} else if (s <= -1) {
+	} else if (s <= -0.999) {
 		bank = 0;
 		heading = -2 * atan2(x, w);
 		attitude = -PI / 2;

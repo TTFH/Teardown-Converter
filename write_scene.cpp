@@ -44,7 +44,7 @@ void WriteXML::WriteEnvironment() {
 
 	xml.AddStrAttribute(environment, "skybox", skybox_texture);
 	xml.AddRgbaAttribute(environment, "skyboxtint", skybox->tint);
-	xml.AddFloatAttribute(environment, "skyboxrot", skybox->rot);
+	xml.AddFloatAttribute(environment, "skyboxrot", deg(skybox->rot));
 	xml.AddRgbaAttribute(environment, "constant", skybox->constant, true);
 	xml.AddFloatAttribute(environment, "ambient", skybox->ambient);
 	xml.AddFloatAttribute(environment, "ambientexponent", skybox->ambientexponent);
@@ -171,18 +171,6 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	Vector axis_offset = { 0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0 };
 	shape->transform.pos = shape->transform.pos + shape->transform.rot * axis_offset;
 	shape->transform.rot = shape->transform.rot * QuatEuler(90, 0, 0);
-
-	float roll, yaw, pitch;
-	QuatToEuler(shape->transform.rot, roll, yaw, pitch);
-	if (fabs(roll) < 0.1 && fabs(yaw) < 0.1 && fabs(pitch + 90) < 0.1) {
-		//shape->transform.rot = QuatEuler(0, 90, -90);
-		xml.AddStrAttribute(entity_element, "name", "FIXME1");
-	}
-	if (fabs(roll) < 0.1 && fabs(yaw) < 0.1 && fabs(pitch - 90) < 0.1) {
-		shape->transform.rot = QuatEuler(0, 90, 90);
-		xml.AddStrAttribute(entity_element, "name", "FIXME2");
-	}
-
 	WriteTransform(entity_element, shape->transform);
 
 	if (volume > 0 && sizex <= 256 && sizey <= 256 && sizez <= 256) {
@@ -637,22 +625,19 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 					Shape* shape = (Shape*)entity->kind;
 					Transform shape_tr = shape->transform;
 					Vector relative_pos = { joint->shape_positions[0][0], joint->shape_positions[0][1], joint->shape_positions[0][2] };
-					Transform joint_tr = TransformToLocalTransform(shape_tr, Transform(relative_pos, Quat()));
-
-					if (joint->type == Hinge)
-						joint_tr.rot = joint_tr.rot * QuatEuler(0, 90, 0);
-					else if (joint->type == Prismatic)
-						joint_tr.rot = joint_tr.rot * QuatEuler(-90, 0, 0);
-					else if (joint->type == Ball)
-						joint_tr.rot = Quat();
+					// TODO: This only work for joints with rotation multiple of 90 degrees
+					Quat relative_rot = joint->type != Ball ? QuatEuler(
+						90.0 * joint->shape_axes[0][1],
+						90.0 * joint->shape_axes[0][0],
+						90.0 * joint->shape_axes[0][2]
+					) : Quat();
+					Transform joint_tr = TransformToLocalTransform(shape_tr, Transform(relative_pos, relative_rot));
 					WriteTransform(entity_element, joint_tr);
-
-					//xml.AddFloat3Attribute(entity_element, "pos", joint_tr.pos.x, joint_tr.pos.y, joint_tr.pos.z);
 					if (joint->type != Ball) {
 						xml.AddFloat3Attribute(entity_element, "name",
-							joint->shape_axes[1][0],
-							joint->shape_axes[1][1],
-							joint->shape_axes[1][2]
+							joint->shape_axes[0][1],
+							joint->shape_axes[0][0],
+							joint->shape_axes[0][2]
 						);
 					}
 				}
@@ -661,7 +646,8 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				xml.AddAttribute(entity_element, "type", "ball");
 			else if (joint->type == Hinge) {
 				xml.AddAttribute(entity_element, "type", "hinge");
-				xml.AddFloat2Attribute(entity_element, "limits", deg(joint->limits[0]), deg(joint->limits[1]));
+				if (joint->limits[0] != 0.0 || joint->limits[1] != 0.0)
+					xml.AddFloat2Attribute(entity_element, "limits", deg(joint->limits[0]), deg(joint->limits[1]));
 			} else if (joint->type == Prismatic) {
 				xml.AddAttribute(entity_element, "type", "prismatic");
 				xml.AddFloatNAttribute(entity_element, "limits", joint->limits, 2);
