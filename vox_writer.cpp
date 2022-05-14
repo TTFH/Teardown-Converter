@@ -83,14 +83,15 @@ bool MVShape::operator==(const MVShape& other) const {
 
 MV_FILE::MV_FILE(string filename) {
 	this->filename = filename;
+	vox_file = NULL;
 
 	palette[0] = { 0, 0, 0, 255 };
 	for (int i = 1; i < 256; i++)
 		palette[i] = { 75, 75, 75, 255};
-	
+
 	for (int i = 0; i < 256; i++) {
 		is_index_used[i] = false;
-		mappings[i] = i;
+		palette_map[i] = i;
 	}
 	is_index_used[0] = true;
 }
@@ -214,9 +215,9 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 		if (empty_index <= i_max) {
 			is_index_used[empty_index] = true;
 			is_index_used[index] = false;
-			uint8_t temp = mappings[index];
-			mappings[index] = mappings[empty_index];
-			mappings[empty_index] = temp;
+			uint8_t temp = palette_map[index];
+			palette_map[index] = palette_map[empty_index];
+			palette_map[empty_index] = temp;
 		} else {
 			if (FixMapping(index, 193, 224))
 				return true;
@@ -229,7 +230,6 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 }
 
 bool MV_FILE::CheckMaterial(uint8_t index, uint8_t i_min, uint8_t i_max) {
-	index = mappings[index];
 	return index >= i_min && index <= i_max;
 }
 
@@ -268,47 +268,54 @@ void MV_FILE::WriteIMAP() {
 			FixMapping(it->material_index, 225, 240);	
 	}
 
+	uint8_t palette_reverse_map[256];
+	for (int i = 0; i < 256; i++)
+		for (int j = 0; j < 256; j++)
+			if (palette_map[i] == j)
+				palette_reverse_map[j] = i;
+
 	bool corrupted = false;
 	for (vector<PBR>::iterator it = pbrs.begin(); it != pbrs.end() && !corrupted; it++) {
+		uint8_t index = palette_reverse_map[it->material_index];
 		if (it->material_type == MaterialKind::Glass)
-			corrupted = !CheckMaterial(it->material_index, 1, 8);
+			corrupted = !CheckMaterial(index, 1, 8);
 		else if (it->material_type == MaterialKind::Foliage)
-			corrupted = !CheckMaterial(it->material_index, 9, 24);
+			corrupted = !CheckMaterial(index, 9, 24);
 		else if (it->material_type == MaterialKind::Dirt)
-			corrupted = !CheckMaterial(it->material_index, 25, 40);
+			corrupted = !CheckMaterial(index, 25, 40);
 		else if (it->material_type == MaterialKind::Rock)
-			corrupted = !CheckMaterial(it->material_index, 41, 56);
+			corrupted = !CheckMaterial(index, 41, 56);
 		else if (it->material_type == MaterialKind::Wood)
-			corrupted = !CheckMaterial(it->material_index, 57, 72);
+			corrupted = !CheckMaterial(index, 57, 72);
 		else if (it->material_type == MaterialKind::Masonry)
-			corrupted = !CheckMaterial(it->material_index, 73, 104);
+			corrupted = !CheckMaterial(index, 73, 104);
 		else if (it->material_type == MaterialKind::Plaster)
-			corrupted = !CheckMaterial(it->material_index, 105, 120);
+			corrupted = !CheckMaterial(index, 105, 120);
 		else if (it->material_type == MaterialKind::Metal)
-			corrupted = !CheckMaterial(it->material_index, 121, 136);
+			corrupted = !CheckMaterial(index, 121, 136);
 		else if (it->material_type == MaterialKind::HeavyMetal)
-			corrupted = !CheckMaterial(it->material_index, 137, 152);
+			corrupted = !CheckMaterial(index, 137, 152);
 		else if (it->material_type == MaterialKind::Plastic)
-			corrupted = !CheckMaterial(it->material_index, 153, 168);
+			corrupted = !CheckMaterial(index, 153, 168);
 		else if (it->material_type == MaterialKind::HardMetal)
-			corrupted = !CheckMaterial(it->material_index, 169, 176);
+			corrupted = !CheckMaterial(index, 169, 176);
 		else if (it->material_type == MaterialKind::HardMasonry)
-			corrupted = !CheckMaterial(it->material_index, 177, 184);
+			corrupted = !CheckMaterial(index, 177, 184);
 		else if (it->material_type == MaterialKind::Ice)
-			corrupted = !CheckMaterial(it->material_index, 185, 192);
+			corrupted = !CheckMaterial(index, 185, 192);
 		else if ( it->material_type == MaterialKind::None)
-			corrupted = !CheckMaterial(it->material_index, 193, 224) && !CheckMaterial(it->material_index, 241, 253);
+			corrupted = !CheckMaterial(index, 193, 224) && !CheckMaterial(index, 241, 253);
 		else if (it->material_type == MaterialKind::Unphysical)
-			corrupted = !CheckMaterial(it->material_index, 225, 240);	
+			corrupted = !CheckMaterial(index, 225, 240);	
+		if (corrupted)
+			printf("Warning: Pallete %s may be corrupted: material %s is at index %d\n",
+			filename.c_str(), MaterialKindName[it->material_type], index);
 	}
-
-	if (corrupted)
-		printf("Warning: Materials in pallete %s are corrupted.\n", filename.c_str());
-	assert(mappings[0] == 0);
+	assert(palette_map[0] == 0);
 
 	WriteChunkHeader(IMAP, 256, 0);
-	fwrite(&mappings[1], sizeof(uint8_t), 255, vox_file);
-	fwrite(&mappings[0], sizeof(uint8_t), 1, vox_file);
+	fwrite(&palette_map[1], sizeof(uint8_t), 255, vox_file);
+	fwrite(&palette_map[0], sizeof(uint8_t), 1, vox_file);
 }
 
 // TODO: fix trailing zeros
@@ -410,5 +417,6 @@ void MV_FILE::AddPBR(uint8_t index, uint8_t type, float reflectivity, float shin
 MV_FILE::~MV_FILE() {
 	for (vector<MVShape>::iterator it = models.begin(); it != models.end(); it++)
 		MatrixDelete(it->voxels, it->sizex, it->sizey);
-	fclose(vox_file);
+	if (vox_file != NULL)
+		fclose(vox_file);
 }

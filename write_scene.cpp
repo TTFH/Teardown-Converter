@@ -551,8 +551,10 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		case KindTrigger: {
 			Trigger* trigger = (Trigger*)entity->kind;
 			entity_element->SetName("trigger");
-			if (trigger->type == TrBox)
-				trigger->transform.pos.x -= trigger->box_size[1];
+			if (trigger->type == TrBox) {
+				Vector offset = Vector(0, trigger->box_size[1], 0);
+				trigger->transform.pos = trigger->transform.pos - trigger->transform.rot * offset;
+			}
 			WriteTransform(entity_element, trigger->transform);
 
 			if (trigger->type == TrSphere) {
@@ -615,6 +617,18 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			xml.AddFloatAttribute(entity_element, "size", joint->size);
 			xml.AddFloatAttribute(entity_element, "collide", joint->collide);
 			xml.AddFloatAttribute(entity_element, "sound", joint->sound);
+
+			// Add tags to joints
+			string tags = "";
+			for (unsigned int i = 0; i < entity->tags.getSize(); i++) {
+				tags += entity->tags[i].name;
+				if (entity->tags[i].value.length() > 0)
+					tags += "=" + entity->tags[i].value;
+				if (i != entity->tags.getSize() - 1)
+					tags += " ";
+			}
+			if (tags.length() > 0)
+				xml.AddStrAttribute(entity_element, "tags", tags);
 
 			uint32_t shape_handle = joint->shape_handles[0];
 			XMLElement* shape_parent = xml.getNode(shape_handle);

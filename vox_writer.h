@@ -71,7 +71,7 @@ private:
 	string filename;
 	vector<PBR> pbrs;
 	Color palette[256];
-	uint8_t mappings[256];
+	uint8_t palette_map[256];
 	long int childrenSize_ptr;
 
 	void WriteInt(int val) {

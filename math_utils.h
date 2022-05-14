@@ -31,6 +31,7 @@ void QuatToEuler(Quat q, float &bank, float &heading, float &attitude);
 Transform TransformToLocalTransform(const Transform& parent, const Transform& child);
 
 Vector operator+(const Vector& u, const Vector& v);
+Vector operator-(const Vector& u, const Vector& v);
 Quat operator*(const Quat& p, const Quat& q);
 Vector operator*(const Quat& q, const Vector& p1);
 

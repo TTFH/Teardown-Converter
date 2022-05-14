@@ -17,9 +17,9 @@ using namespace std;
 using namespace tinyxml2;
 
 static string FloatToString(float value) {
-	if (fabs(value) < 0.0001) value = 0;
+	if (fabs(value) < 0.001) value = 0;
 	stringstream ss;
-	ss << fixed << setprecision(4) << value;
+	ss << fixed << setprecision(3) << value;
 	string str = ss.str();
 	if (str.find('.') != string::npos) {
 		str = str.substr(0, str.find_last_not_of('0') + 1);
