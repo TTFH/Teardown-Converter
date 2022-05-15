@@ -3,9 +3,12 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
-#include <string>
-#include <vector>
 #include <map>
+#include <vector>
+#include <string>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
 
 #include "vox_writer.h"
 
@@ -45,6 +48,19 @@ const char* notes[] = {
 	"foliage",
 	"glass"
 };
+
+static string FloatToString(float value) {
+	if (fabs(value) < 0.001) value = 0;
+	stringstream ss;
+	ss << fixed << setprecision(3) << value;
+	string str = ss.str();
+	if (str.find('.') != string::npos) {
+		str = str.substr(0, str.find_last_not_of('0') + 1);
+		if (str.find('.') == str.size() - 1)
+			str = str.substr(0, str.size() - 1);
+	}
+	return str;
+}
 
 uint8_t*** MatrixInit(int sizex, int sizey, int sizez) {
 	uint8_t*** matrix = new uint8_t**[sizex];
@@ -318,17 +334,16 @@ void MV_FILE::WriteIMAP() {
 	fwrite(&palette_map[0], sizeof(uint8_t), 1, vox_file);
 }
 
-// TODO: fix trailing zeros
 void MV_FILE::WriteMATL(PBR pbr) {
 	DICT material_attr;
 	material_attr["_type"] = pbr.type;
 	if (pbr.type == "_metal") {
-		material_attr["_rough"] = to_string(pbr.rough);
-		material_attr["_metal"] = to_string(pbr.metal);
+		material_attr["_rough"] = FloatToString(pbr.rough);
+		material_attr["_metal"] = FloatToString(pbr.metal);
 	} else if (pbr.type == "_glass")
-		material_attr["_alpha"] = to_string(pbr.alpha);
+		material_attr["_alpha"] = FloatToString(pbr.alpha);
 	else if (pbr.type == "_emit") {
-		material_attr["_emit"] = to_string(pbr.emit);
+		material_attr["_emit"] = FloatToString(pbr.emit);
 		material_attr["_flux"] = to_string(pbr.flux);
 	}
 	int matl_size = 8 + 8 * material_attr.size();

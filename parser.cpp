@@ -146,7 +146,6 @@ Registry TDBIN::ReadRegistry() {
 	Registry entry;
 	entry.key = ReadString();
 	entry.value = ReadString();
-	//printf("[%s] = %s\n", entry.key.c_str(), entry.value.c_str());
 	return entry;
 }
 
@@ -300,11 +299,6 @@ LuaTable TDBIN::ReadLuaTable() {
 		table_entry.value_type = ReadInt();
 		table_entry.value = ReadLuaValue(table_entry.value_type);
 		table.push_back(table_entry);
-
-		/*if (table_entry.key_type == String && table_entry.value_type == String && strcmp(table_entry.key.String, "title") == 0)
-			printf("Title: %s\n", table_entry.value.String);
-		if (table_entry.key_type == String && table_entry.value_type == String && strcmp(table_entry.key.String, "desc") == 0)
-			printf("Description: %s\n", table_entry.value.String);*/
 	} while (true);
 	return table;
 }

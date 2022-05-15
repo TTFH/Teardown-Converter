@@ -123,7 +123,7 @@ void XML_Writer::AddFloatNAttribute(XMLElement* element, const char* name, const
 
 void XML_Writer::AddRgbaAttribute(XMLElement* element, const char* name, Rgba value, bool skip_alpha) {
 	string buffer = FloatToString(value.r) + " " + FloatToString(value.g) + " " + FloatToString(value.b);
-	if (!skip_alpha)
+	if (!skip_alpha && value.a != 1.0)
 		buffer += " " + FloatToString(value.a);
 	element->SetAttribute(name, buffer.c_str());
 }

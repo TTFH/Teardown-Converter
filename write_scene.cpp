@@ -615,8 +615,8 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		if (joint->type != _Rope) {
 			XMLElement* entity_element = xml.CreateElement("joint");
 			xml.AddFloatAttribute(entity_element, "size", joint->size);
-			xml.AddFloatAttribute(entity_element, "collide", joint->collide);
-			xml.AddFloatAttribute(entity_element, "sound", joint->sound);
+			xml.AddBoolAttribute(entity_element, "collide", joint->collide);
+			xml.AddBoolAttribute(entity_element, "sound", joint->sound);
 
 			// Add tags to joints
 			string tags = "";
@@ -639,7 +639,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 					Shape* shape = (Shape*)entity->kind;
 					Transform shape_tr = shape->transform;
 					Vector relative_pos = { joint->shape_positions[0][0], joint->shape_positions[0][1], joint->shape_positions[0][2] };
-					// TODO: This only work for joints with rotation multiple of 90 degrees
+					// TODO: This only work for joints with rotation multiple of 90 degrees, and even then it doesn't work
 					Quat relative_rot = joint->type != Ball ? QuatEuler(
 						90.0 * joint->shape_axes[0][1],
 						90.0 * joint->shape_axes[0][0],
