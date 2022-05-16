@@ -12,56 +12,6 @@
 
 using namespace std::experimental::filesystem;
 
-Transform GetEntityTransform(Entity* entity) {
-	Transform transform;
-	switch (entity->kind_byte) {
-		case KindBody: {
-			Body* body = (Body*)entity->kind;
-			transform = body->transform;
-		}
-			break;
-		case KindShape: {
-			Shape* shape = (Shape*)entity->kind;
-			transform = shape->transform;
-		}
-			break;
-		case KindLight: {
-			Light* light = (Light*)entity->kind;
-			transform = light->transform;
-		}
-			break;
-		case KindLocation: {
-			Location* location = (Location*)entity->kind;
-			transform = location->transform;
-		}
-			break;
-		case KindWater: {
-			Water* water = (Water*)entity->kind;
-			transform = water->transform;
-		}
-			break;
-		case KindVehicle: {
-			Vehicle* vehicle = (Vehicle*)entity->kind;
-			transform = vehicle->transform;
-		}
-			break;
-		case KindWheel: {
-			Wheel* wheel = (Wheel*)entity->kind;
-			transform = wheel->transform;
-		}
-			break;
-		case KindTrigger: {
-			Trigger* trigger = (Trigger*)entity->kind;
-			transform = trigger->transform;
-		}
-			break;
-		default:
-			assert(false);
-			break;
-	}
-	return transform;
-}
-
 TDBIN::TDBIN(const char* input, string save_folder, string level_id) {
 	this->save_path = save_folder;
 	this->level_id = level_id;

@@ -25,6 +25,7 @@ struct Transform {
 double deg(double rad);
 double rad(double deg);
 Quat QuatEuler(double roll, double yaw, double pitch);
+Quat QuatEulerRad(double roll, double yaw, double pitch);
 void QuatToEuler(Quat q, float &bank, float &heading, float &attitude);
 Transform TransformToLocalTransform(const Transform& parent, const Transform& child);
 

@@ -314,7 +314,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 	switch (entity->kind_byte) {
 		case KindBody: {
-			Body* body = (Body*)entity->kind;
+			Body* body = static_cast<Body*>(entity->kind);
 			entity_element->SetName("body");
 
 			Entity* body_parent = entity->parent;
@@ -331,12 +331,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindShape: {
-			Shape* shape = (Shape*)entity->kind;
+			Shape* shape = static_cast<Shape*>(entity->kind);
 			WriteShape(entity_element, shape, entity->handle);
 		}
 			break;
 		case KindLight: {
-			Light* light = (Light*)entity->kind;
+			Light* light = static_cast<Light*>(entity->kind);
 			entity_element->SetName("light");
 
 			Entity* light_parent = entity->parent;
@@ -383,7 +383,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindLocation: {
-			Location* location = (Location*)entity->kind;
+			Location* location = static_cast<Location*>(entity->kind);
 			entity_element->SetName("location");
 
 			Entity* location_parent = entity->parent;
@@ -401,7 +401,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindWater: {
-			Water* water = (Water*)entity->kind;
+			Water* water = static_cast<Water*>(entity->kind);
 			entity_element->SetName("water");
 			WriteTransform(entity_element, water->transform);
 			xml.AddStrAttribute(entity_element, "type", "polygon");
@@ -421,7 +421,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindJoint: {
-			Joint* joint = (Joint*)entity->kind;
+			Joint* joint = static_cast<Joint*>(entity->kind);
 			if (joint->type == _Rope) {
 				entity_element->SetName("rope");
 				xml.AddFloatAttribute(entity_element, "size", joint->size);
@@ -435,12 +435,10 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				if (knot_count > 0) {
 					XMLElement* location_from = xml.CreateElement("location");
 					xml.AddElement(entity_element, location_from);
-					xml.AddAttribute(location_from, "name", "from");
 					xml.AddFloatNAttribute(location_from, "pos", joint->rope.knots[0].from, 3);
 
 					XMLElement* location_to = xml.CreateElement("location");
 					xml.AddElement(entity_element, location_to);
-					xml.AddAttribute(location_to, "name", "to");
 					xml.AddFloatNAttribute(location_to, "pos", joint->rope.knots[knot_count - 1].to, 3);
 				}
 			} else
@@ -448,7 +446,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindVehicle: {
-			Vehicle* vehicle = (Vehicle*)entity->kind;
+			Vehicle* vehicle = static_cast<Vehicle*>(entity->kind);
 			entity_element->SetName("vehicle");
 			WriteTransform(entity_element, vehicle->transform);
 
@@ -505,7 +503,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindWheel: {
-			Wheel* wheel = (Wheel*)entity->kind;
+			Wheel* wheel = static_cast<Wheel*>(entity->kind);
 			entity_element->SetName("wheel");
 
 			Entity* wheel_parent = entity->parent;
@@ -522,7 +520,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindScreen: {
-			Screen* screen = (Screen*)entity->kind;
+			Screen* screen = static_cast<Screen*>(entity->kind);
 			entity_element->SetName("screen");
 
 			Entity* screen_parent = entity->parent;
@@ -548,6 +546,10 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			if (script_file.find(prefix) == 0)
 				script_file = "MOD" + script_file.substr(prefix.size());
 
+			prefix = "data/";
+			if (script_file.find(prefix) == 0)
+				script_file = script_file.substr(prefix.size());
+
 			xml.AddStrAttribute(entity_element, "script", script_file);
 			xml.AddBoolAttribute(entity_element, "enabled", screen->enabled);
 			xml.AddBoolAttribute(entity_element, "interactive", screen->interactive);
@@ -559,7 +561,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindTrigger: {
-			Trigger* trigger = (Trigger*)entity->kind;
+			Trigger* trigger = static_cast<Trigger*>(entity->kind);
 			entity_element->SetName("trigger");
 			if (trigger->type == TrBox) {
 				Vector offset = Vector(0, trigger->box_size[1], 0);
@@ -607,7 +609,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 void WriteXML::WriteEntity2ndPass(Entity* entity) {
 	if (entity->kind_byte == KindVehicle) {
-		Vehicle* vehicle = (Vehicle*)entity->kind;
+		Vehicle* vehicle = static_cast<Vehicle*>(entity->kind);
 		int vital_count = vehicle->vitals.getSize();
 		for (int i = 0; i < vital_count; i++) {
 			uint32_t body_handle = vehicle->vitals[i].body_handle;
@@ -621,7 +623,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				printf("Warning: vital body %d not found\n", body_handle);
 		}
 	} else if (entity->kind_byte == KindJoint) {
-		Joint* joint = (Joint*)entity->kind;
+		Joint* joint = static_cast<Joint*>(entity->kind);
 		if (joint->type != _Rope) {
 			XMLElement* entity_element = xml.CreateElement("joint");
 			xml.AddFloatAttribute(entity_element, "size", joint->size);
@@ -642,29 +644,24 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 
 			uint32_t shape_handle = joint->shape_handles[0];
 			XMLElement* shape_parent = xml.getNode(shape_handle);
-			if (shape_parent != NULL) {
-				if (entity_mapping.find(shape_handle) != entity_mapping.end()) {
-					Entity* entity = entity_mapping[shape_handle];
-					assert(entity->kind_byte == KindShape);
-					Shape* shape = (Shape*)entity->kind;
-					Transform shape_tr = shape->transform;
-					Vector relative_pos = { joint->shape_positions[0][0], joint->shape_positions[0][1], joint->shape_positions[0][2] };
-					// TODO: This only work for joints with rotation multiple of 90 degrees, and even then it doesn't work
-					Quat relative_rot = joint->type != Ball ? QuatEuler(
-						90.0 * joint->shape_axes[0][1],
-						90.0 * joint->shape_axes[0][0],
-						90.0 * joint->shape_axes[0][2]
-					) : Quat();
-					Transform joint_tr = TransformToLocalTransform(shape_tr, Transform(relative_pos, relative_rot));
-					WriteTransform(entity_element, joint_tr);
-					if (joint->type != Ball) {
-						xml.AddFloat3Attribute(entity_element, "name",
-							joint->shape_axes[0][1],
-							joint->shape_axes[0][0],
-							joint->shape_axes[0][2]
-						);
-					}
-				}
+			if (shape_parent != NULL && entity_mapping.find(shape_handle) != entity_mapping.end()) {
+				Entity* entity = entity_mapping[shape_handle];
+				assert(entity->kind_byte == KindShape);
+				Shape* shape = (Shape*)entity->kind;
+				Transform shape_tr = shape->transform;
+				Vector relative_pos = { joint->shape_positions[0][0], joint->shape_positions[0][1], joint->shape_positions[0][2] };
+
+				float rx = joint->shape_axes[0][0]; // sin(a) * cos(b) * sin(c) + cos(a) * sin(b)
+				float ry = joint->shape_axes[0][1]; // -sin(a) * cos(c)
+				//float rz = joint->shape_axes[0][2]; // -sin(a) * sin(b) * sin(c) + cos(a) * cos(b)
+
+				double a = -asin(ry);
+				double b = asin(rx / cos(a));
+				double c = 0;
+
+				Quat relative_rot = joint->type != Ball ? QuatEulerRad(a, b, c) : Quat();
+				Transform joint_tr = TransformToLocalTransform(shape_tr, Transform(relative_pos, relative_rot));
+				WriteTransform(entity_element, joint_tr);
 			}
 			if (joint->type == Ball)
 				xml.AddAttribute(entity_element, "type", "ball");
@@ -686,7 +683,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				xml.AddElement(shape_parent, entity_element, entity->handle);
 		}
 	} else if (entity->kind_byte == KindScript) {
-		Script* script = (Script*)entity->kind;
+		Script* script = static_cast<Script*>(entity->kind);
 		XMLElement* entity_element = xml.CreateElement("script");
 
 		string script_file = script->file;

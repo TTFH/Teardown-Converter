@@ -16,14 +16,7 @@ using namespace std;
 
 extern float progress;
 
-/*enum TYPE { UINT, FLOAT };
-union dword {
-	uint32_t u32;
-	float f32;
-};*/
-
 void ParseFile(const char* filename, string save_folder, string level_id);
-Transform GetEntityTransform(Entity* entity); // TODO: UNUSED, use or remove
 
 class TDBIN : public WriteXML {
 private:

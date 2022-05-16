@@ -222,22 +222,22 @@ struct Rope {
 };
 
 struct Joint {
-	uint32_t type;			// type
-	uint32_t shape_handles[2];
-	float shape_positions[2][3];
-	float shape_axes[2][3];
+	uint32_t type;				// type
+	uint32_t shape_handles[2];	// Conected shapes handles
+	float shape_positions[2][3];// Relative position to each shape
+	float shape_axes[2][3];		// Last column of YZX rotation matrix
 	bool connected;
-	bool collide;			// collide
-	float rotstrength;		// rotstrength
-	float rotspring;		// rotspring
+	bool collide;				// collide
+	float rotstrength;			// rotstrength
+	float rotspring;			// rotspring
 	float ball_rot[4];
-	float limits[2];		// limits (in degrees for hinge, meters for prismatic)
+	float limits[2];			// limits (in degrees for hinge, meters for prismatic)
 	float z_f32[2];
-	float size;				// size
-	bool sound;				// sound
-	bool autodisable;		// autodisable
+	float size;					// size
+	bool sound;					// sound
+	bool autodisable;			// autodisable
 	uint32_t z_u32_2[2];
-	Rope rope;				// Only if type = Rope
+	Rope rope;					// Only if type = Rope
 };
 
 struct VehicleSound {

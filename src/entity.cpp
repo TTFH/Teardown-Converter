@@ -20,37 +20,37 @@ Entity::~Entity() {
 		delete children[i];
 	switch (kind_byte) {
 		case KindBody:
-			delete (Body*)kind;
+			delete static_cast<Body*>(kind);
 			break;
 		case KindShape:
-			delete (Shape*)kind;
+			delete static_cast<Shape*>(kind);
 			break;
 		case KindLight:
-			delete (Light*)kind;
+			delete static_cast<Light*>(kind);
 			break;
 		case KindLocation:
-			delete (Location*)kind;
+			delete static_cast<Location*>(kind);
 			break;
 		case KindWater:
-			delete (Water*)kind;
+			delete static_cast<Water*>(kind);
 			break;
 		case KindJoint:
-			delete (Joint*)kind;
+			delete static_cast<Joint*>(kind);
 			break;
 		case KindVehicle:
-			delete (Vehicle*)kind;
+			delete static_cast<Vehicle*>(kind);
 			break;
 		case KindWheel:
-			delete (Wheel*)kind;
+			delete static_cast<Wheel*>(kind);
 			break;
 		case KindScreen:
-			delete (Screen*)kind;
+			delete static_cast<Screen*>(kind);
 			break;
 		case KindTrigger:
-			delete (Trigger*)kind;
+			delete static_cast<Trigger*>(kind);
 			break;
 		case KindScript:
-			delete (Script*)kind;
+			delete static_cast<Script*>(kind);
 			break;
 	}
 }

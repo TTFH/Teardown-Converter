@@ -5,3 +5,4 @@ release/*.exe
 release/*.bin
 release/*.tdbin
 release/teardown-converter
+release/test/

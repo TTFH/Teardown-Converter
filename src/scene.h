@@ -56,7 +56,7 @@ struct Skybox {
 	string texture;			// skybox
 	Rgba tint;				// skyboxtint
 	float brightness;		// skyboxbrightness
-	float rot;				// skyboxrot
+	float rot;				// skyboxrot in radians
 	Sun sun;
 	uint8_t z_u8;
 	Rgba constant;			// constant
