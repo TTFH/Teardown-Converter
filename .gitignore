@@ -1,7 +1,7 @@
 .vscode/
-*.exe
 *.zip
-imgui.ini
-quicksave.bin
 obj/*.o
 release/*.exe
+release/*.bin
+release/*.tdbin
+release/teardown-converter

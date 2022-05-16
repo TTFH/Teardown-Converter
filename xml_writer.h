@@ -2,14 +2,15 @@
 #define XML_WRITER_H
 
 #include <stdint.h>
+#include <iosfwd>
 #include <map>
 #include <string>
-
-#include "entity.h"
 #include "lib/tinyxml2.h"
 
 using namespace std;
 using namespace tinyxml2;
+
+struct Rgba;
 
 class XML_Writer {
 private:

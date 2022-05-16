@@ -2,9 +2,11 @@
 #define SCENE_H
 
 #include <stdint.h>
+#include <iosfwd>
 #include <string>
 
 #include "entity.h"
+#include "math_utils.h"
 
 using namespace std;
 

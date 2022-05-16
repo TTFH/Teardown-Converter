@@ -2,6 +2,7 @@
 #define ENTITY_H
 
 #include <stdint.h>
+#include <iosfwd>
 #include <stdexcept>
 #include <string>
 

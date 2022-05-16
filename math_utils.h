@@ -1,8 +1,6 @@
 #ifndef MATH_UTILS_H
 #define MATH_UTILS_H
 
-#include <math.h>
-
 #define PI 3.14159265
 
 struct Vector {

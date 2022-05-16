@@ -1,11 +1,15 @@
-#include <math.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
 #include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <cstdint>
 #include <experimental/filesystem>
+#include <utility>
 
 #include "parser.h"
+#include "vox_writer.h"
+#include "zlib_inflate.h"
 
 using namespace std::experimental::filesystem;
 

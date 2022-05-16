@@ -1,9 +1,21 @@
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
-#include <assert.h>
+#include <algorithm>
+#include <cstdint>
+#include <list>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
 
+#include "entity.h"
+#include "math_utils.h"
 #include "parser.h"
+#include "scene.h"
 #include "vox_writer.h"
+#include "xml_writer.h"
+#include "lib/tinyxml2.h"
 
 void WriteXML::WriteScene() {
 	char version[32];

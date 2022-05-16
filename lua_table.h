@@ -2,7 +2,7 @@
 #define LUATABLE_H
 
 #include <stdint.h>
-#include <string.h>
+#include <iosfwd>
 #include <vector>
 
 using namespace std;

@@ -1,15 +1,19 @@
-#include <math.h>
-#include <stdio.h>
 #include <assert.h>
+#include <math.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <map>
-#include <vector>
-#include <string>
 #include <iomanip>
-#include <sstream>
 #include <iostream>
+#include <map>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
+#include "scene.h"
 #include "vox_writer.h"
 
 using namespace std;

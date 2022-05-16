@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "lua_table.h"
 
 LuaTableEntry::LuaTableEntry() {

@@ -2,11 +2,11 @@
 #define VOX_WRITER_H
 
 #include <stdint.h>
+#include <stdio.h>
+#include <iosfwd>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
-
-#include "scene.h"
 
 using namespace std;
 

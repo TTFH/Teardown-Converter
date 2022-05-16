@@ -1,13 +1,11 @@
 #include <math.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <assert.h>
-#include <map>
-#include <string>
+#include <cstdint>
 #include <iomanip>
-#include <sstream>
 #include <iostream>
+#include <map>
+#include <sstream>
+#include <string>
 
 #include "entity.h"
 #include "xml_writer.h"

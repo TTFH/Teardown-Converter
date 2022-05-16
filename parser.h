@@ -2,17 +2,21 @@
 #define PARSER_H
 
 #include <stdint.h>
-#include <string>
+#include <stdio.h>
+#include <iosfwd>
 #include <list>
 #include <map>
+#include <string>
 
+#include "entity.h"
+#include "lua_table.h"
+#include "math_utils.h"
 #include "scene.h"
-#include "vox_writer.h"
 #include "xml_writer.h"
-#include "zlib_inflate.h"
 
+class MV_FILE;
+namespace tinyxml2 { class XMLElement; }
 using namespace std;
-
 extern float progress;
 
 /*enum TYPE { UINT, FLOAT };
