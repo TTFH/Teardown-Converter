@@ -1,6 +1,6 @@
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -9,7 +9,7 @@
 
 #include "entity.h"
 #include "xml_writer.h"
-#include "lib/tinyxml2.h"
+#include "../lib/tinyxml2.h"
 
 using namespace std;
 using namespace tinyxml2;

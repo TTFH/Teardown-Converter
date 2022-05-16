@@ -6,7 +6,6 @@
 #include <chrono>
 #include <string>
 #include <thread>
-#include <utility>
 #include <experimental/filesystem>
 
 #include <SDL.h>
@@ -18,7 +17,7 @@
 #include "imgui_impl_opengl2.h"
 #include "file_dialog/ImGuiFileDialog.h"
 
-#include "parser.h"
+#include "src/parser.h"
 
 using namespace std;
 using namespace std::experimental::filesystem;

@@ -5,7 +5,7 @@
 #include <iosfwd>
 #include <map>
 #include <string>
-#include "lib/tinyxml2.h"
+#include "../lib/tinyxml2.h"
 
 using namespace std;
 using namespace tinyxml2;

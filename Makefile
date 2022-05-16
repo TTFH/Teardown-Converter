@@ -17,7 +17,7 @@ ODIR = obj
 IMGUI_DIR = imgui
 
 SOURCES = main.cpp
-SOURCES += entity.cpp lua_table.cpp math_utils.cpp parser.cpp scene.cpp vox_writer.cpp write_scene.cpp xml_writer.cpp zlib_inflate.cpp lib/tinyxml2.cpp
+SOURCES += src/entity.cpp src/lua_table.cpp src/math_utils.cpp src/parser.cpp src/scene.cpp src/vox_writer.cpp src/write_scene.cpp src/xml_writer.cpp src/zlib_inflate.cpp lib/tinyxml2.cpp
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(IMGUI_DIR)/backend/imgui_impl_sdl.cpp $(IMGUI_DIR)/backend/imgui_impl_opengl2.cpp
 SOURCES += file_dialog/ImGuiFileDialog.cpp
@@ -53,10 +53,12 @@ endif
 
 $(ODIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+	
+$(ODIR)/%.o: src/%.cpp src/%.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(ODIR)/%.o: lib/%.cpp lib/%.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-
 
 $(ODIR)/%.o: $(IMGUI_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
