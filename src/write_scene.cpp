@@ -80,7 +80,7 @@ void WriteXML::WriteEnvironment() {
 	xml.AddFloatAttribute(environment, "waterhurt", scene.environment.waterhurt);
 	xml.AddFloat4Attribute(environment, "snowdir", snow->dir[0], snow->dir[1], snow->dir[2], snow->spread);
 	xml.AddFloatAttribute(environment, "snowamount", snow->amount);
-	xml.AddBoolAttribute(environment, "snowonground", false); // The map already have snow, don't add more.
+	xml.AddBoolAttribute(environment, "snowonground", snow->onground);
 	xml.AddFloatNAttribute(environment, "wind", scene.environment.wind, 3);
 	if (snow->onground) printf("Here comes the snow!\n");
 }
@@ -331,7 +331,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 			if (body->dynamic == true)
 				xml.AddBoolAttribute(entity_element, "dynamic", body->dynamic);
-			else if (entity->parent == NULL && entity->children.getSize() > 4) { // TODO: improve world body detection
+			else if (entity->parent == NULL && entity->children.getSize() > 0 && entity->tags.getSize() == 0) {
 				entity_element->SetName("group"); // World Body
 				xml.AddStrAttribute(entity_element, "name", "Static");
 			} else if (entity->tags.getSize() == 0)

@@ -17,7 +17,7 @@
 using namespace std;
 
 const char* notes[] = {
-	"hole",
+	"snow / hole",
 	"reserved",
 	"unphysical",
 	"unphysical",
@@ -252,8 +252,9 @@ bool MV_FILE::CheckMaterial(uint8_t index, uint8_t i_min, uint8_t i_max) {
 }
 
 void MV_FILE::WriteIMAP() {
-	//for (int i = 0; i < 2; i++)
 	for (vector<PBR>::iterator it = pbrs.begin(); it != pbrs.end(); it++) {
+		bool is_snow = it->material_type == MaterialKind::Unphysical &&
+			palette[it->material_index].r == 229 && palette[it->material_index].g == 229 && palette[it->material_index].b == 229;
 		if (it->material_type == MaterialKind::Glass)
 			FixMapping(it->material_index, 1, 8);
 		else if (it->material_type == MaterialKind::Foliage)
@@ -282,8 +283,10 @@ void MV_FILE::WriteIMAP() {
 			FixMapping(it->material_index, 185, 192);
 		else if ( it->material_type == MaterialKind::None)
 			FixMapping(it->material_index, 193, 224);
-		else if (it->material_type == MaterialKind::Unphysical)
-			FixMapping(it->material_index, 225, 240);	
+		else if (!is_snow)
+			FixMapping(it->material_index, 225, 240);
+		else
+			FixMapping(it->material_index, 254, 254); // To remove snow change this to 255
 	}
 
 	uint8_t palette_reverse_map[256];
@@ -324,7 +327,7 @@ void MV_FILE::WriteIMAP() {
 		else if ( it->material_type == MaterialKind::None)
 			corrupted = !CheckMaterial(index, 193, 224) && !CheckMaterial(index, 241, 253);
 		else if (it->material_type == MaterialKind::Unphysical)
-			corrupted = !CheckMaterial(index, 225, 240);	
+			corrupted = !CheckMaterial(index, 225, 240) && !CheckMaterial(index, 254, 255);	
 		if (corrupted)
 			printf("Warning: Pallete %s may be corrupted: material %s is at index %d\n",
 			filename.c_str(), MaterialKindName[it->material_type], index);
