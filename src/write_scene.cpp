@@ -179,6 +179,11 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	}
 
 	Vector axis_offset(0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0);
+	if (int(shape->scale * 10.0) == 2) // Scaled x2
+		axis_offset = Vector(0.1f * (sizex - sizex % 2), 0.1f * (sizey - sizey % 2), 0);
+	else if (int(shape->scale * 10.0) == 4) // Scaled x4
+		axis_offset = Vector(0.2f * (sizex - sizex % 2), 0.2f * (sizey - sizey % 2), 0);
+
 	shape->transform.pos = shape->transform.pos + shape->transform.rot * axis_offset;
 	shape->transform.rot = shape->transform.rot * QuatEuler(90, 0, 0);
 	WriteTransform(entity_element, shape->transform);
@@ -326,8 +331,8 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 			if (body->dynamic == true)
 				xml.AddBoolAttribute(entity_element, "dynamic", body->dynamic);
-			else if (entity->parent == NULL && entity->children.getSize() > 0) { // World Body
-				entity_element->SetName("group");
+			else if (entity->parent == NULL && entity->children.getSize() > 4) { // TODO: improve world body detection
+				entity_element->SetName("group"); // World Body
 				xml.AddStrAttribute(entity_element, "name", "Static");
 			} else if (entity->tags.getSize() == 0)
 				entity_element = NULL; // Ignore static bodies with no tags
@@ -391,10 +396,21 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 			Entity* location_parent = entity->parent;
 			if (location_parent != NULL && location_parent->kind_byte == KindShape) {
+				// The location is inside a static shape
 				Shape* parent_shape = (Shape*)location_parent->kind;
 				Transform loc_tr = TransformToLocalTransform(parent_shape->transform, location->transform);
 				WriteTransform(entity_element, loc_tr);
-				// TODO: fix location position on dynamic bodies
+
+				// The location is inside a dynamic body
+				Entity* location_grandparent = location_parent->parent;
+				if (location_grandparent != NULL && location_grandparent->kind_byte == KindBody) {
+					Body* grandparent_body = (Body*)location_grandparent->kind;
+					if (grandparent_body->dynamic) {
+						Transform location_tr = TransformToLocalTransform(grandparent_body->transform, location->transform);
+						location_tr = TransformToLocalTransform(parent_shape->transform, location_tr);
+						WriteTransform(entity_element, location_tr);
+					}
+				}
 			} else if (location_parent != NULL && location_parent->kind_byte == KindBody) {
 				Body* parent_body = (Body*)location_parent->kind;
 				Transform loc_tr = TransformToLocalTransform(parent_body->transform, location->transform);

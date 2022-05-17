@@ -9,9 +9,8 @@ Voxscript:
 SKIP default attributes
 FIX attributes order
 FIX Progress Bar
-Fix material IMAP
+FIX material IMAP
 Improve split shapes performance
-Fix locations inside a shape inside a body
 
 	IMAP TEST
 1 2 3 4 5 6 7 8
@@ -22,22 +21,10 @@ A A B B C C D D 	Mat
 1 2 3 4 5 6 7 8 	Index
 C B A A
 
-// YZX
-float rx = sin(a) * cos(b) * sin(c) + cos(a) * sin(b);
-float ry = -sin(a) * cos(c);
-float rz = -sin(a) * sin(b) * sin(c) + cos(a) * cos(b);
-
+// YZX Solve:
 sin(x) * cos(y) * sin(z) + cos(x) * sin(y) = a
 -sin(x) * cos(z) = b
 -sin(x) * sin(y) * sin(z) + cos(x) * cos(y) = c
-
- 0  0 -1	=>	180   0 0
- 0  0  1	=>	  0   0 0
- 0 -1  0	=>	 90   0 0
- 0  1  0	=>	-90   0 0
--1  0  0	=>	  0 -90 0
- 1  0  0	=>	  0  90 0
-
 
 Teardown 0.6.0
 4 March 2021 – 11:28:44 UTC (15 months ago)
