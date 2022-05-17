@@ -178,7 +178,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		return;
 	}
 
-	Vector axis_offset = { 0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0 };
+	Vector axis_offset(0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0);
 	shape->transform.pos = shape->transform.pos + shape->transform.rot * axis_offset;
 	shape->transform.rot = shape->transform.rot * QuatEuler(90, 0, 0);
 	WriteTransform(entity_element, shape->transform);
@@ -326,7 +326,10 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 			if (body->dynamic == true)
 				xml.AddBoolAttribute(entity_element, "dynamic", body->dynamic);
-			else if (entity->tags.getSize() == 0)
+			else if (entity->parent == NULL && entity->children.getSize() > 0) { // World Body
+				entity_element->SetName("group");
+				xml.AddStrAttribute(entity_element, "name", "Static");
+			} else if (entity->tags.getSize() == 0)
 				entity_element = NULL; // Ignore static bodies with no tags
 		}
 			break;
@@ -649,20 +652,26 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				assert(entity->kind_byte == KindShape);
 				Shape* shape = (Shape*)entity->kind;
 				Transform shape_tr = shape->transform;
-				Vector relative_pos = { joint->shape_positions[0][0], joint->shape_positions[0][1], joint->shape_positions[0][2] };
+				Vector relative_pos(joint->shape_positions[0][0], joint->shape_positions[0][1], joint->shape_positions[0][2]);
 
-				float rx = joint->shape_axes[0][0]; // sin(a) * cos(b) * sin(c) + cos(a) * sin(b)
-				float ry = joint->shape_axes[0][1]; // -sin(a) * cos(c)
-				//float rz = joint->shape_axes[0][2]; // -sin(a) * sin(b) * sin(c) + cos(a) * cos(b)
+				Quat relative_rot;
+				if (joint->type != Ball) {
+					float rx = joint->shape_axes[0][0]; // sin(a) * cos(b) * sin(c) + cos(a) * sin(b)
+					float ry = joint->shape_axes[0][1]; // -sin(a) * cos(c)
+					float rz = joint->shape_axes[0][2]; // -sin(a) * sin(b) * sin(c) + cos(a) * cos(b)
+					xml.AddFloat3Attribute(entity_element, "name", rx, ry, rz);
 
-				double a = -asin(ry);
-				double b = asin(rx / cos(a));
-				double c = 0;
-
-				Quat relative_rot = joint->type != Ball ? QuatEulerRad(a, b, c) : Quat();
+					double a = -asin(ry);
+					double b = asin(rx / cos(a));
+					if (!isnan(a) && !isnan(b))
+						relative_rot = QuatEulerRad(a, b, 0);
+					else
+						relative_rot = QuatEuler(0, -90, 90);
+				}
 				Transform joint_tr = TransformToLocalTransform(shape_tr, Transform(relative_pos, relative_rot));
 				WriteTransform(entity_element, joint_tr);
 			}
+
 			if (joint->type == Ball)
 				xml.AddAttribute(entity_element, "type", "ball");
 			else if (joint->type == Hinge) {
@@ -716,7 +725,8 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			XMLElement* entity_child = xml.getNode(entity_handle);
 			if (entity_child != NULL) {
 				int detect_loop = 0;
-				while (entity_child->Parent()->ToElement() != xml.getScene() && detect_loop < 10) {
+				while (entity_child->Parent()->ToElement() != xml.getScene() &&
+					strcmp(entity_child->Parent()->ToElement()->Name(), "group") != 0 && detect_loop < 10) {
 					entity_child = entity_child->Parent()->ToElement();
 					detect_loop++;
 				}

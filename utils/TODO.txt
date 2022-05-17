@@ -11,9 +11,7 @@ FIX attributes order
 FIX Progress Bar
 Fix material IMAP
 Improve split shapes performance
-Fix locations inside a shape inside a body inside a... ok
-Fix terrain in Factory: Add index 255 in two opposite corners of the terrain tiles, how to determine if something is a terrain tile??? size maybe?
-Move source to src/ and add missing .h files
+Fix locations inside a shape inside a body
 
 	IMAP TEST
 1 2 3 4 5 6 7 8
@@ -28,17 +26,17 @@ C B A A
 float rx = sin(a) * cos(b) * sin(c) + cos(a) * sin(b);
 float ry = -sin(a) * cos(c);
 float rz = -sin(a) * sin(b) * sin(c) + cos(a) * cos(b);
-Solutions:
-if (c == 0)
-a = asin(-ry)
-b = asin(rx / cos(a))
-c = 0;
 
-if (a == 0 && b == 0)
-a = 0;
-b = 0;
-c = any;
+sin(x) * cos(y) * sin(z) + cos(x) * sin(y) = a
+-sin(x) * cos(z) = b
+-sin(x) * sin(y) * sin(z) + cos(x) * cos(y) = c
 
+ 0  0 -1	=>	180   0 0
+ 0  0  1	=>	  0   0 0
+ 0 -1  0	=>	 90   0 0
+ 0  1  0	=>	-90   0 0
+-1  0  0	=>	  0 -90 0
+ 1  0  0	=>	  0  90 0
 
 
 Teardown 0.6.0
@@ -52,5 +50,3 @@ DepotDownloader -app 1167630 -depot 1167634 -manifest 7508456906693476405 -usern
 https://github.com/SteamRE/DepotDownloader
 https://steamdb.info/depot/1167634/manifests/
 https://dotnet.microsoft.com/en-us/download/dotnet/6.0/runtime
-
-

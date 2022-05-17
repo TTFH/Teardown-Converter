@@ -31,7 +31,7 @@ Quat operator*(const Quat& p, const Quat& q) {
 }
 
 Vector operator*(const Quat& q, const Vector& p1) {
-	Quat p = {p1.x, p1.y, p1.z, 0};
+	Quat p(p1.x, p1.y, p1.z, 0);
 	Quat qConj = Conjugate(q);
 	Quat result = q * p * qConj;
 	return Vector(result.x, result.y, result.z);
