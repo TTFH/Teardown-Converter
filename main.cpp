@@ -16,10 +16,12 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl2.h"
 #include "file_dialog/ImGuiFileDialog.h"
+#include "lib/tinyxml2.h"
 
 #include "src/parser.h"
 
 using namespace std;
+using namespace tinyxml2;
 using namespace std::experimental::filesystem;
 
 float progress = 0;
@@ -39,6 +41,8 @@ struct ConverterParams {
 	string level_id;
 	string level_name;
 	string level_desc;
+
+	bool remove_snow;
 };
 
 void SaveInfoTxt(string map_folder, string level_name, string level_desc) {
@@ -74,7 +78,7 @@ int DecompileMap(void* param) {
 	printf("Preview image: %s\n", preview_image.c_str());
 	printf("Script Folder: %s\n", script_folder.c_str());
 
-	ParseFile(data->bin_path.c_str(), data->map_folder, data->level_id);
+	ParseFile(data->bin_path.c_str(), data->map_folder, data->level_id, data->remove_snow);
 	return 0;
 }
 
@@ -85,12 +89,11 @@ int FakeProgressBar(void* param) {
 		this_thread::sleep_for(chrono::seconds(1));
 		progress += ((double)rand() / RAND_MAX) / 10.0;
 	}
-	return 1;
+	return 0;
 }
 
 vector<LevelInfo> LoadLevels() {
 	vector<LevelInfo> levels;
-
 	const char* sandbox[][4] = {
 		{"lee", "lee_sandbox", "Lee Chemicals Sandbox", "Operated by the Lee family for three generations. Lawrence Lee Junior showed a promising start, but developed a weakness for fast cash. He is now a well known name in the criminal underworld."},
 		{"marina", "marina_sandbox", "West Point Marina Sandbox", "The oldest marina in Löckelle municipality. It features an industrial part and a separate section for leisure activities."},
@@ -230,9 +233,9 @@ int main(int argc, char* argv[]) {
 #endif
 	if (argc == 2) {
 		#ifdef _WIN32
-			ParseFile(argv[1], "test\\", "");
+			ParseFile(argv[1], "test\\");
 		#else
-			ParseFile(argv[1], "test/", "");
+			ParseFile(argv[1], "test/");
 		#endif
 		return 0;
 	}
@@ -278,6 +281,15 @@ int main(int argc, char* argv[]) {
 	char mods_folder[256] = "test";
 	char game_folder[256] = "test";
 #endif
+
+	XMLDocument config_file;
+	XMLElement* config_root = NULL;
+	if (config_file.LoadFile("config.xml") == XML_SUCCESS) {
+		config_root = config_file.RootElement();
+		strcpy(quicksave_folder, config_root->FindAttribute("quicksave_folder")->Value());
+		strcpy(mods_folder, config_root->FindAttribute("mods_folder")->Value());
+		strcpy(game_folder, config_root->FindAttribute("game_folder")->Value());
+	}
 
 	bool disable_convert = false;
 	bool remove_snow = false;
@@ -443,6 +455,7 @@ int main(int argc, char* argv[]) {
 				paths->level_id = selected_level_it->level_id;
 				paths->level_name = selected_level_it->title;
 				paths->level_desc = selected_level_it->description;
+				paths->remove_snow = remove_snow;
 
 				parse_thread = SDL_CreateThread(DecompileMap, "decompile_thread", (void*)paths);
 				progress_thread = SDL_CreateThread(FakeProgressBar, "progress_thread", NULL);
@@ -471,6 +484,15 @@ int main(int argc, char* argv[]) {
 		ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 		SDL_GL_SwapWindow(window);
 	}
+
+	if (config_root == NULL) {
+		config_root = config_file.NewElement("config");
+		config_file.InsertFirstChild(config_root);
+	}
+	config_root->SetAttribute("game_folder", game_folder);
+	config_root->SetAttribute("mods_folder", mods_folder);
+	config_root->SetAttribute("quicksave_folder", quicksave_folder);
+	config_file.SaveFile("config.xml");
 
 	if (parse_thread != NULL)
 		SDL_WaitThread(parse_thread, NULL);

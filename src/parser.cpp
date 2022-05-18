@@ -12,9 +12,11 @@
 
 using namespace std::experimental::filesystem;
 
-TDBIN::TDBIN(const char* input, string save_folder, string level_id) {
+TDBIN::TDBIN(const char* input, string save_folder, string level_id, bool remove_snow) {
 	this->save_path = save_folder;
 	this->level_id = level_id;
+	this->remove_snow = remove_snow;
+
 	char* filename = new char[strlen(input) + 3];
 	strcpy(filename, input);
 	if (IsFileCompressed(input)) {
@@ -731,14 +733,14 @@ void TDBIN::parse() {
 	printf("File parsed successfully!\n");
 }
 
-void ParseFile(const char* filename, string map_folder, string level_id) {
+void ParseFile(const char* filename, string map_folder, string level_id, bool remove_snow) {
 	if (!exists(map_folder)) {
 		create_directories(map_folder);
 		create_directories(map_folder + "vox");
 		create_directories(map_folder + "compounds");
 	}
 
-	TDBIN parser(filename, map_folder, level_id);
+	TDBIN parser(filename, map_folder, level_id, remove_snow);
 	parser.parse();
 	parser.WriteScene();
 	parser.WriteSpawnpoint();

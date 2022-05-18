@@ -80,9 +80,11 @@ void WriteXML::WriteEnvironment() {
 	xml.AddFloatAttribute(environment, "waterhurt", scene.environment.waterhurt);
 	xml.AddFloat4Attribute(environment, "snowdir", snow->dir[0], snow->dir[1], snow->dir[2], snow->spread);
 	xml.AddFloatAttribute(environment, "snowamount", snow->amount);
-	xml.AddBoolAttribute(environment, "snowonground", snow->onground);
+	xml.AddBoolAttribute(environment, "snowonground", snow->onground && !remove_snow);
 	xml.AddFloatNAttribute(environment, "wind", scene.environment.wind, 3);
-	if (snow->onground) printf("Here comes the snow!\n");
+	if (snow->onground && !remove_snow) printf("Here comes the snow!\n");
+	remove_snow = remove_snow && snow->onground; // Only remove snow if there is snow to remove
+	if (remove_snow) printf("Removing the snow...\n");
 }
 
 void WriteXML::WriteBoundary() {
@@ -205,16 +207,30 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 
 		MVShape mvshape = { sizex, sizey, sizez, NULL, vox_object.c_str(), 0, 0, sizez / 2 };
 		mvshape.voxels = MatrixInit(sizex, sizey, sizez);
+
+		if (remove_snow) {
+			mvshape.voxels[0][0][0] = 255;
+			mvshape.voxels[sizex-1][sizey-1][sizez-1] = 255;
+			vox_file->AddColor(255, 255, 0, 0);
+		}
+
 		unsigned int k = 0;
 		for (int z = 0; z < sizez; z++)
 			for (int y = 0; y < sizey; y++)
 				for (int x = 0; x < sizex; x++) {
 					uint8_t index = shape->voxels.palette_index[k];
-					Material palette_entry = palette.materials[index];
-					mvshape.voxels[x][y][z] = index;
-					if (!vox_file->is_index_used[index]) {
-						vox_file->AddColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
-						vox_file->AddPBR(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
+					if (index != 0) {
+						Material palette_entry = palette.materials[index];
+						mvshape.voxels[x][y][z] = index;
+
+						if (remove_snow && palette_entry.kind == MaterialKind::Unphysical &&
+							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
+							mvshape.voxels[x][y][z] = 0;
+
+						if (!vox_file->is_index_used[index]) {
+							vox_file->AddColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
+							vox_file->AddPBR(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
+						}
 					}
 					k++;
 				}
@@ -287,6 +303,11 @@ void WriteXML::WriteCompound(MV_FILE* compound_vox, string vox_file, XMLElement*
 					if (index != 0) {
 						Material palette_entry = palette.materials[index];
 						mvshape.voxels[x - offsetx][y - offsety][z - offsetz] = index;
+
+						if (remove_snow && palette_entry.kind == MaterialKind::Unphysical &&
+							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
+							mvshape.voxels[x - offsetx][y - offsety][z - offsetz] = 0;
+
 						if (!compound_vox->is_index_used[index]) {
 							compound_vox->AddColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
 							compound_vox->AddPBR(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);

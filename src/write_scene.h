@@ -19,11 +19,13 @@ class WriteXML{
 protected:
 	Scene scene;
 	XML_Writer xml;
-	string save_path;
-	string level_id;
 	list<MV_FILE*> compound_files;
 	map<uint32_t, MV_FILE*> vox_files;
 	map<uint32_t, Entity*> entity_mapping;
+
+	string save_path;
+	string level_id;
+	bool remove_snow;
 
 	void WriteEntity2ndPass(Entity*);
 	void WriteEntity(XMLElement*, Entity*);
