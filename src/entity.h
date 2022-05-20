@@ -86,6 +86,7 @@ enum EntityKind { // uint8_t
 	KindLight,
 	KindLocation,
 	KindWater,
+	KindEnemy,
 	KindJoint,
 	KindVehicle,
 	KindWheel,
@@ -155,9 +156,9 @@ struct Shape {
 
 enum LightType { // uint8_t
 	Sphere = 1,
-	Capsule,
 	Cone,
 	Area,
+	Capsule,
 };
 
 struct Light {
