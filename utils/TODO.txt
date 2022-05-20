@@ -40,6 +40,10 @@ dec bits
 54	00110110
 58	00111010
 
+	ROPE SLACK
+Catenary: y = a*cosh(x/a)
+
+	JOINT ROT
 // YZX Solve:
 sin(x) * cos(y) * sin(z) + cos(x) * sin(y) = a
 -sin(x) * cos(z) = b

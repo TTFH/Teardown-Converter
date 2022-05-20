@@ -4,5 +4,6 @@ obj/*.o
 release/*.exe
 release/*.bin
 release/*.tdbin
+release/config.xml
 release/teardown-converter
 release/test/

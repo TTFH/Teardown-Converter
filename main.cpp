@@ -251,7 +251,7 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 550, window_flags);
+	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 500, window_flags);
 	SDL_GLContext gl_context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, gl_context);
 	SDL_GL_SetSwapInterval(1);
@@ -293,8 +293,10 @@ int main(int argc, char* argv[]) {
 
 	bool disable_convert = false;
 	bool remove_snow = false;
+	/*bool xml_only = false;
+	bool use_tdcz = false;
 	bool use_mega_prop_pack = false;
-	int game_version = 0;
+	int game_version = 0;*/
 
 	ConverterParams* paths = new ConverterParams();
 	SDL_Thread* parse_thread = NULL;
@@ -367,11 +369,11 @@ int main(int argc, char* argv[]) {
 			}
 			ImGui::Dummy(ImVec2(0, 5));
 
-			ImGui::Text("Game Version:    ");
+			/*ImGui::Text("Game Version:    ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
 			ImGui::Combo("##gameversion", &game_version, " 1.0.0\0 0.6.0\0");
-			ImGui::PopItemWidth();
+			ImGui::PopItemWidth();*/
 
 			ImGui::Dummy(ImVec2(0, 10));
 			ImGui::Spacing();
@@ -400,7 +402,9 @@ int main(int argc, char* argv[]) {
 			ImGui::Dummy(ImVec2(0, 10));
 
 			ImGui::Checkbox("Remove Snow", &remove_snow);
-			ImGui::Checkbox("Use Mega Prop Pack", &use_mega_prop_pack);
+			/*ImGui::Checkbox("Generate XML only", &xml_only);
+			ImGui::Checkbox("Compress Vox Files", &use_tdcz);
+			ImGui::Checkbox("Use Mega Prop Pack", &use_mega_prop_pack);*/
 			ImGui::Dummy(ImVec2(0, 5));
 
 			if (disable_convert) {

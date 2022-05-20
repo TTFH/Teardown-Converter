@@ -212,10 +212,20 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		MVShape mvshape = { sizex, sizey, sizez, NULL, vox_object.c_str(), 0, 0, sizez / 2 };
 		mvshape.voxels = MatrixInit(sizex, sizey, sizez);
 
+		bool is_wheel_shape = false;
 		if (remove_snow) {
-			mvshape.voxels[0][0][0] = 255;
-			mvshape.voxels[sizex-1][sizey-1][sizez-1] = 255;
-			vox_file->AddColor(255, 255, 0, 0);
+			Entity* this_entity = entity_mapping[handle];
+			Entity* vox_parent = this_entity->parent;
+			if (vox_parent != NULL && vox_parent->kind_byte == KindBody) {
+				Entity* vox_grandparent = vox_parent->parent;
+				if (vox_grandparent != NULL && vox_grandparent->kind_byte == KindWheel)
+					is_wheel_shape = true;
+			}
+			if (!is_wheel_shape) {
+				mvshape.voxels[0][0][0] = 255;
+				mvshape.voxels[sizex-1][sizey-1][sizez-1] = 255;
+				vox_file->AddColor(255, 255, 0, 0);
+			}
 		}
 
 		unsigned int k = 0;
@@ -227,7 +237,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 						Material palette_entry = palette.materials[index];
 						mvshape.voxels[x][y][z] = index;
 
-						if (remove_snow && palette_entry.kind == MaterialKind::Unphysical &&
+						if (remove_snow && !is_wheel_shape && palette_entry.kind == MaterialKind::Unphysical &&
 							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
 							mvshape.voxels[x][y][z] = 0;
 
@@ -470,12 +480,10 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				entity_element->SetName("rope");
 				xml.AddFloatAttribute(entity_element, "size", joint->size);
 				xml.AddRgbaAttribute(entity_element, "color", joint->rope.color);
-				//xml.AddFloatAttribute(entity_element, "slack", joint->rope.slack);
 				xml.AddFloatAttribute(entity_element, "strength", joint->rope.strength);
 				xml.AddFloatAttribute(entity_element, "maxstretch", joint->rope.maxstretch);
 
 				int knot_count = joint->rope.knots.getSize();
-				//for (int i = 0; i < knot_count; i++) {
 				if (knot_count > 0) {
 					XMLElement* location_from = xml.CreateElement("location");
 					xml.AddElement(entity_element, location_from);
@@ -484,6 +492,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 					XMLElement* location_to = xml.CreateElement("location");
 					xml.AddElement(entity_element, location_to);
 					xml.AddFloatNAttribute(location_to, "pos", joint->rope.knots[knot_count - 1].to, 3);
+
+					/*Vector rope_start = joint->rope.knots[0].from;
+					Vector rope_end = joint->rope.knots[knot_count - 1].to;
+					Vector rope_dir = rope_end - rope_start;
+					float rope_length = rope_dir.length();
+					xml.AddFloatAttribute(entity_element, "slack", rope->slack);*/
 				}
 			} else
 				entity_element = NULL; // Process joints on a second pass

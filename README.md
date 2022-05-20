@@ -13,7 +13,7 @@ Those files are leave there so it's faster to convert the same map again.
 ### There are red voxels on the editor
 Those voxels are used so the shapes don't change the size when removing the snow or spliting compounds.  
 You can use Shift + 'V' in the editor to hide them.  
-When you remove the snow, all vehicle wheels will have some extra voxels on them, those need to be removed manually (will be fixed in the next update).  
+Snow is sticky and cannot be removed from the wheels. XD  
 
 ## How to Compile
 This program needs SDL2 and Zlib, check the Makefile to know how to install them  

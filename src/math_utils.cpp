@@ -10,6 +10,10 @@ double rad(double deg) {
 	return deg * (PI / 180.0);
 }
 
+float Vector::length() {
+	return sqrt(x * x + y * y + z * z);
+}
+
 Vector operator+(const Vector& u, const Vector& v) {
 	return {u.x + v.x, u.y + v.y, u.z + v.z};
 }

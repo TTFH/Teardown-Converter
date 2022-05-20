@@ -7,6 +7,8 @@ struct Vector {
 	float x, y, z;
 	Vector() : x(0), y(0), z(0) {}
 	Vector(float x, float y, float z) : x(x), y(y), z(z) {}
+	Vector(float v[3]) : x(v[0]), y(v[1]), z(v[2]) {}
+	float length();
 };
 
 struct Quat {
