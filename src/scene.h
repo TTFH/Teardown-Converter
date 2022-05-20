@@ -119,11 +119,6 @@ struct Fire {
 	uint8_t z_u8_6[6];
 };
 
-enum TintKind { // uint8_t
-	Black,
-	Yellow
-};
-
 struct Material {
 	uint8_t kind; // MaterialKind
 	Rgba rgba;

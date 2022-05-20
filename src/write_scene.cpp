@@ -151,6 +151,10 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	//xml.AddBoolAttribute(entity_element, "collide", shape->collide);
 	xml.AddStrAttribute(entity_element, "prop", "false");
 
+	uint8_t collide = shape->z_u8_4[0];
+	if (collide != 33 && collide != 34 && collide != 53 && collide != 54 && collide != 58)
+		printf("Unknow byte: %d, please report.\n", collide);
+
 	int sizex = shape->voxels.size[0];
 	int sizey = shape->voxels.size[1];
 	int sizez = shape->voxels.size[2];

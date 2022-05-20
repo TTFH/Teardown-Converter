@@ -182,7 +182,7 @@ VehicleProperties TDBIN::ReadVehicleProperties() {
 	properties.strength = ReadFloat();
 	properties.friction = ReadFloat();
 	properties.z2_f32 = ReadFloat();
-	properties.z1_u8 = ReadByte();
+	properties.z_u8 = ReadByte();
 	properties.antispin = ReadFloat();
 	properties.steerassist = ReadFloat();
 	properties.z3_f32 = ReadFloat();
@@ -320,7 +320,7 @@ Shape* TDBIN::ReadShape() {
 	res->palette = ReadInt();
 	res->scale = ReadFloat();
 	for (int i = 0; i < 2; i++)
-		res->z_i32_2[i] = ReadInt();
+		res->z_u32_2[i] = ReadInt();
 	res->z3_u8 = ReadByte();
 	return res;
 }
@@ -344,7 +344,7 @@ Light* TDBIN::ReadLight() {
 	light->capsule_size = ReadFloat();
 	for (int i = 0; i < 13; i++)
 		light->z_u8_13[i] = ReadByte();
-	light->z2_f32 = ReadFloat();
+	light->z_f32 = ReadFloat();
 	light->sound.path = ReadString();
 	light->sound.volume = ReadFloat();
 	light->glare = ReadFloat();
@@ -417,7 +417,7 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->velocity[i] = ReadFloat();
 	for (int i = 0; i < 3; i++)
 		vehicle->angular_velocity[i] = ReadFloat();
-	vehicle->z_f32_not_health = ReadFloat();
+	vehicle->z1_f32 = ReadFloat();
 
 	int wheel_count = ReadInt();
 	vehicle->wheel_handles.resize(wheel_count);
@@ -435,10 +435,10 @@ Vehicle* TDBIN::ReadVehicle() {
 	for (int i = 0; i < 3; i++)
 		vehicle->propeller[i] = ReadFloat();
 	vehicle->difflock = ReadFloat();
-	vehicle->z6_f32_eq_1 = ReadFloat();
+	vehicle->z2_f32 = ReadFloat();
 	vehicle->z_u32 = ReadInt();
-	vehicle->z2_u8 = ReadByte();
-	vehicle->z7_f32_eq_0 = ReadFloat();
+	vehicle->z1_u8 = ReadByte();
+	vehicle->z3_f32 = ReadFloat();
 
 	int ref_count = ReadInt();
 	vehicle->refs.resize(ref_count);
@@ -462,9 +462,9 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->vitals[i].shape_index = ReadInt();
 	}
 
-	vehicle->z2_f32 = ReadFloat();
-	vehicle->z3_u8 = ReadByte();
-	vehicle->z3_f32 = ReadFloat();
+	vehicle->z4_f32 = ReadFloat();
+	vehicle->z2_u8 = ReadByte();
+	vehicle->z5_f32 = ReadFloat();
 	return vehicle;
 }
 
@@ -527,7 +527,7 @@ Trigger* TDBIN::ReadTrigger() {
 	}
 	trigger->sound.path = ReadString();
 	trigger->sound.soundramp = ReadFloat();
-	trigger->sound.z_u8_1 = ReadByte();
+	trigger->sound.z_u8 = ReadByte();
 	trigger->sound.volume = ReadFloat();
 	return trigger;
 };

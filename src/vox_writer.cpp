@@ -345,9 +345,10 @@ void MV_FILE::WriteMATL(PBR pbr) {
 	if (pbr.type == "_metal") {
 		material_attr["_rough"] = FloatToString(pbr.rough);
 		material_attr["_metal"] = FloatToString(pbr.metal);
-	} else if (pbr.type == "_glass")
+	} else if (pbr.type == "_glass") {
+		material_attr["_rough"] = FloatToString(pbr.rough);
 		material_attr["_alpha"] = FloatToString(pbr.alpha);
-	else if (pbr.type == "_emit") {
+	} else if (pbr.type == "_emit") {
 		material_attr["_emit"] = FloatToString(pbr.emit);
 		material_attr["_flux"] = to_string(pbr.flux);
 	}
@@ -405,13 +406,13 @@ void MV_FILE::AddColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void MV_FILE::AddPBR(uint8_t index, uint8_t type, float reflectivity, float shinyness, float metalness, float emissive, float alpha) {
-	(void)reflectivity;
 	PBR pbr;
 	pbr.material_index = index;
 	pbr.material_type = type;
 
 	if (alpha != 0 && alpha != 1) {
 		pbr.type = "_glass";
+		pbr.rough = reflectivity;
 		pbr.alpha = alpha;
 	} else if (emissive > 0) {
 		pbr.type = "_emit";

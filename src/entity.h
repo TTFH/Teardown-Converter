@@ -147,7 +147,7 @@ struct Shape {
 	Voxels voxels;
 	uint32_t palette;
 	float scale;				// scale = 10.0 * this
-	int z_i32_2[2];
+	uint32_t z_u32_2[2];
 	uint8_t z3_u8;
 
 	Transform old_transform;	// used for screens
@@ -176,7 +176,7 @@ struct Light {
 	float area_size[2];	// size = 2.0 * this
 	float capsule_size;	// size.x = 2.0 * this
 	uint8_t z_u8_13[13];
-	float z2_f32;
+	float z_f32;
 	Sound sound;		// sound
 	float glare;		// glare
 };
@@ -254,7 +254,7 @@ struct VehicleProperties {
 	float strength;		// strength
 	float friction;		// friction
 	float z2_f32;
-	uint8_t z1_u8;
+	uint8_t z_u8;
 	float antispin;		// antispin
 	float steerassist;	// steerassist
 	float z3_f32;
@@ -281,7 +281,7 @@ struct Vehicle {
 	Transform transform;
 	float velocity[3];
 	float angular_velocity[3];
-	float z_f32_not_health;
+	float z1_f32;
 	Vec<uint32_t> wheel_handles;
 	VehicleProperties properties;
 	float camera[3];		// camera
@@ -289,16 +289,16 @@ struct Vehicle {
 	float exit[3];			// exit
 	float propeller[3];		// propeller
 	float difflock;			// difflock
-	float z6_f32_eq_1;
+	float z2_f32;
 	uint32_t z_u32;
-	uint8_t z2_u8;
-	float z7_f32_eq_0;
+	uint8_t z1_u8;
+	float z3_f32;
 	Vec<uint32_t> refs;
 	Vec<Exhaust> exhausts;	// exhaust
 	Vec<Vital> vitals;		// vital
-	float z2_f32;
-	uint8_t z3_u8;
-	float z3_f32;
+	float z4_f32;
+	uint8_t z2_u8;
+	float z5_f32;
 };
 
 struct Wheel {
@@ -343,7 +343,7 @@ enum TriggerKind { // uint32_t
 struct TriggerSound {
 	string path;		// sound
 	float soundramp;	// soundramp
-	uint8_t z_u8_1;
+	uint8_t z_u8;
 	float volume;		// sound
 };
 
