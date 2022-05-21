@@ -138,6 +138,13 @@ void WriteXML::SaveVoxFiles() {
 void WriteXML::WriteEntities() {
 	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
 		WriteEntity(xml.getScene(), scene.entities[i]);
+	
+	if (scene.driven_vehicle != 0) {
+		XMLElement* xml_vehicle = xml.getNode(scene.driven_vehicle);
+		if (xml_vehicle != NULL)
+			xml.AddBoolAttribute(xml_vehicle, "driven", true);
+	}
+
 	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
 		WriteEntity2ndPass(scene.entities[i]);
 }
@@ -150,10 +157,6 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	xml.AddFloatAttribute(entity_element, "strength", shape->strength);
 	//xml.AddBoolAttribute(entity_element, "collide", shape->collide);
 	xml.AddStrAttribute(entity_element, "prop", "false");
-
-	uint8_t collide = shape->z_u8_4[0];
-	if (collide != 33 && collide != 34 && collide != 53 && collide != 54 && collide != 58)
-		printf("Unknow byte: %d, please report.\n", collide);
 
 	int sizex = shape->voxels.size[0];
 	int sizey = shape->voxels.size[1];
@@ -493,11 +496,11 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 					xml.AddElement(entity_element, location_to);
 					xml.AddFloatNAttribute(location_to, "pos", joint->rope.knots[knot_count - 1].to, 3);
 
-					/*Vector rope_start = joint->rope.knots[0].from;
+					Vector rope_start = joint->rope.knots[0].from;
 					Vector rope_end = joint->rope.knots[knot_count - 1].to;
 					Vector rope_dir = rope_end - rope_start;
 					float rope_length = rope_dir.length();
-					xml.AddFloatAttribute(entity_element, "slack", rope->slack);*/
+					xml.AddFloatAttribute(entity_element, "slack", joint->rope.slack - rope_length);
 				}
 			} else
 				entity_element = NULL; // Process joints on a second pass
@@ -508,7 +511,6 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			entity_element->SetName("vehicle");
 			WriteTransform(entity_element, vehicle->transform);
 
-			//xml.AddFloatAttribute(entity_element, "driven", vehicle->driven);
 			xml.AddStrFloatAttribute(entity_element, "sound", vehicle->properties.sound.name, vehicle->properties.sound.pitch);
 			xml.AddFloatAttribute(entity_element, "spring", vehicle->properties.spring);
 			xml.AddFloatAttribute(entity_element, "damping", vehicle->properties.damping);

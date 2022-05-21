@@ -24,10 +24,9 @@ You can find the execulable in the `release` folder
 ## Task list
 #### Add the next attributes to the xml file:
 - [ ] Shape collide
-- [ ] Vehicle driven
 
 #### Fixes
 - [ ] Clean up XML (default attributes and order)
-- [ ] Improve progress bar
+- [ ] Improve progress bar and performance
 
 ![Editor Example](https://github.com/TTFH/Teardown-Converter/blob/415d7c086d4669cbbaa9762657e97eb9a1d57d97/utils/converter_mall.png)  

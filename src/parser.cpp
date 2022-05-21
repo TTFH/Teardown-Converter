@@ -150,8 +150,8 @@ Rope TDBIN::ReadRope() {
 	rope.z_f32 = ReadFloat();
 	rope.strength = ReadFloat();
 	rope.maxstretch = ReadFloat();
-	for (int i = 0; i < 2; i++)
-		rope.z_f32_2[i] = ReadFloat();
+	rope.slack = ReadFloat();
+	rope.z2_f32 = ReadFloat();
 	rope.z_u8 = ReadByte();
 
 	int knot_count = ReadInt();
@@ -680,7 +680,7 @@ void TDBIN::parse() {
 	for (int i = 0; i < 3; i++)
 		scene.version[i] = ReadByte();
 	scene.level = ReadString();
-	scene.z_u32 = ReadInt();
+	scene.driven_vehicle = ReadInt();
 	for (int i = 0; i < 3; i++)
 		scene.shadowVolume[i] = ReadFloat();
 	scene.spawnpoint = ReadTransform();

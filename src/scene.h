@@ -147,7 +147,7 @@ struct Scene {
 	uint8_t magic[5];		// TDBIN
 	uint8_t version[3];		// version
 	string level;
-	uint32_t z_u32;
+	uint32_t driven_vehicle;// driven
 	float shadowVolume[3];	// shadowVolume
 	Transform spawnpoint;	// spawnpoint
 	uint32_t z_u32_3[3];

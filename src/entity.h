@@ -210,13 +210,13 @@ struct Knot {
 	float to[3];
 };
 
-// TODO: float slack
 struct Rope {
 	Rgba color;			// color
 	float z_f32;
 	float strength;		// strength
 	float maxstretch;	// maxstretch
-	float z_f32_2[2];
+	float slack;		// slack
+	float z2_f32;
 	uint8_t z_u8;
 	Vec<Knot> knots;
 };
