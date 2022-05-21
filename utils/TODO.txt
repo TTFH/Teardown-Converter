@@ -6,8 +6,8 @@ Voxscript:
 SKIP Default Attributes
 FIX Attributes Order
 FIX Progress Bar
-FIX Material IMAP
 FIX Joint Rotation (again)
+Improve Material IMAP
 Improve split shapes performance
 
 	IMAP TEST
@@ -31,12 +31,13 @@ index flag
 0 static
 
 dec bits
-32	
+32	00100000
 33	00100001
 34	00100010
 53	00110101
 54	00110110
 58	00111010
+
 
 	JOINT ROT
 // YZX Solve:

@@ -303,8 +303,9 @@ Shape* TDBIN::ReadShape() {
 	Shape* res = new Shape;
 	res->flags = ReadWord();
 	res->transform = ReadTransform();
-	for (int i = 0; i < 4; i++)
-		res->z_u8_4[i] = ReadByte();
+	res->shape_flags = ReadByte();
+	for (int i = 0; i < 3; i++)
+		res->z_u8_3[i] = ReadByte();
 	res->density = ReadFloat();
 	res->strength = ReadFloat();
 	res->texture_tile = ReadWord();

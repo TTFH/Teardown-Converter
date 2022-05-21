@@ -129,11 +129,11 @@ struct Voxels {
 	Vec<uint8_t> palette_index;
 };
 
-// TODO: bool collide; 
 struct Shape {
 	BitFlags flags;
 	Transform transform;
-	uint8_t z_u8_4[4];
+	uint8_t shape_flags;		// 0x10 = collide
+	uint8_t z_u8_3[3];
 	float density;
 	float strength;				// strength
 	uint16_t texture_tile;		// texture
@@ -274,7 +274,6 @@ struct Vital {
 	uint32_t shape_index;
 };
 
-// TODO: bool driven;
 struct Vehicle {
 	BitFlags flags;
 	uint32_t body_handle;
@@ -317,7 +316,6 @@ struct Wheel {
 	float z2_f32_2[2];
 };
 
-// TODO: float fxglitch;
 struct Screen {
 	BitFlags flags;
 	Transform transform;

@@ -155,7 +155,8 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	xml.AddIntFloatAttribute(entity_element, "blendtexture", shape->blendtexture_tile, shape->blendtexture_weight);
 	xml.AddFloatAttribute(entity_element, "density", shape->density);
 	xml.AddFloatAttribute(entity_element, "strength", shape->strength);
-	//xml.AddBoolAttribute(entity_element, "collide", shape->collide);
+	bool collide = (shape->shape_flags & 0x10) != 0;
+	xml.AddBoolAttribute(entity_element, "collide", collide);
 	xml.AddStrAttribute(entity_element, "prop", "false");
 
 	int sizex = shape->voxels.size[0];
