@@ -149,7 +149,7 @@ struct Entity {
 
 static const int NUM_ENTITIES = 5;
 static const Entity entities[NUM_ENTITIES] = {
-    { "quot", 4,	DOUBLE_QUOTE },
+    //{ "quot", 4,	DOUBLE_QUOTE },
     { "amp", 3,		'&'  },
     { "apos", 4,	SINGLE_QUOTE },
     { "lt",	2, 		'<'	 },
@@ -2398,7 +2398,7 @@ XMLError XMLDocument::SaveFile( const char* filename, bool compact )
         return _errorID;
     }
 
-    FILE* fp = callfopen( filename, "w" );
+    FILE* fp = callfopen( filename, "wb" );
     if ( !fp ) {
         SetError( XML_ERROR_FILE_COULD_NOT_BE_OPENED, 0, "filename=%s", filename );
         return _errorID;
@@ -2631,7 +2631,7 @@ void XMLPrinter::Putc( char ch )
 void XMLPrinter::PrintSpace( int depth )
 {
     for( int i=0; i<depth; ++i ) {
-        Write( "    " );
+        Write( "\t" );
     }
 }
 
@@ -2738,9 +2738,15 @@ void XMLPrinter::PushAttribute( const char* name, const char* value )
     TIXMLASSERT( _elementJustOpened );
     Putc ( ' ' );
     Write( name );
-    Write( "=\"" );
-    PrintString( value, false );
-    Putc ( '\"' );
+	if (strchr(value, DOUBLE_QUOTE) == NULL) {
+		Write( "=\"" );
+		PrintString( value, false );
+		Putc ( '\"' );
+	} else {
+		Write( "=\'" );
+		PrintString( value, false );
+		Putc ( '\'' );
+	}
 }
 
 

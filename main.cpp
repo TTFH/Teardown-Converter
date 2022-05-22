@@ -43,6 +43,7 @@ struct ConverterParams {
 	string level_desc;
 
 	bool remove_snow;
+	bool xml_only;
 };
 
 void SaveInfoTxt(string map_folder, string level_name, string level_desc) {
@@ -78,7 +79,7 @@ int DecompileMap(void* param) {
 	printf("Preview image: %s\n", preview_image.c_str());
 	printf("Script Folder: %s\n", script_folder.c_str());
 
-	ParseFile(data->bin_path.c_str(), data->map_folder, data->level_id, data->remove_snow);
+	ParseFile(data->bin_path.c_str(), data->map_folder, data->level_id, data->remove_snow, data->xml_only);
 	return 0;
 }
 
@@ -293,8 +294,8 @@ int main(int argc, char* argv[]) {
 
 	bool disable_convert = false;
 	bool remove_snow = false;
-	/*bool xml_only = false;
-	bool use_tdcz = false;
+	bool xml_only = false;
+	/*bool use_tdcz = false;
 	bool use_mega_prop_pack = false;
 	int game_version = 0;*/
 
@@ -402,8 +403,8 @@ int main(int argc, char* argv[]) {
 			ImGui::Dummy(ImVec2(0, 10));
 
 			ImGui::Checkbox("Remove Snow", &remove_snow);
-			/*ImGui::Checkbox("Generate XML only", &xml_only);
-			ImGui::Checkbox("Compress Vox Files", &use_tdcz);
+			ImGui::Checkbox("Generate XML only", &xml_only);
+			/*ImGui::Checkbox("Compress Vox Files", &use_tdcz);
 			ImGui::Checkbox("Use Mega Prop Pack", &use_mega_prop_pack);*/
 			ImGui::Dummy(ImVec2(0, 5));
 
@@ -460,6 +461,7 @@ int main(int argc, char* argv[]) {
 				paths->level_name = selected_level_it->title;
 				paths->level_desc = selected_level_it->description;
 				paths->remove_snow = remove_snow;
+				paths->xml_only = xml_only;
 
 				parse_thread = SDL_CreateThread(DecompileMap, "decompile_thread", (void*)paths);
 				progress_thread = SDL_CreateThread(FakeProgressBar, "progress_thread", NULL);

@@ -12,6 +12,7 @@ struct Vector {
 	bool operator==(const Vector& v);
 	Vector operator+(const Vector& v);
 	Vector operator-(const Vector& v) const;
+	Vector operator*(float f);
 };
 
 struct Quat {

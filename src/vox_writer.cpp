@@ -140,7 +140,7 @@ void MV_FILE::WriteFileHeader() {
 }
 
 void MV_FILE::WriteSIZE(MVShape shape) {
-	WriteChunkHeader(SIZE_c, 12, 0);
+	WriteChunkHeader(SIZE, 12, 0);
 	WriteInt(shape.sizex);
 	WriteInt(shape.sizey);
 	WriteInt(shape.sizez);

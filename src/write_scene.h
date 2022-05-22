@@ -30,7 +30,7 @@ protected:
 	void WriteEntity2ndPass(Entity*);
 	void WriteEntity(XMLElement*, Entity*);
 	void WriteTransform(XMLElement*, Transform);
-	void WriteShape(XMLElement*&, Shape*, uint32_t);
+	void WriteShape(XMLElement*&, Shape*, uint32_t, string);
 	void WriteCompound(MV_FILE*, string, XMLElement*, Shape*, int, int, int);
 public:
 	void WriteScene();

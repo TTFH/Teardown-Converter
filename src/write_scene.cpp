@@ -52,6 +52,7 @@ void WriteXML::WriteEnvironment() {
 
 	xml.AddStrAttribute(environment, "skybox", skybox_texture, "cloudy.dds");
 	xml.AddRgbaAttribute(environment, "skyboxtint", skybox->tint, "1 1 1");
+	xml.AddFloatAttribute(environment, "skyboxbrightness", skybox->brightness, "1");
 	xml.AddFloatAttribute(environment, "skyboxrot", deg(skybox->rot), "0");
 	xml.AddRgbaAttribute(environment, "constant", skybox->constant, "0.003 0.003 0.003");
 	xml.AddFloatAttribute(environment, "ambient", skybox->ambient, "1");
@@ -131,7 +132,6 @@ void WriteXML::SaveVoxFiles() {
 		it->second->SaveModel();
 	for (list<MV_FILE*>::iterator it = compound_files.begin(); it != compound_files.end(); it++)
 		(*it)->SaveModel();
-	progress = 1;
 }
 
 void WriteXML::WriteEntities() {
@@ -148,15 +148,7 @@ void WriteXML::WriteEntities() {
 		WriteEntity2ndPass(scene.entities[i]);
 }
 
-void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t handle) {
-	entity_element->SetName("vox");
-	xml.AddIntFloatAttribute(entity_element, "texture", shape->texture_tile, shape->texture_weight);
-	xml.AddIntFloatAttribute(entity_element, "blendtexture", shape->blendtexture_tile, shape->blendtexture_weight);
-	xml.AddFloatAttribute(entity_element, "density", shape->density, "1");
-	xml.AddFloatAttribute(entity_element, "strength", shape->strength, "1");
-	bool collide = (shape->shape_flags & 0x10) != 0;
-	xml.AddBoolAttribute(entity_element, "collide", collide, true);
-
+void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t handle, string description) {
 	int sizex = shape->voxels.size[0];
 	int sizey = shape->voxels.size[1];
 	int sizez = shape->voxels.size[2];
@@ -168,6 +160,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 
 	Palette palette = scene.palettes[shape->palette];
 	shape->old_transform = shape->transform;
+	bool collide = (shape->shape_flags & 0x10) != 0;
 
 	bool is_filled_voxbox = true;
 	uint8_t index = shape->voxels.palette_index[0];
@@ -175,26 +168,38 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		is_filled_voxbox = is_filled_voxbox && shape->voxels.palette_index[i] == index;
 
 	if (is_filled_voxbox) {
-		entity_element->SetName("voxbox");
-		xml.AddFloat3Attribute(entity_element, "size", sizex, sizey, sizez);
 		uint8_t index = shape->voxels.palette_index[0];
 		Material palette_entry = palette.materials[index];
+
+		entity_element->SetName("voxbox");
+		WriteTransform(entity_element, shape->transform);
+		xml.AddStrAttribute(entity_element, "desc", description);
+		xml.AddIntFloatAttribute(entity_element, "texture", shape->texture_tile, shape->texture_weight);
+		xml.AddIntFloatAttribute(entity_element, "blendtexture", shape->blendtexture_tile, shape->blendtexture_weight);
+		xml.AddFloatAttribute(entity_element, "density", shape->density, "1");
+		xml.AddFloatAttribute(entity_element, "strength", shape->strength, "1");
+		xml.AddBoolAttribute(entity_element, "collide", collide, true);
+		xml.AddFloat3Attribute(entity_element, "size", sizex, sizey, sizez);
 		xml.AddStrAttribute(entity_element, "material", MaterialKindName[palette_entry.kind], "none");
 		xml.AddRgbaAttribute(entity_element, "color", palette_entry.rgba, "1 1 1");
 		xml.AddFloat4Attribute(entity_element, "pbr", palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, "0 0 0 0");
-		WriteTransform(entity_element, shape->transform);
 		return;
 	}
 
 	Vector axis_offset(0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0);
-	if (int(shape->scale * 10.0) == 2) // Scaled x2
-		axis_offset = Vector(0.1f * (sizex - sizex % 2), 0.1f * (sizey - sizey % 2), 0);
-	else if (int(shape->scale * 10.0) == 4) // Scaled x4
-		axis_offset = Vector(0.2f * (sizex - sizex % 2), 0.2f * (sizey - sizey % 2), 0);
-
+	if (shape->scale * 10.0 != 1.0)
+		axis_offset = axis_offset * (shape->scale * 10.0);
 	shape->transform.pos = shape->transform.pos + shape->transform.rot * axis_offset;
 	shape->transform.rot = shape->transform.rot * QuatEuler(90, 0, 0);
+
+	entity_element->SetName("vox");
 	WriteTransform(entity_element, shape->transform);
+	xml.AddStrAttribute(entity_element, "desc", description);
+	xml.AddIntFloatAttribute(entity_element, "texture", shape->texture_tile, shape->texture_weight);
+	xml.AddIntFloatAttribute(entity_element, "blendtexture", shape->blendtexture_tile, shape->blendtexture_weight);
+	xml.AddFloatAttribute(entity_element, "density", shape->density, "1");
+	xml.AddFloatAttribute(entity_element, "strength", shape->strength, "1");
+	xml.AddBoolAttribute(entity_element, "collide", collide, true);
 
 	if (volume > 0 && sizex <= 256 && sizey <= 256 && sizez <= 256) {
 		string vox_filename = save_path + "vox\\palette" + to_string(shape->palette) + ".vox";
@@ -351,8 +356,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		if (i != entity->tags.getSize() - 1)
 			tags += " ";
 	}
-	if (tags.length() > 0)
-		xml.AddStrAttribute(entity_element, "tags", tags);
+	xml.AddStrAttribute(entity_element, "tags", tags);
 
 	switch (entity->kind_byte) {
 		case KindBody: {
@@ -377,7 +381,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			break;
 		case KindShape: {
 			Shape* shape = static_cast<Shape*>(entity->kind);
-			WriteShape(entity_element, shape, entity->handle);
+			WriteShape(entity_element, shape, entity->handle, entity->desc);
 		}
 			break;
 		case KindLight: {
@@ -480,8 +484,6 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				entity_element->SetName("rope");
 				xml.AddFloatAttribute(entity_element, "size", joint->size, "0.2");
 				xml.AddRgbaAttribute(entity_element, "color", joint->rope.color, "0 0 0");
-				xml.AddFloatAttribute(entity_element, "strength", joint->rope.strength, "1");
-				xml.AddFloatAttribute(entity_element, "maxstretch", joint->rope.maxstretch, "0");
 
 				int knot_count = joint->rope.knots.getSize();
 				if (knot_count > 0) {
@@ -499,6 +501,9 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 					float rope_length = rope_dir.length();
 					xml.AddFloatAttribute(entity_element, "slack", joint->rope.slack - rope_length, "0");
 				}
+
+				xml.AddFloatAttribute(entity_element, "strength", joint->rope.strength, "1");
+				xml.AddFloatAttribute(entity_element, "maxstretch", joint->rope.maxstretch, "0");
 			} else
 				entity_element = NULL; // Process joints on a second pass
 		}
@@ -648,12 +653,11 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			break;
 	}
 
-	if (entity_element != NULL && entity->desc.length() > 0)
-		xml.AddStrAttribute(entity_element, "desc", entity->desc);
-
-	if (entity_element != NULL)
+	if (entity_element != NULL) {
+		if (entity->kind_byte != KindShape)
+			xml.AddStrAttribute(entity_element, "desc", entity->desc);
 		xml.AddElement(parent, entity_element, entity->handle);
-	else
+	} else
 		entity_element = parent;
 
 	for (unsigned int i = 0; i < entity->children.getSize(); i++)
@@ -679,10 +683,6 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		Joint* joint = static_cast<Joint*>(entity->kind);
 		if (joint->type != _Rope) {
 			XMLElement* entity_element = xml.CreateElement("joint");
-			xml.AddFloatAttribute(entity_element, "size", joint->size, "0.1");
-			xml.AddBoolAttribute(entity_element, "collide", joint->collide, false);
-			xml.AddBoolAttribute(entity_element, "sound", joint->sound, false);
-
 			// Add tags to joints
 			string tags = "";
 			for (unsigned int i = 0; i < entity->tags.getSize(); i++) {
@@ -734,21 +734,27 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				Transform joint_tr = TransformToLocalTransform(shape_tr, Transform(relative_pos, relative_rot));
 				WriteTransform(entity_element, joint_tr);
 			}
-
-			if (joint->type == Hinge) {
+			
+			if (joint->type == Hinge)
 				xml.AddAttribute(entity_element, "type", "hinge");
-				if (joint->limits[0] != 0.0 || joint->limits[1] != 0.0)
-					xml.AddFloat2Attribute(entity_element, "limits", deg(joint->limits[0]), deg(joint->limits[1]));
-			} else if (joint->type == Prismatic) {
+			else if (joint->type == Prismatic)
 				xml.AddAttribute(entity_element, "type", "prismatic");
-				xml.AddFloatNAttribute(entity_element, "limits", joint->limits, 2, "0 0");
-				xml.AddBoolAttribute(entity_element, "autodisable", joint->autodisable, false);
-			}
 
+			xml.AddFloatAttribute(entity_element, "size", joint->size, "0.1");
 			if (joint->type != Prismatic) {
 				xml.AddFloatAttribute(entity_element, "rotstrength", joint->rotstrength, "0");
 				xml.AddFloatAttribute(entity_element, "rotspring", joint->rotspring, "0.5");
 			}
+			if (joint->type == Hinge) {
+				if (joint->limits[0] != 0.0 || joint->limits[1] != 0.0)
+					xml.AddFloat2Attribute(entity_element, "limits", deg(joint->limits[0]), deg(joint->limits[1]));
+			} else if (joint->type == Prismatic)
+				xml.AddFloatNAttribute(entity_element, "limits", joint->limits, 2, "0 0");
+			xml.AddBoolAttribute(entity_element, "collide", joint->collide, false);
+			xml.AddBoolAttribute(entity_element, "sound", joint->sound, false);
+			if (joint->type == Prismatic)
+				xml.AddBoolAttribute(entity_element, "autodisable", joint->autodisable, false);
+
 			if (shape_parent != NULL) // Ignore joints without an attached shape
 				xml.AddElement(shape_parent, entity_element, entity->handle);
 		}

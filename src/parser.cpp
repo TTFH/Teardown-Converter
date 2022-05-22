@@ -734,7 +734,7 @@ void TDBIN::parse() {
 	printf("File parsed successfully!\n");
 }
 
-void ParseFile(const char* filename, string map_folder, string level_id, bool remove_snow) {
+void ParseFile(const char* filename, string map_folder, string level_id, bool remove_snow, bool xml_only) {
 	if (!exists(map_folder)) {
 		create_directories(map_folder);
 		create_directories(map_folder + "vox");
@@ -750,6 +750,8 @@ void ParseFile(const char* filename, string map_folder, string level_id, bool re
 	parser.WritePostProcessing();
 	parser.WriteEntities();
 	parser.SaveXML();
-	parser.SaveVoxFiles();
+	if (!xml_only)
+		parser.SaveVoxFiles();
 	printf("Map successfully converted!\n");
+	progress = 1;
 }

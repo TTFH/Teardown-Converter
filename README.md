@@ -22,7 +22,6 @@ Type: `make`
 You can find the execulable in the `release` folder  
 
 ## Task list
-- [ ] Clean up XML (attribute order)
 - [ ] Improve progress bar and performance
 - [ ] Improve IMAP mappings
 

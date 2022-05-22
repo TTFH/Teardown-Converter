@@ -30,6 +30,10 @@ Vector Vector::operator-(const Vector& v) const {
 	return Vector(x - v.x, y - v.y, z - v.z);
 }
 
+Vector Vector::operator*(float f) {
+	return Vector(x * f, y * f, z * f);
+}
+
 static Quat Conjugate(const Quat& q) {
 	return {-q.x, -q.y, -q.z, q.w};
 }

@@ -22,7 +22,7 @@ constexpr int ID(char a, char b, char c, char d) {
 const int VERSION = 150;
 const int VOX  = ID('V', 'O', 'X', ' ');
 const int MAIN = ID('M', 'A', 'I', 'N');
-const int SIZE_c = ID('S', 'I', 'Z', 'E');
+const int SIZE = ID('S', 'I', 'Z', 'E');
 const int XYZI = ID('X', 'Y', 'Z', 'I');
 const int TDCZ = ID('T', 'D', 'C', 'Z');
 const int RGBA = ID('R', 'G', 'B', 'A');
