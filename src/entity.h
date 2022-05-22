@@ -232,7 +232,7 @@ struct Joint {
 	float rotspring;			// rotspring
 	float ball_rot[4];
 	float limits[2];			// limits (in degrees for hinge, meters for prismatic)
-	float z_f32[2];
+	float z_f32_2[2];
 	float size;					// size
 	bool sound;					// sound
 	bool autodisable;			// autodisable

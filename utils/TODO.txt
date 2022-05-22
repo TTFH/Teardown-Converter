@@ -3,10 +3,8 @@ Shape collide
 Voxscript:
 	Heightmapper + ground.lua
 
-SKIP Default Attributes
 FIX Attributes Order
 FIX Progress Bar
-FIX Joint Rotation (again)
 Improve Material IMAP
 Improve split shapes performance
 
@@ -37,7 +35,6 @@ dec bits
 53	00110101
 54	00110110
 58	00111010
-
 
 	JOINT ROT
 // YZX Solve:

@@ -14,15 +14,23 @@ float Vector::length() {
 	return sqrt(x * x + y * y + z * z);
 }
 
-Vector operator+(const Vector& u, const Vector& v) {
-	return {u.x + v.x, u.y + v.y, u.z + v.z};
+static bool CompareFloat(float a, float b) {
+	return fabs(a - b) < 0.0001;
 }
 
-Vector operator-(const Vector& u, const Vector& v) {
-	return {u.x - v.x, u.y - v.y, u.z - v.z};
+bool Vector::operator==(const Vector& v) {
+	return CompareFloat(x, v.x) && CompareFloat(y, v.y) && CompareFloat(z, v.z);
 }
 
-Quat Conjugate(const Quat& q) {
+Vector Vector::operator+(const Vector& v) {
+	return Vector(x + v.x, y + v.y, z + v.z);
+}
+
+Vector Vector::operator-(const Vector& v) const {
+	return Vector(x - v.x, y - v.y, z - v.z);
+}
+
+static Quat Conjugate(const Quat& q) {
 	return {-q.x, -q.y, -q.z, q.w};
 }
 

@@ -22,9 +22,8 @@ Type: `make`
 You can find the execulable in the `release` folder  
 
 ## Task list
-- [ ] Clean up XML (default attributes and order)
+- [ ] Clean up XML (attribute order)
 - [ ] Improve progress bar and performance
 - [ ] Improve IMAP mappings
-- [ ] Fix joint rotation
 
 ![Editor Example](https://github.com/TTFH/Teardown-Converter/blob/415d7c086d4669cbbaa9762657e97eb9a1d57d97/utils/converter_mall.png)  

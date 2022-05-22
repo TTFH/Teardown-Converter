@@ -9,6 +9,9 @@ struct Vector {
 	Vector(float x, float y, float z) : x(x), y(y), z(z) {}
 	Vector(float v[3]) : x(v[0]), y(v[1]), z(v[2]) {}
 	float length();
+	bool operator==(const Vector& v);
+	Vector operator+(const Vector& v);
+	Vector operator-(const Vector& v) const;
 };
 
 struct Quat {
@@ -31,8 +34,6 @@ Quat QuatEulerRad(double roll, double yaw, double pitch);
 void QuatToEuler(Quat q, float &bank, float &heading, float &attitude);
 Transform TransformToLocalTransform(const Transform& parent, const Transform& child);
 
-Vector operator+(const Vector& u, const Vector& v);
-Vector operator-(const Vector& u, const Vector& v);
 Quat operator*(const Quat& p, const Quat& q);
 Vector operator*(const Quat& q, const Vector& p1);
 

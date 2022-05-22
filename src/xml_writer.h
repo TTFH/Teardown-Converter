@@ -28,16 +28,17 @@ public:
 	void MoveElement(XMLElement* new_parent, XMLElement* child); // Alias of AddElement
 	void AddElement(XMLElement* parent, XMLElement* child, uint32_t handle = 0);
 	void AddBoolAttribute(XMLElement* element, const char* name, bool value);
-	void AddStrAttribute(XMLElement* element, const char* name, string value);
-	void AddFloatAttribute(XMLElement* element, const char* name, float value);
+	void AddBoolAttribute(XMLElement* element, const char* name, bool value, bool default_value);
 	void AddAttribute(XMLElement* element, const char* name, const char* value);
-	void AddFloat2Attribute(XMLElement* element, const char* name, float value1, float value2);
+	void AddStrAttribute(XMLElement* element, const char* name, string value, string default_value = "");
 	void AddIntFloatAttribute(XMLElement* element, const char* name, int value1, float value2);
-	void AddStrFloatAttribute(XMLElement* element, const char* name, string value1, float value2);
-	void AddFloatNAttribute(XMLElement* element, const char* name, const float* value, int count);
-	void AddRgbaAttribute(XMLElement* element, const char* name, Rgba value, bool skip_alpha = false);
+	void AddStrFloatAttribute(XMLElement* element, const char* name, string value1, float value2, string default_value = "");
+	void AddFloatAttribute(XMLElement* element, const char* name, float value, string default_value = "");
+	void AddFloat2Attribute(XMLElement* element, const char* name, float value1, float value2);
 	void AddFloat3Attribute(XMLElement* element, const char* name, float value1, float value2, float value3);
-	void AddFloat4Attribute(XMLElement* element, const char* name, float value1, float value2, float value3, float value4);
+	void AddFloat4Attribute(XMLElement* element, const char* name, float value1, float value2, float value3, float value4, string default_value = "");
+	void AddFloatNAttribute(XMLElement* element, const char* name, const float* value, int count, string default_value = "");
+	void AddRgbaAttribute(XMLElement* element, const char* name, Rgba value, string default_value = "");
 };
 
 #endif

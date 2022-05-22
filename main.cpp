@@ -22,7 +22,7 @@
 
 using namespace std;
 using namespace tinyxml2;
-using namespace std::experimental::filesystem;
+namespace fs = std::experimental::filesystem;
 
 float progress = 0;
 
@@ -62,18 +62,18 @@ void SaveInfoTxt(string map_folder, string level_name, string level_desc) {
 int DecompileMap(void* param) {
 	ConverterParams* data = (ConverterParams*)param;
 
-	create_directories(data->map_folder);
-	create_directories(data->map_folder + "vox");
-	create_directories(data->map_folder + "compounds");
+	fs::create_directories(data->map_folder);
+	fs::create_directories(data->map_folder + "vox");
+	fs::create_directories(data->map_folder + "compounds");
 	SaveInfoTxt(data->map_folder, data->level_name, data->level_desc);
 
 	string preview_image = "preview\\" + data->level_id + ".jpg";
-	if (exists(preview_image) && !exists(data->map_folder + "preview.jpg"))
-		copy(preview_image, data->map_folder + "preview.jpg");
+	if (fs::exists(preview_image) && !fs::exists(data->map_folder + "preview.jpg"))
+		fs::copy(preview_image, data->map_folder + "preview.jpg");
 
 	string script_folder = data->game_folder + "data\\level\\" + data->level_id + "\\script";
-	if (exists(script_folder) && !exists(data->map_folder + "script"))
-		copy(script_folder, data->map_folder + "script");
+	if (fs::exists(script_folder) && !fs::exists(data->map_folder + "script"))
+		fs::copy(script_folder, data->map_folder + "script", fs::copy_options::recursive);
 
 	printf("Preview image: %s\n", preview_image.c_str());
 	printf("Script Folder: %s\n", script_folder.c_str());

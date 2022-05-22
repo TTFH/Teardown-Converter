@@ -398,7 +398,7 @@ Joint* TDBIN::ReadJoint() {
 	for (int i = 0; i < 2; i++)
 		joint->limits[i] = ReadFloat();
 	for (int i = 0; i < 2; i++)
-		joint->z_f32[i] = ReadFloat();
+		joint->z_f32_2[i] = ReadFloat();
 	joint->size = ReadFloat();
 	joint->sound = ReadByte() != 0;
 	joint->autodisable = ReadByte() != 0;
