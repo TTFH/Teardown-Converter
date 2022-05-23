@@ -147,7 +147,7 @@ struct Entity {
     char value;
 };
 
-static const int NUM_ENTITIES = 5;
+static const int NUM_ENTITIES = 4; // Hi!
 static const Entity entities[NUM_ENTITIES] = {
     //{ "quot", 4,	DOUBLE_QUOTE },
     { "amp", 3,		'&'  },

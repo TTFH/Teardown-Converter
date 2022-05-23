@@ -189,11 +189,9 @@ void MV_FILE::WriteMain_nTRN() {
 		WriteInt(2 * i); // child_node
 
 	for (int i = 1; i <= num_models; i++) {
-		char pos[32];
-		int n = snprintf(pos, 32, "%d %d %d", models[i-1].pos_x, models[i-1].pos_y, models[i-1].pos_z);
-		assert(n >= 0 && n < 32);
+		string pos = to_string(models[i-1].pos_x) + " " + to_string(models[i-1].pos_y) + " " + to_string(models[i-1].pos_z);
 
-		WriteChunkHeader(nTRN, 38 + n + 13 + models[i-1].name.length(), 0);
+		WriteChunkHeader(nTRN, 38 + pos.length() + 13 + models[i-1].name.length(), 0);
 		WriteInt(2 * i); // node_id
 
 		DICT node_attr;
@@ -206,7 +204,7 @@ void MV_FILE::WriteMain_nTRN() {
 		WriteInt(1); // num_frames
 
 		DICT frame_attr;
-		frame_attr["_t"] = string(pos);
+		frame_attr["_t"] = pos;
 		WriteDICT(frame_attr);
 
 		WriteChunkHeader(nSHP, 20, 0);
@@ -225,21 +223,26 @@ void MV_FILE::WriteRGBA() {
 }
 
 bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
-	if (index < i_min || index > i_max) {
+	unsigned int mapped_index = 1;
+	while (palette_map[mapped_index] != index && mapped_index < 256)
+		mapped_index++;
+	assert(mapped_index < 256);
+
+	if (mapped_index < i_min || mapped_index > i_max) {
 		unsigned int empty_index = i_min;
 		while (is_index_used[empty_index] && empty_index <= i_max)
 			empty_index++;
 
 		if (empty_index <= i_max) {
 			is_index_used[empty_index] = true;
-			is_index_used[index] = false;
-			uint8_t temp = palette_map[index];
-			palette_map[index] = palette_map[empty_index];
+			is_index_used[mapped_index] = false;
+			uint8_t temp = palette_map[mapped_index];
+			palette_map[mapped_index] = palette_map[empty_index];
 			palette_map[empty_index] = temp;
 		} else {
-			if (FixMapping(index, 193, 224))
+			if (FixMapping(mapped_index, 193, 224))
 				return true;
-			if (FixMapping(index, 241, 253))
+			if (FixMapping(mapped_index, 241, 253))
 				return true;
 			return false;
 		}
@@ -252,9 +255,13 @@ bool MV_FILE::CheckMaterial(uint8_t index, uint8_t i_min, uint8_t i_max) {
 }
 
 void MV_FILE::WriteIMAP() {
+	for (int i = 0; i < 2; i++)
 	for (vector<PBR>::iterator it = pbrs.begin(); it != pbrs.end(); it++) {
 		bool is_snow = it->material_type == MaterialKind::Unphysical &&
-			palette[it->material_index].r == 229 && palette[it->material_index].g == 229 && palette[it->material_index].b == 229;
+			palette[palette_map[it->material_index]].r == 229 &&
+			palette[palette_map[it->material_index]].g == 229 &&
+			palette[palette_map[it->material_index]].b == 229;
+
 		if (it->material_type == MaterialKind::Glass)
 			FixMapping(it->material_index, 1, 8);
 		else if (it->material_type == MaterialKind::Foliage)
@@ -285,8 +292,8 @@ void MV_FILE::WriteIMAP() {
 			FixMapping(it->material_index, 193, 224);
 		else if (!is_snow)
 			FixMapping(it->material_index, 225, 240);
-		else
-			FixMapping(it->material_index, 254, 254); // To remove snow change this to 255
+		else // Snow
+			FixMapping(it->material_index, 254, 254);
 	}
 
 	uint8_t palette_reverse_map[256];

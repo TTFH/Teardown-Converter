@@ -2,7 +2,6 @@ Voxscript:
 	Heightmapper + ground.lua
 
 FIX Progress Bar
-Improve Material IMAP
 Improve split shapes performance
 
 	IMAP TEST
