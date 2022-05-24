@@ -64,7 +64,7 @@ uint8_t TDBIN::ReadByte() {
 
 uint16_t TDBIN::ReadWord() {
 	uint16_t word = 0;
-	fread(&word, sizeof(uint16_t), 1, bin_file);
+	fread(&word, sizeof(uint8_t), 1, bin_file);
 	return word;
 }
 
@@ -296,6 +296,7 @@ Body* TDBIN::ReadBody() {
 		res->angular_velocity[i] = ReadFloat();
 	res->dynamic = ReadByte() != 0;
 	res->body_flags = ReadByte();
+	ReadByte();
 	return res;
 }
 
@@ -308,12 +309,12 @@ Shape* TDBIN::ReadShape() {
 		res->z_u8_3[i] = ReadByte();
 	res->density = ReadFloat();
 	res->strength = ReadFloat();
-	res->texture_tile = ReadWord();
-	res->blendtexture_tile = ReadWord();
-	res->texture_weight = ReadFloat();
-	res->blendtexture_weight = ReadFloat();
+	res->texture_tile = ReadInt();
+	res->blendtexture_tile = 0;
+	res->blendtexture_weight = 1;
 	for (int i = 0; i < 3; i++)
 		res->starting_world_position[i] = ReadFloat();
+	res->texture_weight = ReadFloat();
 	res->z_f32 = ReadFloat();
 	res->z1_u8 = ReadByte();
 	res->z2_u8 = ReadByte();
@@ -322,7 +323,7 @@ Shape* TDBIN::ReadShape() {
 	res->scale = ReadFloat();
 	for (int i = 0; i < 2; i++)
 		res->z_u32_2[i] = ReadInt();
-	res->z3_u8 = ReadByte();
+	res->z3_u8 = 0;
 	return res;
 }
 
@@ -342,7 +343,7 @@ Light* TDBIN::ReadLight() {
 	light->fogscale = ReadFloat();
 	for (int i = 0; i < 2; i++)
 		light->area_size[i] = ReadFloat();
-	light->capsule_size = ReadFloat();
+	light->capsule_size = 0;
 	for (int i = 0; i < 13; i++)
 		light->z_u8_13[i] = ReadByte();
 	light->z_f32 = ReadFloat();
@@ -368,7 +369,7 @@ Water* TDBIN::ReadWater() {
 	water->ripple = ReadFloat();
 	water->motion = ReadFloat();
 	water->foam = ReadFloat();
-	water->color = ReadRgba();
+	water->color = {0.01, 0.01, 0.01, 1};
 	int vertex_count = ReadInt();
 	water->water_vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++) {
@@ -400,10 +401,10 @@ Joint* TDBIN::ReadJoint() {
 	for (int i = 0; i < 2; i++)
 		joint->z_f32_2[i] = ReadFloat();
 	joint->size = ReadFloat();
-	joint->sound = ReadByte() != 0;
-	joint->autodisable = ReadByte() != 0;
+	joint->sound = false;
+	joint->autodisable = false;
 	for (int i = 0; i < 2; i++)
-		joint->z_u32_2[i] = ReadInt();
+		joint->z_u32_2[i] = 0;
 	if (joint->type == _Rope)
 		joint->rope = ReadRope();
 	return joint;
@@ -450,7 +451,7 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->exhausts.resize(exhaust_count);
 	for (int i = 0; i < exhaust_count; i++) {
 		vehicle->exhausts[i].transform = ReadTransform();
-		vehicle->exhausts[i].z_f32 = ReadFloat();
+		vehicle->exhausts[i].z_f32 = 0;
 	}
 
 	int vital_count = ReadInt();
@@ -464,8 +465,8 @@ Vehicle* TDBIN::ReadVehicle() {
 	}
 
 	vehicle->z4_f32 = ReadFloat();
-	vehicle->z2_u8 = ReadByte();
-	vehicle->z5_f32 = ReadFloat();
+	vehicle->z2_u8 = 0;
+	vehicle->z5_f32 = 0;
 	return vehicle;
 }
 
@@ -561,7 +562,7 @@ Script* TDBIN::ReadScript() {
 		script->sounds[i].kind = ReadInt();
 		script->sounds[i].name = ReadString();
 	}
-
+/*
 	int transition_count = ReadInt();
 	script->transitions.resize(transition_count);
 	for (int i = 0; i < transition_count; i++) {
@@ -572,7 +573,7 @@ Script* TDBIN::ReadScript() {
 		for (int j = 0; j < 4; j++)
 			script->transitions[i].z_u8_4[j] = ReadByte();
 	}
-
+*/
 	return script;
 }
 
@@ -608,13 +609,15 @@ void* TDBIN::ReadEntityKind(uint8_t kind_byte) {
 }
 
 void TDBIN::ReadPlayer() {
+	ReadInt();
+	ReadInt();
 	scene.player.transform = ReadTransform();
 	scene.player.yaw = ReadFloat();
 	scene.player.pitch = ReadFloat();
 	for (int i = 0; i < 3; i++)
 		scene.player.velocity[i] = ReadFloat();
 	scene.player.health = ReadFloat();
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 2; i++)
 		scene.player.z_f32_4[i] = ReadFloat();
 }
 
@@ -622,7 +625,7 @@ void TDBIN::ReadEnvironment() {
 	Skybox* skybox = &scene.environment.skybox;
 	skybox->texture = ReadString();
 	skybox->tint = ReadRgba();
-	skybox->brightness = ReadFloat();
+	skybox->brightness = 1;
 	skybox->rot = ReadFloat();
 	for (int i = 0; i < 3; i++)
 		skybox->sun.tint_brightness[i] = ReadFloat();
@@ -635,9 +638,9 @@ void TDBIN::ReadEnvironment() {
 	skybox->sun.fogScale = ReadFloat();
 	skybox->sun.glare = ReadFloat();
 	skybox->z_u8 = ReadByte();
-	skybox->constant = ReadRgba();
+	skybox->constant = {0.003, 0.003, 0.003, 0};
 	skybox->ambient = ReadFloat();
-	skybox->ambientexponent = ReadFloat();
+	skybox->ambientexponent = 1.3;
 
 	for (int i = 0; i < 2; i++)
 		scene.environment.exposure[i] = ReadFloat();
@@ -660,8 +663,8 @@ void TDBIN::ReadEnvironment() {
 	scene.environment.ambience.path = ReadString();
 	scene.environment.ambience.volume = ReadFloat();
 	scene.environment.slippery = ReadFloat();
-	scene.environment.fogscale = ReadFloat();
-
+	scene.environment.fogscale = 1;
+/*
 	Snow* snow = &scene.environment.snow;
 	for (int i = 0; i < 3; i++)
 		snow->dir[i] = ReadFloat();
@@ -673,6 +676,7 @@ void TDBIN::ReadEnvironment() {
 	for (int i = 0; i < 3; i++)
 		scene.environment.wind[i] = ReadFloat();
 	scene.environment.waterhurt = ReadFloat();
+*/
 }
 
 void TDBIN::parse() {
@@ -685,7 +689,7 @@ void TDBIN::parse() {
 	for (int i = 0; i < 3; i++)
 		scene.shadowVolume[i] = ReadFloat();
 	scene.spawnpoint = ReadTransform();
-
+/*
 	for (int i = 0; i < 3; i++)
 		scene.z_u32_3[i] = ReadInt();
 	scene.postpro.brightness = ReadFloat();
@@ -693,7 +697,7 @@ void TDBIN::parse() {
 	scene.postpro.saturation = ReadFloat();
 	scene.postpro.gamma = ReadFloat();
 	scene.postpro.bloom = ReadFloat();
-
+*/
 	ReadPlayer();
 	ReadEnvironment();
 
@@ -703,10 +707,10 @@ void TDBIN::parse() {
 		scene.boundary.vertices[i].pos[0] = ReadFloat();
 		scene.boundary.vertices[i].pos[1] = ReadFloat();
 	}
-	scene.boundary.padleft = ReadFloat();
-	scene.boundary.padtop = ReadFloat();
-	scene.boundary.padright = ReadFloat();
-	scene.boundary.padbottom = ReadFloat();
+	scene.boundary.padleft = -5;
+	scene.boundary.padtop = -5;
+	scene.boundary.padright = 5;
+	scene.boundary.padbottom = 5;
 
 	int fire_count = ReadInt();
 	scene.fires.resize(fire_count);
@@ -747,7 +751,7 @@ void ParseFile(const char* filename, string map_folder, string level_id, bool re
 	parser.WriteSpawnpoint();
 	parser.WriteEnvironment();
 	parser.WriteBoundary();
-	parser.WritePostProcessing();
+	//parser.WritePostProcessing();
 	parser.WriteEntities();
 	parser.SaveXML();
 	if (!xml_only)

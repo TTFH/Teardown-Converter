@@ -7,6 +7,7 @@ const char* EntityKindName[] = {
 	"Light",
 	"Location",
 	"Water",
+	"Enemy",
 	"Joint",
 	"Vehicle",
 	"Wheel",

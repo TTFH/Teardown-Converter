@@ -40,7 +40,7 @@ void WriteXML::WriteEnvironment() {
 	Skybox* skybox = &scene.environment.skybox;
 	Fog* fog = &scene.environment.fog;
 	EnvWater* water = &scene.environment.water;
-	Snow* snow = &scene.environment.snow;
+	//Snow* snow = &scene.environment.snow;
 
 	XMLElement* environment = xml.CreateElement("environment");
 	xml.AddElement(xml.getScene(), environment);
@@ -76,7 +76,7 @@ void WriteXML::WriteEnvironment() {
 	xml.AddStrFloatAttribute(environment, "ambience", scene.environment.ambience.path, scene.environment.ambience.volume, "outdoor/field.ogg");
 	xml.AddFloatAttribute(environment, "fogscale", scene.environment.fogscale, "1");
 	xml.AddFloatAttribute(environment, "slippery", scene.environment.slippery, "0");
-	xml.AddFloatAttribute(environment, "waterhurt", scene.environment.waterhurt, "0");
+	/*xml.AddFloatAttribute(environment, "waterhurt", scene.environment.waterhurt, "0");
 	xml.AddFloat4Attribute(environment, "snowdir", snow->dir[0], snow->dir[1], snow->dir[2], snow->spread, "0 -1 0 0.2");
 	xml.AddFloatAttribute(environment, "snowamount", snow->amount, "0");
 	xml.AddBoolAttribute(environment, "snowonground", snow->onground && !remove_snow, false);
@@ -84,7 +84,7 @@ void WriteXML::WriteEnvironment() {
 
 	if (snow->onground && !remove_snow) printf("Here comes the snow!\n");
 	remove_snow = remove_snow && snow->onground; // Only remove snow if there is snow to remove
-	if (remove_snow) printf("Removing the snow...\n");
+	if (remove_snow) printf("Removing the snow...\n");*/
 }
 
 void WriteXML::WriteBoundary() {
@@ -161,7 +161,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 
 	Palette palette = scene.palettes[shape->palette];
 	shape->old_transform = shape->transform;
-	bool collide = (shape->shape_flags & 0x10) != 0;
+	bool collide = true; //(shape->shape_flags & 0x10) != 0;
 
 	bool is_filled_voxbox = true;
 	uint8_t index = shape->voxels.palette_index[0];
