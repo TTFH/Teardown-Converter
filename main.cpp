@@ -232,12 +232,15 @@ int main(int argc, char* argv[]) {
 #ifdef _WIN32
 	_setmaxstdio(2048);
 #endif
-	if (argc == 2) {
-		#ifdef _WIN32
-			ParseFile(argv[1], "test\\");
-		#else
-			ParseFile(argv[1], "test/");
-		#endif
+	if (argc > 1) {
+		if (argc == 3) {
+			#ifdef _WIN32
+				ParseFile(argv[1], "test\\", argv[2]);
+			#else
+				ParseFile(argv[1], "test/", argv[2]);
+			#endif
+		} else
+			printf("CLI Usage: %s quicksave.bin level_id\n", argv[0]);
 		return 0;
 	}
 

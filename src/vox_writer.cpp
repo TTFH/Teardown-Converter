@@ -336,8 +336,7 @@ void MV_FILE::WriteIMAP() {
 		else if (it->material_type == MaterialKind::Unphysical)
 			corrupted = !CheckMaterial(index, 225, 240) && !CheckMaterial(index, 254, 255);	
 		if (corrupted)
-			printf("Warning: Pallete %s may be corrupted: material %s is at index %d\n",
-			filename.c_str(), MaterialKindName[it->material_type], index);
+			printf("Overflow of %s at pallete %s.\n", MaterialKindName[it->material_type], filename.c_str());
 	}
 	assert(palette_map[0] == 0);
 

@@ -144,7 +144,8 @@ void WriteXML::WriteEntities() {
 			xml.AddBoolAttribute(xml_vehicle, "driven", true);
 	}
 
-	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
+	// Iterate in reverse order, so parent scripts comes after their childrens
+	for (int i = scene.entities.getSize() - 1; i >= 0; i--)
 		WriteEntity2ndPass(scene.entities[i]);
 }
 
@@ -202,7 +203,11 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	xml.AddBoolAttribute(entity_element, "collide", collide, true);
 
 	if (volume > 0 && sizex <= 256 && sizey <= 256 && sizez <= 256) {
+	#ifdef _WIN32
 		string vox_filename = save_path + "vox\\palette" + to_string(shape->palette) + ".vox";
+	#else
+		string vox_filename = save_path + "vox/palette" + to_string(shape->palette) + ".vox";
+	#endif
 		string vox_path = "MOD/vox/palette" + to_string(shape->palette) + ".vox";
 		string vox_object = "shape" + to_string(handle);
 
@@ -270,7 +275,11 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		xml.AddStrAttribute(entity_element, "object", vox_object);
 		xml.AddFloatAttribute(entity_element, "scale", 10.0 * shape->scale, "1");
 	} else {
+	#ifdef _WIN32
 		string compound_filename = save_path + "compounds\\compound" + to_string(handle) + ".vox";
+	#else
+		string compound_filename = save_path + "compounds/compound" + to_string(handle) + ".vox";
+	#endif
 		string compound_path = "MOD/compounds/compound" + to_string(handle) + ".vox";
 		MV_FILE* compound_vox = new MV_FILE(compound_filename.c_str());
 		compound_files.push_back(compound_vox);
@@ -676,8 +685,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				xml.AddElement(xml_body, vital);
 				xml.AddAttribute(vital, "tags", "vital");
 				xml.AddFloatNAttribute(vital, "pos", vehicle->vitals[i].pos, 3);
-			} else
-				printf("Warning: vital body %d not found\n", body_handle);
+			}
 		}
 	} else if (entity->kind_byte == KindJoint) {
 		Joint* joint = static_cast<Joint*>(entity->kind);
