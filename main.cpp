@@ -50,7 +50,7 @@ void SaveInfoTxt(string map_folder, string level_name, string level_desc) {
 	string info_path = map_folder + "info.txt";
 	FILE* info_file = fopen(info_path.c_str(), "w");
 	if (info_file == NULL) {
-		printf("ERROR: Could not create info.txt\n");
+		printf("Error: Could not create info.txt\n");
 		return;
 	}
 	fprintf(info_file, "name = %s\n", level_name.c_str());
@@ -73,11 +73,10 @@ int DecompileMap(void* param) {
 		fs::copy(preview_image, data->map_folder + "preview.jpg");
 
 	string script_folder = data->game_folder + "data\\level\\" + data->level_id + "\\script";
-	if (fs::exists(script_folder) && !fs::exists(data->map_folder + "script"))
-		fs::copy(script_folder, data->map_folder + "script", fs::copy_options::recursive);
-
-	printf("Preview image: %s\n", preview_image.c_str());
-	printf("Script Folder: %s\n", script_folder.c_str());
+	if (fs::exists(script_folder) && !fs::exists(data->map_folder + "main\\script")) {
+		fs::create_directories(data->map_folder + "main");
+		fs::copy(script_folder, data->map_folder + "main\\script", fs::copy_options::recursive);
+	}
 
 	ParseFile(data->bin_path.c_str(), data->map_folder, data->level_id, data->remove_snow, data->xml_only);
 	return 0;
@@ -245,7 +244,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
-		printf("Error SDL: %s\n", SDL_GetError());
+		printf("Error: Failed to init SDL: %s\n", SDL_GetError());
 		return -1;
 	}
 

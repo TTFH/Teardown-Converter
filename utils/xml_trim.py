@@ -143,7 +143,7 @@ def main():
 		new_content = re.sub("(<voxbox[^>]*) size=\"50\.0 30\.0 20\.0\"", "\g<1>", new_content)
 		new_content = re.sub("(<voxbox[^>]*) color=\"1\.0 1\.0 1\.0\"", "\g<1>", new_content)
 
-		new_content = re.sub("version=\"\d\.\d\.\d\"", "version=\"0.9.6\"", new_content)
+		new_content = re.sub("version=\"\d\.\d\.\d\"", "version=\"1.0.0\"", new_content)
 		new_content = re.sub("( texture=\"\d+\.0) 1\.0(\")", "\g<1>\g<2>", new_content)
 		new_content = re.sub("( blendtexture=\"\d+\.0) 1\.0(\")", "\g<1>\g<2>", new_content)
 		new_content = re.sub("([\" ])(-?\d+)\.0(?=[\" ])", "\g<1>\g<2>", new_content)

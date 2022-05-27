@@ -82,17 +82,13 @@ void WriteXML::WriteEnvironment() {
 	xml.AddBoolAttribute(environment, "snowonground", snow->onground && !remove_snow, false);
 	xml.AddFloatNAttribute(environment, "wind", scene.environment.wind, 3, "0 0 0");
 
-	if (snow->onground && !remove_snow) printf("Here comes the snow!\n");
 	remove_snow = remove_snow && snow->onground; // Only remove snow if there is snow to remove
-	if (remove_snow) printf("Removing the snow...\n");
 }
 
 void WriteXML::WriteBoundary() {
 	int vertex_count = scene.boundary.vertices.getSize();
-	if (vertex_count == 0) {
-		printf("A world with no boundaries.\n");
+	if (vertex_count == 0)
 		return;
-	}
 
 	XMLElement* boundary = xml.CreateElement("boundary");
 	xml.AddElement(xml.getScene(), boundary);
@@ -123,7 +119,6 @@ void WriteXML::WritePostProcessing() {
 void WriteXML::SaveXML() {
 	string main_xml_path = save_path + "main.xml";
 	xml.SaveFile(main_xml_path.c_str());
-	printf("XML file saved!\n");
 }
 
 void WriteXML::SaveVoxFiles() {
@@ -613,7 +608,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			string script_file = screen->script;
 			string prefix = "data/level/" + level_id;
 			if (script_file.find(prefix) == 0)
-				script_file = "MOD" + script_file.substr(prefix.size());
+				script_file = "LEVEL" + script_file.substr(prefix.size());
 
 			prefix = "data/";
 			if (script_file.find(prefix) == 0)
@@ -777,7 +772,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 
 		prefix = "data/level/" + level_id;
 		if (script_file.find(prefix) == 0)
-			script_file = "MOD" + script_file.substr(prefix.size());
+			script_file = "LEVEL" + script_file.substr(prefix.size());
 
 		if (script_file == "fx.lua" || script_file == "explosion.lua" || script_file == "spawn.lua")
 			return;

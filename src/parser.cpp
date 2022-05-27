@@ -20,7 +20,7 @@ TDBIN::TDBIN(const char* input, string save_folder, string level_id, bool remove
 	char* filename = new char[strlen(input) + 3];
 	strcpy(filename, input);
 	if (IsFileCompressed(input)) {
-		printf("%s is compressed, unzipping...\n", input);
+		printf("Unzipping file...\n");
 		char* output = new char[strlen(input) + 3];
 		strcpy(output, input);
 		char* pos = strstr(output, ".bin");
@@ -30,16 +30,15 @@ TDBIN::TDBIN(const char* input, string save_folder, string level_id, bool remove
 
 		UncompressFile(input, output);
 		if (!IsFileCompressed(output)) {
-			printf("File sucessfully uncompressed\n");
 			strcpy(filename, output);
 		} else {
-			printf("Failed to uncompress file\n");
+			printf("Error: Failed to uncompress file\n");
 			exit(EXIT_FAILURE);
 		}
 		delete[] output;
 	}
 
-	printf("Parsing file %s\n", filename);
+	printf("Parsing file...\n");
 	bin_file = fopen(filename, "rb");
 	if (bin_file == NULL) {
 		printf("Error: Could not open %s for reading\n", filename);
@@ -601,7 +600,7 @@ void* TDBIN::ReadEntityKind(uint8_t kind_byte) {
 		case KindScript:
 			return ReadScript();
 		default:
-			printf("Invalid entity kind: %d\n", kind_byte);
+			printf("Error: Invalid entity kind: %d\n", kind_byte);
 			exit(EXIT_FAILURE);
 			return NULL;
 	}
@@ -714,7 +713,6 @@ void TDBIN::parse() {
 		scene.fires[i] = ReadFire();
 
 	int palette_count = ReadInt();
-	printf("%d Palettes\n", palette_count);
 	scene.palettes.resize(palette_count);
 	for (int i = 0; i < palette_count; i++)
 		scene.palettes[i] = ReadPalette();
@@ -725,7 +723,6 @@ void TDBIN::parse() {
 		scene.registry[i] = ReadRegistry();
 
 	int entity_count = ReadInt();
-	printf("%d Top level entities\n", entity_count);
 	scene.entities.resize(entity_count);
 	for (int i = 0; i < entity_count; i++) {
 		scene.entities[i] = ReadEntity();

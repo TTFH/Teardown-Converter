@@ -29,7 +29,6 @@ void UncompressFile(const char* input_file, const char* output_file) {
 	fseek(bin_file, 0, SEEK_END);
 	long int compressed_size = ftell(bin_file);
 	rewind(bin_file);
-	printf("Compressed size: %ld bytes\n", compressed_size);
 
 	uint8_t* compressed_data = new uint8_t[compressed_size];
 	fread(compressed_data, sizeof(uint8_t), compressed_size, bin_file);
@@ -38,7 +37,6 @@ void UncompressFile(const char* input_file, const char* output_file) {
 	long int uncompressed_size = 2 << 27;
 	uint8_t* uncompressed_data = new uint8_t[uncompressed_size];
 	if (ZlibUncompress(compressed_data, compressed_size, uncompressed_data, uncompressed_size)) {
-		printf("Uncompressed size: %ld bytes\n", uncompressed_size);
 		FILE* tdbin_file = fopen(output_file, "wb");
 		if (tdbin_file != NULL) {
 			fwrite(uncompressed_data, sizeof(uint8_t), uncompressed_size, tdbin_file);
