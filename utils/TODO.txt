@@ -49,3 +49,5 @@ DepotDownloader -app 1167630 -depot 1167634 -manifest 7508456906693476405 -usern
 https://github.com/SteamRE/DepotDownloader
 https://steamdb.info/depot/1167634/manifests/
 https://dotnet.microsoft.com/en-us/download/dotnet/6.0/runtime
+
+windres icon.rc -O coff -o icon.res
