@@ -74,7 +74,7 @@ all: $(EXE)
 	@echo Build complete for $(ECHO_MESSAGE)
 
 $(EXE): $(OBJS)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS) icon.res
 
 clean:
 	rm -f $(EXE) $(OBJS)

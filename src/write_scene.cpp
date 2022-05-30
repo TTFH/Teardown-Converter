@@ -244,7 +244,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 						Material palette_entry = palette.materials[index];
 						mvshape.voxels[x][y][z] = index;
 
-						if (remove_snow && !is_wheel_shape && palette_entry.kind == MaterialKind::Unphysical &&
+						if (remove_snow /*&& !is_wheel_shape*/ && palette_entry.kind == MaterialKind::Unphysical &&
 							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
 							mvshape.voxels[x][y][z] = 0;
 
@@ -457,6 +457,10 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			} else if (location_parent != NULL && location_parent->kind_byte == KindBody) {
 				Body* parent_body = (Body*)location_parent->kind;
 				Transform loc_tr = TransformToLocalTransform(parent_body->transform, location->transform);
+				WriteTransform(entity_element, loc_tr);
+			} else if (location_parent != NULL && location_parent->kind_byte == KindTrigger) {
+				Trigger* parent_trigger = (Trigger*)location_parent->kind;
+				Transform loc_tr = TransformToLocalTransform(parent_trigger->transform, location->transform);
 				WriteTransform(entity_element, loc_tr);
 			} else
 				WriteTransform(entity_element, location->transform);
