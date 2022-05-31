@@ -25,7 +25,7 @@ SOURCES += file_dialog/ImGuiFileDialog.cpp
 OBJS = $(addprefix obj/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 
-CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -g
+CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -Wconversion -O3
 CXXFLAGS += -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog
 CXXFLAGS += -Ilib
 LIBS = -lz -lstdc++fs
@@ -44,12 +44,13 @@ endif
 ifeq ($(OS), Windows_NT)
 	ECHO_MESSAGE = "MinGW"
 	CXXFLAGS += `pkg-config --cflags sdl2`
-	LIBS += -lgdi32 -lopengl32 -limm32 `pkg-config --static --libs sdl2` -mconsole
+	LIBS += -lgdi32 -lopengl32 -limm32 `pkg-config --static --libs sdl2` -mconsole icon.res
 endif
 
 ##---------------------------------------------------------------------
 ## BUILD RULES
 ##---------------------------------------------------------------------
+.PHONY: all clean
 
 $(ODIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -74,7 +75,7 @@ all: $(EXE)
 	@echo Build complete for $(ECHO_MESSAGE)
 
 $(EXE): $(OBJS)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS) icon.res
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
 
 clean:
 	rm -f $(EXE) $(OBJS)

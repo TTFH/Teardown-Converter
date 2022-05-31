@@ -228,11 +228,6 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 				if (vox_grandparent != NULL && vox_grandparent->kind_byte == KindWheel)
 					is_wheel_shape = true;
 			}
-			if (!is_wheel_shape) {
-				mvshape.voxels[0][0][0] = 255;
-				mvshape.voxels[sizex-1][sizey-1][sizez-1] = 255;
-				vox_file->AddColor(255, 255, 0, 0);
-			}
 		}
 
 		unsigned int k = 0;
@@ -244,7 +239,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 						Material palette_entry = palette.materials[index];
 						mvshape.voxels[x][y][z] = index;
 
-						if (remove_snow /*&& !is_wheel_shape*/ && palette_entry.kind == MaterialKind::Unphysical &&
+						if (remove_snow && palette_entry.kind == MaterialKind::Unphysical &&
 							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
 							mvshape.voxels[x][y][z] = 0;
 
@@ -255,6 +250,14 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 					}
 					k++;
 				}
+
+		if (remove_snow && !is_wheel_shape) {
+			if (mvshape.voxels[0][0][0] == 0)
+				mvshape.voxels[0][0][0] = 255;
+			if (mvshape.voxels[sizex-1][sizey-1][sizez-1] == 0)
+				mvshape.voxels[sizex-1][sizey-1][sizez-1] = 255;
+			vox_file->AddColor(255, 255, 0, 0);
+		}
 
 		bool duplicated = false;
 		if (!is_new_palette)
