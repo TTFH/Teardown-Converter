@@ -79,10 +79,10 @@ void WriteXML::WriteEnvironment() {
 	xml.AddFloatAttribute(environment, "waterhurt", scene.environment.waterhurt, "0");
 	xml.AddFloat4Attribute(environment, "snowdir", snow->dir[0], snow->dir[1], snow->dir[2], snow->spread, "0 -1 0 0.2");
 	xml.AddFloatAttribute(environment, "snowamount", snow->amount, "0");
-	xml.AddBoolAttribute(environment, "snowonground", snow->onground && !remove_snow, false);
+	xml.AddBoolAttribute(environment, "snowonground", snow->onground && !params.remove_snow, false);
 	xml.AddFloatNAttribute(environment, "wind", scene.environment.wind, 3, "0 0 0");
 
-	remove_snow = remove_snow && snow->onground; // Only remove snow if there is snow to remove
+	params.remove_snow = params.remove_snow && snow->onground; // Only remove snow if there is snow to remove
 }
 
 void WriteXML::WriteBoundary() {
@@ -117,16 +117,16 @@ void WriteXML::WritePostProcessing() {
 }
 
 void WriteXML::SaveXML() {
-	string main_xml_path = save_path + "main.xml";
+	string main_xml_path = params.map_folder + "main.xml";
 	xml.SaveFile(main_xml_path.c_str());
 }
 
 void WriteXML::SaveVoxFiles() {
 	printf("Saving vox files...\n");
 	for (map<uint32_t, MV_FILE*>::iterator it = vox_files.begin(); it != vox_files.end(); it++)
-		it->second->SaveModel();
+		it->second->SaveModel(params.compress_vox);
 	for (list<MV_FILE*>::iterator it = compound_files.begin(); it != compound_files.end(); it++)
-		(*it)->SaveModel();
+		(*it)->SaveModel(params.compress_vox);
 }
 
 void WriteXML::WriteEntities() {
@@ -199,9 +199,9 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 
 	if (volume > 0 && sizex <= 256 && sizey <= 256 && sizez <= 256) {
 	#ifdef _WIN32
-		string vox_filename = save_path + "vox\\palette" + to_string(shape->palette) + ".vox";
+		string vox_filename = params.map_folder + "vox\\palette" + to_string(shape->palette) + ".vox";
 	#else
-		string vox_filename = save_path + "vox/palette" + to_string(shape->palette) + ".vox";
+		string vox_filename = params.map_folder + "vox/palette" + to_string(shape->palette) + ".vox";
 	#endif
 		string vox_path = "MOD/vox/palette" + to_string(shape->palette) + ".vox";
 		string vox_object = "shape" + to_string(handle);
@@ -220,7 +220,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		mvshape.voxels = MatrixInit(sizex, sizey, sizez);
 
 		bool is_wheel_shape = false;
-		if (remove_snow) {
+		if (params.remove_snow) {
 			Entity* this_entity = entity_mapping[handle];
 			Entity* vox_parent = this_entity->parent;
 			if (vox_parent != NULL && vox_parent->kind_byte == KindBody) {
@@ -239,7 +239,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 						Material palette_entry = palette.materials[index];
 						mvshape.voxels[x][y][z] = index;
 
-						if (remove_snow && palette_entry.kind == MaterialKind::Unphysical &&
+						if (params.remove_snow && palette_entry.kind == MaterialKind::Unphysical &&
 							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
 							mvshape.voxels[x][y][z] = 0;
 
@@ -251,7 +251,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 					k++;
 				}
 
-		if (remove_snow && !is_wheel_shape) {
+		if (params.remove_snow && !is_wheel_shape) {
 			if (mvshape.voxels[0][0][0] == 0)
 				mvshape.voxels[0][0][0] = 255;
 			if (mvshape.voxels[sizex-1][sizey-1][sizez-1] == 0)
@@ -274,9 +274,9 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		xml.AddFloatAttribute(entity_element, "scale", 10.0 * shape->scale, "1");
 	} else {
 	#ifdef _WIN32
-		string compound_filename = save_path + "compounds\\compound" + to_string(handle) + ".vox";
+		string compound_filename = params.map_folder + "compounds\\compound" + to_string(handle) + ".vox";
 	#else
-		string compound_filename = save_path + "compounds/compound" + to_string(handle) + ".vox";
+		string compound_filename = params.map_folder + "compounds/compound" + to_string(handle) + ".vox";
 	#endif
 		string compound_path = "MOD/compounds/compound" + to_string(handle) + ".vox";
 		MV_FILE* compound_vox = new MV_FILE(compound_filename.c_str());
@@ -332,7 +332,7 @@ void WriteXML::WriteCompound(MV_FILE* compound_vox, string vox_file, XMLElement*
 						Material palette_entry = palette.materials[index];
 						mvshape.voxels[x - offsetx][y - offsety][z - offsetz] = index;
 
-						if (remove_snow && palette_entry.kind == MaterialKind::Unphysical &&
+						if (params.remove_snow && palette_entry.kind == MaterialKind::Unphysical &&
 							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
 							mvshape.voxels[x - offsetx][y - offsety][z - offsetz] = 0;
 
@@ -613,7 +613,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddStrAttribute(entity_element, "resolution", resolution, "640 480");
 
 			string script_file = screen->script;
-			string prefix = "data/level/" + level_id;
+			string prefix = "data/level/" + params.level_id;
 			if (script_file.find(prefix) == 0)
 				script_file = "LEVEL" + script_file.substr(prefix.size());
 
@@ -777,7 +777,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		if (script_file.find(prefix) == 0)
 			script_file = script_file.substr(prefix.size());
 
-		prefix = "data/level/" + level_id;
+		prefix = "data/level/" + params.level_id;
 		if (script_file.find(prefix) == 0)
 			script_file = "LEVEL" + script_file.substr(prefix.size());
 

@@ -33,19 +33,6 @@ struct LevelInfo {
 	string description;
 };
 
-struct ConverterParams {
-	string bin_path;
-	string map_folder;
-	string game_folder;
-
-	string level_id;
-	string level_name;
-	string level_desc;
-
-	bool remove_snow;
-	bool xml_only;
-};
-
 void SaveInfoTxt(string map_folder, string level_name, string level_desc) {
 	string info_path = map_folder + "info.txt";
 	FILE* info_file = fopen(info_path.c_str(), "w");
@@ -78,16 +65,16 @@ int DecompileMap(void* param) {
 		fs::copy(script_folder, data->map_folder + "main\\script", fs::copy_options::recursive);
 	}
 
-	ParseFile(data->bin_path.c_str(), data->map_folder, data->level_id, data->remove_snow, data->xml_only);
+	ParseFile(*data);
 	return 0;
 }
 
 int FakeProgressBar(void* param) {
 	(void)param;
-	progress = 0.01;
+	progress = 0.01f;
 	while (progress < 0.98) {
 		this_thread::sleep_for(chrono::seconds(1));
-		progress += ((double)rand() / RAND_MAX) / 10.0;
+		progress += ((float)rand() / RAND_MAX) / 10.0f;
 	}
 	return 0;
 }
@@ -231,7 +218,7 @@ int main(int argc, char* argv[]) {
 #ifdef _WIN32
 	_setmaxstdio(2048);
 #endif
-	if (argc > 1) {
+	/*if (argc > 1) {
 		if (argc == 3) {
 			#ifdef _WIN32
 				ParseFile(argv[1], "test\\", argv[2]);
@@ -241,7 +228,9 @@ int main(int argc, char* argv[]) {
 		} else
 			printf("CLI Usage: %s quicksave.bin level_id\n", argv[0]);
 		return 0;
-	}
+	}*/
+	(void) argc;
+	(void) argv;
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
 		printf("Error: Failed to init SDL: %s\n", SDL_GetError());
@@ -254,7 +243,7 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 500, window_flags);
+	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 550, window_flags);
 	SDL_GLContext gl_context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, gl_context);
 	SDL_GL_SetSwapInterval(1);
@@ -297,11 +286,11 @@ int main(int argc, char* argv[]) {
 	bool disable_convert = false;
 	bool remove_snow = false;
 	bool xml_only = false;
-	/*bool use_tdcz = false;
-	bool use_mega_prop_pack = false;
+	bool use_tdcz = false;
+	/*bool use_mega_prop_pack = false;
 	int game_version = 0;*/
 
-	ConverterParams* paths = new ConverterParams();
+	ConverterParams* params = new ConverterParams();
 	SDL_Thread* parse_thread = NULL;
 	SDL_Thread* progress_thread = NULL;
 
@@ -406,8 +395,8 @@ int main(int argc, char* argv[]) {
 
 			ImGui::Checkbox("Remove Snow", &remove_snow);
 			ImGui::Checkbox("Generate XML only", &xml_only);
-			/*ImGui::Checkbox("Compress Vox Files", &use_tdcz);
-			ImGui::Checkbox("Use Mega Prop Pack", &use_mega_prop_pack);*/
+			ImGui::Checkbox("Compress Vox Files", &use_tdcz);
+			//ImGui::Checkbox("Use Mega Prop Pack", &use_mega_prop_pack);
 			ImGui::Dummy(ImVec2(0, 5));
 
 			if (disable_convert) {
@@ -436,36 +425,37 @@ int main(int argc, char* argv[]) {
 				progress = 0;
 				disable_convert = true;
 				if (selected_level_it->filename == "quicksave") {
-					paths->bin_path = quicksave_folder;
-					paths->bin_path += "\\";
+					params->bin_path = quicksave_folder;
+					params->bin_path += "\\";
 				} else {
-					paths->bin_path = game_folder;
-					paths->bin_path += "\\data\\bin\\";
+					params->bin_path = game_folder;
+					params->bin_path += "\\data\\bin\\";
 				}
-				paths->bin_path += selected_level_it->filename;
+				params->bin_path += selected_level_it->filename;
 
-				string tdbin = paths->bin_path + ".tdbin";
+				string tdbin = params->bin_path + ".tdbin";
 				FILE* already_decompressed = fopen(tdbin.c_str(), "rb");
 				if (already_decompressed != NULL) {
 					printf("A decompressed file was found for the current level.\n");
-					paths->bin_path += ".tdbin";
+					params->bin_path += ".tdbin";
 					fclose(already_decompressed);
 				} else
-					paths->bin_path += ".bin";
+					params->bin_path += ".bin";
 
-				paths->map_folder = mods_folder;
-				paths->map_folder += "\\" + selected_level_it->filename + "\\";
+				params->map_folder = mods_folder;
+				params->map_folder += "\\" + selected_level_it->filename + "\\";
 
-				paths->game_folder = game_folder;
-				paths->game_folder += "\\";
+				params->game_folder = game_folder;
+				params->game_folder += "\\";
 
-				paths->level_id = selected_level_it->level_id;
-				paths->level_name = selected_level_it->title;
-				paths->level_desc = selected_level_it->description;
-				paths->remove_snow = remove_snow;
-				paths->xml_only = xml_only;
+				params->level_id = selected_level_it->level_id;
+				params->level_name = selected_level_it->title;
+				params->level_desc = selected_level_it->description;
+				params->remove_snow = remove_snow;
+				params->xml_only = xml_only;
+				params->compress_vox = use_tdcz;
 
-				parse_thread = SDL_CreateThread(DecompileMap, "decompile_thread", (void*)paths);
+				parse_thread = SDL_CreateThread(DecompileMap, "decompile_thread", (void*)params);
 				progress_thread = SDL_CreateThread(FakeProgressBar, "progress_thread", NULL);
 			}
 			ImGui::PopStyleColor(3);

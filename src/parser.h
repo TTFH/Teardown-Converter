@@ -16,7 +16,7 @@ using namespace std;
 
 extern float progress;
 
-void ParseFile(const char* filename, string save_folder, string level_id = "", bool remove_snow = false, bool xml_only = false);
+void ParseFile(ConverterParams params);
 
 class TDBIN : public WriteXML {
 private:
@@ -60,7 +60,7 @@ private:
 	void ReadEnvironment();
 	void* ReadEntityKind(uint8_t);
 public:
-	TDBIN(const char* input, string save_folder, string level_id, bool remove_snow);
+	TDBIN(const ConverterParams& params);
 	~TDBIN();
 	void parse();
 };

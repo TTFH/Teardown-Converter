@@ -13,6 +13,7 @@
 
 #include "scene.h"
 #include "vox_writer.h"
+#include "zlib_utils.h"
 
 using namespace std;
 
@@ -111,7 +112,6 @@ MV_FILE::MV_FILE(string filename) {
 		is_index_used[i] = false;
 		palette_map[i] = i;
 	}
-	is_index_used[0] = true;
 }
 
 void MV_FILE::WriteDICT(DICT dict) {
@@ -168,6 +168,32 @@ void MV_FILE::WriteXYZI(MVShape shape) {
 			}
 		}
 	}
+}
+
+void MV_FILE::WriteTDCZ(MVShape shape) {
+	int volume = shape.sizex * shape.sizey * shape.sizez;
+	uint8_t* voxel_array = new uint8_t[volume];
+
+	int i = 0;
+	int voxel_count = 0;
+	for (int z = 0; z < shape.sizez; z++) // TDCZ order is ZYX
+		for (int y = 0; y < shape.sizey; y++)
+			for (int x = 0; x < shape.sizex; x++) {
+				voxel_array[i++] = shape.voxels[x][y][z];
+				if (shape.voxels[x][y][z] != 0)
+					voxel_count++;
+			}
+
+	int compressed_size = volume + voxel_count + 10;
+	uint8_t* compressed_data = new uint8_t[compressed_size];
+	bool error = ZlibBlockCompress(voxel_array, volume, 9, compressed_data, compressed_size);
+	assert(!error);
+
+	WriteChunkHeader(TDCZ, 3 * sizeof(int) + compressed_size, 0);
+	WriteInt(shape.sizex);
+	WriteInt(shape.sizey);
+	WriteInt(shape.sizez);
+	fwrite(compressed_data, sizeof(uint8_t), compressed_size, vox_file);
 }
 
 void MV_FILE::WriteMain_nTRN() {
@@ -367,7 +393,7 @@ void MV_FILE::WriteMATL(PBR pbr) {
 }
 
 void MV_FILE::WriteNOTE() {
-	int note_count = sizeof(notes) / sizeof(notes[0]);;
+	int note_count = sizeof(notes) / sizeof(notes[0]);
 	int note_chunck_size = 4 + 4 * note_count;
 	for (int i = 0; i < note_count; i++)
 		note_chunck_size += strlen(notes[i]);
@@ -380,7 +406,7 @@ void MV_FILE::WriteNOTE() {
 	}
 }
 
-void MV_FILE::SaveModel() {
+void MV_FILE::SaveModel(bool compress) {
 	vox_file = fopen(filename.c_str(), "wb+");
 	if (vox_file == NULL) {
 		printf("Error: Could not open %s for writing\n", filename.c_str());
@@ -390,7 +416,10 @@ void MV_FILE::SaveModel() {
 	WriteFileHeader();
 	for (unsigned int i = 0; i < models.size(); i++) {
 		WriteSIZE(models[i]);
-		WriteXYZI(models[i]);
+		if (compress)
+			WriteTDCZ(models[i]);
+		else
+			WriteXYZI(models[i]);
 	}
 	WriteMain_nTRN();
 	WriteRGBA();

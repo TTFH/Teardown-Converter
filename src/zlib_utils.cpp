@@ -1,7 +1,43 @@
 #include <stdio.h>
 #include <zlib.h>
 
-#include "zlib_inflate.h"
+#include "zlib_utils.h"
+
+const int BLOCK_SIZE = 8 * 1024; // 8 KiB
+
+static int min(int a, int b) {
+	return a < b ? a : b;
+}
+
+bool ZlibBlockCompress(const uint8_t* source, int source_len, int level, uint8_t* dest, int &dest_len) {
+	z_stream stream;
+	stream.zalloc = Z_NULL;
+	stream.zfree = Z_NULL;
+	stream.opaque = Z_NULL;
+	stream.next_in = (uint8_t*)source;
+	stream.avail_in = 0;
+	stream.next_out = dest;
+	stream.avail_out = dest_len;
+	dest_len = 0;
+
+	int err = deflateInit(&stream, level);
+	if (err != Z_OK) return false;
+
+	do {
+		if (stream.avail_in == 0) {
+			stream.avail_in = min(source_len, BLOCK_SIZE);
+			source_len -= stream.avail_in;
+		}
+		if (stream.avail_in != 0 || stream.avail_out != 0)
+			err = deflate(&stream, Z_SYNC_FLUSH);
+		else
+			err = Z_STREAM_END;
+	} while (err == Z_OK);
+
+	dest_len = stream.total_out;
+	deflateEnd(&stream);
+	return err == Z_STREAM_END;
+}
 
 bool ZlibUncompress(const uint8_t* source, long int source_len, uint8_t* dest, long int &dest_len) {
 	z_stream stream;

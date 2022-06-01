@@ -8,15 +8,13 @@
 
 #include "parser.h"
 #include "vox_writer.h"
-#include "zlib_inflate.h"
+#include "zlib_utils.h"
 
 using namespace std::experimental::filesystem;
 
-TDBIN::TDBIN(const char* input, string save_folder, string level_id, bool remove_snow) {
-	this->save_path = save_folder;
-	this->level_id = level_id;
-	this->remove_snow = remove_snow;
-
+TDBIN::TDBIN(const ConverterParams& params) {
+	this->params = params;
+	const char* input = params.bin_path.c_str();
 	char* filename = new char[strlen(input) + 3];
 	strcpy(filename, input);
 	if (IsFileCompressed(input)) {
@@ -204,7 +202,7 @@ Voxels TDBIN::ReadVoxels() {
 		int k = 0;
 		for (int i = 0; i < encoded_length / 2; i++) {
 			int run_length = ReadByte();
-			int voxel_index = ReadByte();
+			uint8_t voxel_index = ReadByte();
 			for (int j = 0; j <= run_length; j++) {
 				voxels.palette_index[k] = voxel_index;
 				k++;
@@ -731,14 +729,14 @@ void TDBIN::parse() {
 	printf("File parsed successfully!\n");
 }
 
-void ParseFile(const char* filename, string map_folder, string level_id, bool remove_snow, bool xml_only) {
-	if (!exists(map_folder)) {
-		create_directories(map_folder);
-		create_directories(map_folder + "vox");
-		create_directories(map_folder + "compounds");
+void ParseFile(ConverterParams params) {
+	if (!exists(params.map_folder)) {
+		create_directories(params.map_folder);
+		create_directories(params.map_folder + "vox");
+		create_directories(params.map_folder + "compounds");
 	}
 
-	TDBIN parser(filename, map_folder, level_id, remove_snow);
+	TDBIN parser(params);
 	parser.parse();
 	parser.WriteScene();
 	parser.WriteSpawnpoint();
@@ -747,7 +745,7 @@ void ParseFile(const char* filename, string map_folder, string level_id, bool re
 	parser.WritePostProcessing();
 	parser.WriteEntities();
 	parser.SaveXML();
-	if (!xml_only)
+	if (!params.xml_only)
 		parser.SaveVoxFiles();
 	printf("Map successfully converted!\n");
 	progress = 1;

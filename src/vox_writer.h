@@ -82,6 +82,7 @@ private:
 	void WriteChunkHeader(int id, int contentSize, int childrenSize);
 	void WriteSIZE(MVShape shape);
 	void WriteXYZI(MVShape shape);
+	void WriteTDCZ(MVShape shape);
 	void WriteMain_nTRN();
 	void WriteRGBA();
 	bool FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max);
@@ -97,7 +98,7 @@ public:
 	void AddShape(MVShape shape) {
 		models.push_back(shape);
 	}
-	void SaveModel();
+	void SaveModel(bool compress);
 	void AddColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
 	void AddPBR(uint8_t index, uint8_t type, float reflectivity, float shinyness, float metalness, float emissive, float alpha);
 	~MV_FILE();
