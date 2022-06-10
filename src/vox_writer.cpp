@@ -18,7 +18,7 @@
 using namespace std;
 
 const char* notes[] = {
-	"snow / hole",
+	"snow/hole",
 	"reserved",
 	"unphysical",
 	"unphysical",
@@ -188,6 +188,9 @@ void MV_FILE::WriteTDCZ(MVShape shape) {
 	uint8_t* compressed_data = new uint8_t[compressed_size];
 	bool error = ZlibBlockCompress(voxel_array, volume, 9, compressed_data, compressed_size);
 	assert(!error);
+	#ifdef NDEBUG
+		(void)error;
+	#endif
 
 	WriteChunkHeader(TDCZ, 3 * sizeof(int) + compressed_size, 0);
 	WriteInt(shape.sizex);

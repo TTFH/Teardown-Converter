@@ -353,7 +353,6 @@ void WriteXML::WriteCompound(MV_FILE* compound_vox, string vox_file, XMLElement*
 
 void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 	XMLElement* entity_element = xml.CreateElement("unknown");
-	assert(entity->handle != 0);
 
 	string tags = "";
 	for (unsigned int i = 0; i < entity->tags.getSize(); i++) {

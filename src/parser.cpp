@@ -44,6 +44,7 @@ TDBIN::TDBIN(const ConverterParams& params) {
 	}
 	delete[] filename;
 }
+
 TDBIN::~TDBIN() {
 	fclose(bin_file);
 	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
@@ -735,16 +736,20 @@ void ParseFile(ConverterParams params) {
 		create_directories(params.map_folder + "vox");
 		create_directories(params.map_folder + "compounds");
 	}
-
+	progress = 0.1;
 	TDBIN parser(params);
 	parser.parse();
+	progress = 0.2;
 	parser.WriteScene();
 	parser.WriteSpawnpoint();
 	parser.WriteEnvironment();
 	parser.WriteBoundary();
 	parser.WritePostProcessing();
+	progress = 0.4;
 	parser.WriteEntities();
+	progress = 0.6;
 	parser.SaveXML();
+	progress = 0.8;
 	if (!params.xml_only)
 		parser.SaveVoxFiles();
 	printf("Map successfully converted!\n");

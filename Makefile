@@ -25,7 +25,7 @@ SOURCES += file_dialog/ImGuiFileDialog.cpp
 OBJS = $(addprefix obj/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 
-CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -g
+CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -DNDEBUG -O2
 CXXFLAGS += -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog
 CXXFLAGS += -Ilib
 LIBS = -lz -lstdc++fs
