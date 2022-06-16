@@ -218,20 +218,17 @@ int main(int argc, char* argv[]) {
 #ifdef _WIN32
 	_setmaxstdio(2048);
 #endif
-	/*if (argc > 1) {
-		if (argc == 3) {
+	if (argc > 1) {
+		if (argc == 2) {
 			#ifdef _WIN32
-				ParseFile(argv[1], "test\\", argv[2]);
+				ParseFile({argv[1], "converted\\", "", "", "", "", false, false, false});
 			#else
-				ParseFile(argv[1], "test/", argv[2]);
+				ParseFile({argv[1], "converted/", "", "", "", "", false, false, false});
 			#endif
 		} else
-			printf("CLI Usage: %s quicksave.bin level_id\n", argv[0]);
+			printf("CLI Usage: %s quicksave.bin\n", argv[0]);
 		return 0;
-	}*/
-	// TODO: fix me back in
-	(void) argc;
-	(void) argv;
+	}
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
 		printf("Error: Failed to init SDL: %s\n", SDL_GetError());
@@ -365,7 +362,7 @@ int main(int argc, char* argv[]) {
 			/*ImGui::Text("Game Version:    ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
-			ImGui::Combo("##gameversion", &game_version, " 1.0.0\0 0.6.0\0");
+			ImGui::Combo("##gameversion", &game_version, " 1.1.0\0 0.6.0\0");
 			ImGui::PopItemWidth();*/
 
 			ImGui::Dummy(ImVec2(0, 10));

@@ -70,7 +70,6 @@ $(ODIR)/%.o: $(IMGUI_DIR)/backend/%.cpp $(IMGUI_DIR)/backend/%.h
 $(ODIR)/%.o: file_dialog/%.cpp file_dialog/%.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-
 all: $(EXE)
 	@echo Build complete for $(ECHO_MESSAGE)
 

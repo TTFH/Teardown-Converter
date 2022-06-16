@@ -678,14 +678,15 @@ void TDBIN::parse() {
 		scene.magic[i] = ReadByte();
 	for (int i = 0; i < 3; i++)
 		scene.version[i] = ReadByte();
+	assert(scene.version[0] == 1 && scene.version[1] == 1 && scene.version[2] == 0);
 	scene.level = ReadString();
 	scene.driven_vehicle = ReadInt();
 	for (int i = 0; i < 3; i++)
 		scene.shadowVolume[i] = ReadFloat();
 	scene.spawnpoint = ReadTransform();
 
-	for (int i = 0; i < 3; i++)
-		scene.z_u32_3[i] = ReadInt();
+	for (int i = 0; i < 4; i++)
+		scene.z_u32_4[i] = ReadInt();
 	scene.postpro.brightness = ReadFloat();
 	scene.postpro.colorbalance = ReadRgba();
 	scene.postpro.saturation = ReadFloat();
@@ -738,7 +739,13 @@ void ParseFile(ConverterParams params) {
 	}
 	progress = 0.1;
 	TDBIN parser(params);
-	parser.parse();
+	try {
+		parser.parse();
+	} catch(const std::bad_alloc& e) {
+		printf("You're a few terabytes low on RAM or this application crashed.\n");
+		printf("It's most likely the second.\n");
+		exit(EXIT_FAILURE);
+	}
 	progress = 0.2;
 	parser.WriteScene();
 	parser.WriteSpawnpoint();

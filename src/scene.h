@@ -150,7 +150,7 @@ struct Scene {
 	uint32_t driven_vehicle;// driven
 	float shadowVolume[3];	// shadowVolume
 	Transform spawnpoint;	// spawnpoint
-	uint32_t z_u32_3[3];
+	uint32_t z_u32_4[4];
 	PostProcessing postpro;
 	Player player;
 	Environment environment;
