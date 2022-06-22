@@ -20,7 +20,4 @@ Open a Terminal / Command Prompt in the same folder that Makefile
 Type: `make`  
 You can find the execulable in the `release` folder  
 
-## Task list
-- [ ] Improve progress bar and performance
-
 ![Editor Example](https://github.com/TTFH/Teardown-Converter/blob/415d7c086d4669cbbaa9762657e97eb9a1d57d97/utils/converter_mall.png)  

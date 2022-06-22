@@ -170,25 +170,12 @@ void MV_FILE::WriteXYZI(MVShape shape) {
 	}
 }
 
-/*
-TODO:
-class Tensor3D
-vars:
-size
-data
-methods:
-from run length encoding
-to array
-get non-zero count
-set/get entry
-*/
-
 void MV_FILE::WriteTDCZ(MVShape shape) {
 	int volume = shape.sizex * shape.sizey * shape.sizez;
 	uint8_t* voxel_array = new uint8_t[volume];
 
 	int i = 0;
-	int voxel_count = 0;
+	int voxel_count = 0; // TODO: remove, not used
 	for (int z = 0; z < shape.sizez; z++) // TDCZ order is ZYX
 		for (int y = 0; y < shape.sizey; y++)
 			for (int x = 0; x < shape.sizex; x++) {
@@ -197,7 +184,7 @@ void MV_FILE::WriteTDCZ(MVShape shape) {
 					voxel_count++;
 			}
 
-	int compressed_size = volume + voxel_count + 10;
+	int compressed_size = volume + voxel_count + 10; // TODO: rought estimate, fix
 	uint8_t* compressed_data = new uint8_t[compressed_size];
 	ZlibBlockCompress(voxel_array, volume, 9, compressed_data, compressed_size);
 

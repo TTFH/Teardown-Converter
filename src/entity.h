@@ -124,8 +124,7 @@ struct Body {
 struct Voxels {
 	uint32_t size[3];
 	// if the shape volume is not empty, voxels are stored using run length encoding
-	// with pairs (n-1, i) in the zyx order
-	// the next array stores a voxel matrix and not the binary data
+	// with pairs (n-1, i) in xyz order
 	Vec<uint8_t> palette_index;
 };
 

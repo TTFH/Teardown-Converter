@@ -2,6 +2,8 @@
 
 #include "math_utils.h"
 
+using namespace std;
+
 double deg(double rad) {
 	return rad * 180.0 / PI;
 }
@@ -116,4 +118,84 @@ Transform TransformToLocalTransform(const Transform& parent, const Transform& ch
 	local_tr.pos = inv_parent_rot * (child.pos - parent.pos);
 	local_tr.rot = inv_parent_rot * child.rot;
 	return local_tr;
+}
+
+Tensor3D::Tensor3D(int sizex, int sizey, int sizez) {
+	this->sizex = sizex;
+	this->sizey = sizey;
+	this->sizez = sizez;
+
+	data = new uint8_t**[sizex];
+	for (int i = 0; i < sizex; i++) {
+		data[i] = new uint8_t*[sizey];
+		for (int j = 0; j < sizey; j++)
+			data[i][j] = new uint8_t[sizez];
+	}
+	for (int i = 0; i < sizex; i++)
+		for (int j = 0; j < sizey; j++)
+			for (int k = 0; k < sizez; k++)
+				data[i][j][k] = 0x00;
+}
+
+Tensor3D::~Tensor3D() {
+	for (int i = 0; i < sizex; i++) {
+		for (int j = 0; j < sizey; j++)
+			delete[] data[i][j];
+		delete[] data[i];
+	}
+	delete[] data;
+	data = NULL;
+}
+
+void Tensor3D::FromRunLengthEncoding(RLE rle) {
+	uint8_t* array = new uint8_t[GetVolume()];
+
+	int k = 0;
+	for (RLE::iterator it = rle.begin(); it != rle.end(); it++) {
+		int run_length = it->first;
+		uint8_t entry = it->second;
+		for (int j = 0; j <= run_length; j++) {
+			array[k++] = entry;
+		}
+	}
+
+	k = 0;
+	for (int z = 0; z < sizez; z++)
+		for (int y = 0; y < sizey; y++)
+			for (int x = 0; x < sizex; x++)
+				data[x][y][z] = array[k++];
+
+	delete[] array;
+}
+
+void Tensor3D::Set(int x, int y, int z, uint8_t value) {
+	data[x][y][z] = value;
+}
+
+uint8_t Tensor3D::Get(int x, int y, int z) {
+	return data[x][y][z];
+}
+
+int Tensor3D::GetVolume() {
+	return sizex * sizey * sizez;
+}
+
+int Tensor3D::GetNonZeroCount() {
+	int count = 0;
+	for (int x = 0; x < sizex; x++)
+		for (int y = 0; y < sizey; y++)
+			for (int z = 0; z < sizez; z++)
+				if (data[x][y][z] != 0)
+					count++;
+	return count;
+}
+
+uint8_t* Tensor3D::ToArray() {
+	uint8_t* array = new uint8_t[GetVolume()];
+	int i = 0;
+	for (int z = 0; z < sizez; z++)
+		for (int y = 0; y < sizey; y++)
+			for (int x = 0; x < sizex; x++)
+				array[i++] = data[x][y][z];
+	return array;
 }
