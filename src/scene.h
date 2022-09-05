@@ -131,7 +131,7 @@ struct Material {
 
 struct Palette {
 	Material materials[256];
-	uint8_t tint_tables[2 * 4 * 256];
+	uint8_t tint_table[2 * 4 * 256];
 	uint8_t z_u8;
 };
 

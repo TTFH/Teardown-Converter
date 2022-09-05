@@ -137,7 +137,7 @@ Palette TDBIN::ReadPalette() {
 		p.materials[i].emissive = ReadFloat();
 		p.materials[i].replacable = ReadByte() != 0;
 	}
-	fread(&p.tint_tables, sizeof(uint8_t), 2 * 4 * 256, bin_file);
+	fread(&p.tint_table, sizeof(uint8_t), 2 * 4 * 256, bin_file);
 	p.z_u8 = ReadByte();
 	return p;
 }
@@ -737,7 +737,6 @@ void ParseFile(ConverterParams params) {
 		create_directories(params.map_folder + "vox");
 		create_directories(params.map_folder + "compounds");
 	}
-	progress = 0.1;
 	TDBIN parser(params);
 	try {
 		parser.parse();
@@ -746,17 +745,13 @@ void ParseFile(ConverterParams params) {
 		printf("It's most likely the second.\n");
 		exit(EXIT_FAILURE);
 	}
-	progress = 0.2;
 	parser.WriteScene();
 	parser.WriteSpawnpoint();
 	parser.WriteEnvironment();
 	parser.WriteBoundary();
 	parser.WritePostProcessing();
-	progress = 0.4;
 	parser.WriteEntities();
-	progress = 0.6;
 	parser.SaveXML();
-	progress = 0.8;
 	if (!params.xml_only)
 		parser.SaveVoxFiles();
 	printf("Map successfully converted!\n");
