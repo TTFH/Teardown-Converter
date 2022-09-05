@@ -12,6 +12,14 @@
 
 using namespace std::experimental::filesystem;
 
+TDBIN::TDBIN(const char* filename) {
+	bin_file = fopen(filename, "rb");
+	if (bin_file == NULL) {
+		printf("Error: Could not open %s for reading\n", filename);
+		exit(EXIT_FAILURE);
+	}
+}
+
 TDBIN::TDBIN(const ConverterParams& params) {
 	this->params = params;
 	const char* input = params.bin_path.c_str();
@@ -89,8 +97,7 @@ string TDBIN::ReadString() {
 	char c;
 	do {
 		fread(&c, sizeof(char), 1, bin_file);
-		if (c != '\0')
-			str += c;
+		if (c != '\0') str += c;
 	} while (c != '\0');
 	return str;
 }

@@ -60,6 +60,7 @@ private:
 	void ReadEnvironment();
 	void* ReadEntityKind(uint8_t);
 public:
+	TDBIN(const char* filename);
 	TDBIN(const ConverterParams& params);
 	~TDBIN();
 	void parse();
