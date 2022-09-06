@@ -1,5 +1,4 @@
 .vscode/
-*.zip
 obj/*.o
 release/*.exe
 release/*.bin
