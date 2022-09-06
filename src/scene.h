@@ -127,6 +127,8 @@ struct Material {
 	float metalness;
 	float emissive;	// [0..32]
 	bool replacable;
+
+	bool hacked;
 };
 
 struct Palette {

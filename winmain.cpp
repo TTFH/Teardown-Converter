@@ -235,21 +235,6 @@ RGBA OpenColorPicker(float r, float g, float b) {
 	return rgba;
 }
 
-/*
-// strength in range [0-4], 0: no paint, 4: fully painted
-RGB paint(RGB spray_color, RGB voxel_color, uint8_t strength) {
-	RGB diff = (spray_color - voxel_color) * 0.25;
-	return voxel_color + diff * strength;
-}
-
-uint8_t index = shape->voxels.palette_index[k];
-int tint_strength = shape->palette % 8;
-int tint_index = 256 * tint_strength + index + 1;
-assert(tint_index < 2 * 4 * 256);
-index = palette.tint_table[tint_index];
-Material palette_entry = palette.materials[index];
-*/
-
 DWORD WINAPI MainThread(HMODULE hModule) {
 	AllocConsole();
 	FILE* stream;

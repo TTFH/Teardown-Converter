@@ -18,6 +18,7 @@ extern float progress;
 
 void ParseFile(ConverterParams params);
 
+// TODO: inheritance should be the other way around
 class TDBIN : public WriteXML {
 private:
 	FILE* bin_file;
