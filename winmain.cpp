@@ -1,4 +1,4 @@
-// g++ -Wall -Werror winmain.cpp -o winmm.dll -s -shared -lcomdlg32
+// g++ -Wall -Werror winmain.cpp -o release/winmm.dll -s -shared -lcomdlg32
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -190,6 +190,21 @@ EXPORT(waveOutUnprepareHeader, winmm.waveOutUnprepareHeader);
 EXPORT(waveOutWrite, winmm.waveOutWrite);
 #endif
 
+struct RGBA {
+	float r, g, b, a;
+};
+
+uintptr_t FindDMAAddy(uintptr_t addr, std::vector<unsigned int> offsets) {
+	uintptr_t cAddr = addr;
+	for (unsigned int i = 0; i < offsets.size(); i++) {
+		cAddr = *(uintptr_t*)cAddr;
+		if (IsBadReadPtr((uintptr_t*)cAddr, sizeof(cAddr)))
+			return 0;
+		cAddr += offsets[i];
+	}
+	return cAddr;
+}
+
 void Patch(BYTE* dst, BYTE* src, unsigned int size) {
 	DWORD oldProtect;
 	VirtualProtect(dst, size, PAGE_EXECUTE_READWRITE, &oldProtect);
@@ -197,44 +212,10 @@ void Patch(BYTE* dst, BYTE* src, unsigned int size) {
 	VirtualProtect(dst, size, oldProtect, &oldProtect);
 }
 
-void Nop(BYTE* dst, unsigned int size) {
-	DWORD oldProtect;
-	VirtualProtect(dst, size, PAGE_EXECUTE_READWRITE, &oldProtect);
-	memset(dst, 0x90, size);
-	VirtualProtect(dst, size, oldProtect, &oldProtect);
-}
-
-uintptr_t FindDMAAddy(uintptr_t addr, std::vector<unsigned int> offsets) {
-	uintptr_t cAddr = addr;
-	for (unsigned int i = 0; i < offsets.size(); i++) {
-		cAddr = *(uintptr_t*)cAddr;
-
-		// Check if memory is writable (not ?? in cheatengine)
-		if (IsBadReadPtr((uintptr_t*)cAddr, sizeof(cAddr)))
-			return 0;
-
-		cAddr += offsets[i];
-	}
-	return cAddr;
-}
-/*
-__declspec(dllexport)
-DWORD WINAPI MessageBoxThread(LPVOID lpParam) {
-	MessageBoxA(NULL, "Hello World", "Hello World", MB_YESNO);
-	return 0;
-}
-*/
-
-struct RGBA {
-	float r, g, b, a;
-};
-
-RGBA OpenColorPicker() {
+RGBA OpenColorPicker(float r, float g, float b) {
 	CHOOSECOLOR cc;
 	static COLORREF acrCustClr[16];
-	static DWORD rgbCurrent;
-
-	rgbCurrent = RGB(229, 178, 25);
+	static COLORREF rgbCurrent = RGB(r * 255, g * 255, b * 255);
 
 	ZeroMemory(&cc, sizeof(cc));
 	cc.lStructSize = sizeof(cc);
@@ -256,60 +237,26 @@ RGBA OpenColorPicker() {
 
 DWORD WINAPI MainThread(HMODULE hModule) {
 	AllocConsole();
-	FILE* f;
-	freopen_s(&f, "CONOUT$", "w", stdout);
-	printf("Hello World\n");
-
+	FILE* stream;
+	freopen_s(&stream, "CONOUT$", "w", stdout);
 	uintptr_t moduleBase = (uintptr_t)GetModuleHandleA("teardown.exe");
-	bool close = false;
 
-	while (!close) {
-		if (GetAsyncKeyState(VK_END) & 1) {
-			close = true;
-		}
-
+	while (true) {
 		if (GetAsyncKeyState(VK_F1) & 1) {
-			printf("F1 pressed\n");
-
 			const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x34D390, {});
-			printf("spray_color: %g %g %g %g\n", spray_color->r, spray_color->g, spray_color->b, spray_color->a);
-			//0.9 0.7 0.1 1.0
-			//RGBA new_color = { 0.9, 0.1, 0.1, 1.0 };
-			RGBA new_color = OpenColorPicker();
+			// Removing the next line make the linker unhappy
+			printf("Spray Color: %g %g %g %g\n", spray_color->r, spray_color->g, spray_color->b, spray_color->a);
+			RGBA new_color = OpenColorPicker(spray_color->r, spray_color->g, spray_color->b);
 			Patch((BYTE*)spray_color, (BYTE*)&new_color, sizeof(RGBA));
-
-
 		}
-
 		Sleep(10);
 	}
-
 	FreeLibraryAndExitThread(hModule, 0);
 	return 0;
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved) {
-	switch (dwReason) {
-		case DLL_PROCESS_ATTACH: {
-			//DWORD dwTID;
-			//CreateThread(nullptr, 0, MessageBoxThread, nullptr, 0, &dwTID);
-
-			CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)MainThread, hModule, 0, nullptr);
-		}
-			break;
-		case DLL_THREAD_ATTACH:
-			break;
-		case DLL_THREAD_DETACH:
-			break;
-		case DLL_PROCESS_DETACH:
-			break;
-	}
-	return TRUE;
-}
-/*
 BOOL APIENTRY DllMain(HMODULE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	if (fdwReason == DLL_PROCESS_ATTACH)
-		AllocConsole();
+		CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)MainThread, hinstDLL, 0, nullptr);
 	return TRUE;
 }
-*/
