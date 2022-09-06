@@ -28,7 +28,7 @@ UNAME_S := $(shell uname -s)
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic #-DNDEBUG -O2
 CXXFLAGS += -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog
 CXXFLAGS += -Ilib
-LIBS = -lz -lstdc++fs
+LIBS = -lz -lstdc++fs -static
 
 ##---------------------------------------------------------------------
 ## BUILD FLAGS PER PLATFORM
