@@ -235,13 +235,6 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 			for (int y = 0; y < sizey; y++)
 				for (int x = 0; x < sizex; x++) {
 					uint8_t index = shape->voxels.palette_index[k];
-					/*if (index != 0) {
-						int tint_strength = shape->palette % 8;
-						int tint_index = 256 * tint_strength + index + 1;
-						assert(tint_index < 2 * 4 * 256);
-						index = palette.tint_table[tint_index];
-					}*/
-
 					if (index != 0) {
 						Material palette_entry = palette.materials[index];
 						mvshape.voxels[x][y][z] = index;
