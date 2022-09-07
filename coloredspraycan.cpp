@@ -196,6 +196,7 @@ void Spraycan::save(const char* filename) {
 */
 	// PALETTE
 	unsigned int palette_count = scene.palettes.getSize();
+	printf("Palette count: %d\n", palette_count);
 	//WriteInt(palette_count);
 	for (unsigned int i = 0; i < palette_count; i++) {
 		/*string vox_filename = "palette" + to_string(i) + ".vox";
@@ -232,9 +233,9 @@ void Spraycan::hijackTintTable() {
 		float b = k & 1 ? 0.9 : 0.1;
 		tint = { r, g, b, 1.0 };
 
-		for (int i = 0; i < 255; i++) { // Last index not used (?)
+		for (int i = 0; i < 256; i++) {
 			for (int strength = 0; strength < 4; strength++) {
-				int tint_index = 4 * 256 + 256 * strength + i; // Index offset by 1 (?)
+				int tint_index = 4 * 256 + 256 * strength + i;
 				assert(tint_index < 2 * 4 * 256);
 				int index = palette.tint_table[tint_index];
 				Material& original_color = palette.materials[i];
@@ -254,8 +255,9 @@ int main(int argc, char* argv[]) {
 
 	Spraycan parser(argv[1]);
 	parser.parse();
+	parser.save("memory_dump_original.cem");
 	parser.hijackTintTable();
-	parser.save("memory_dump.cem");
+	parser.save("memory_dump_painted.cem");
 	printf("Done!\n");
 
 	return 0;

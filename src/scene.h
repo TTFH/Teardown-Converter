@@ -119,7 +119,6 @@ struct Fire {
 	uint8_t z_u8_6[6];
 };
 
-// @0x3F6A004C
 struct Material {
 	uint8_t kind; // MaterialKind
 	// padding: 3 bytes

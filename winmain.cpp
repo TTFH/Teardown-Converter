@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <commdlg.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <vector>
 
 #define EXPORT(exp_name, target_name) asm(".section .drectve\n\t.ascii \" -export:" #exp_name "= c:/windows/system32/" #target_name "\"")
@@ -194,6 +195,52 @@ struct RGBA {
 	float r, g, b, a;
 };
 
+struct Material {
+	uint32_t kind;
+	RGBA rgba;
+	float reflectivity;
+	float shinyness;
+	float metalness;
+	float emissive;
+	uint32_t replacable;
+};
+
+struct Palette {
+	Material materials[256];
+	uint8_t tint_table[2 * 4 * 256];
+	uint32_t padding[4];
+};
+
+// TODO: use alpha
+RGBA operator*(const RGBA& color, float scale) {
+	return { color.r * scale, color.g * scale, color.b * scale, 1 };
+}
+RGBA operator+(const RGBA& color1, const RGBA& color2) {
+	return { color1.r + color2.r, color1.g + color2.g, color1.b + color2.b, 1 };
+}
+RGBA operator-(const RGBA& color1, const RGBA& color2) {
+	return { color1.r - color2.r, color1.g - color2.g, color1.b - color2.b, 1 };
+}
+
+// strength in range [0-4], 0: no paint, 4: fully painted
+RGBA paint(RGBA spray_color, RGBA voxel_color, uint8_t strength) {
+	RGBA diff = (spray_color - voxel_color) * 0.25;
+	return voxel_color + diff * strength;
+}
+
+void updateTintTable(RGBA tint, Palette& palette) {
+	for (int i = 0; i < 256; i++) {
+		for (int strength = 0; strength < 4; strength++) {
+			int tint_index = 4 * 256 + 256 * strength + i;
+			int index = palette.tint_table[tint_index];
+			Material& original_color = palette.materials[i];
+			Material& tinted_color = palette.materials[index];
+			if (tinted_color.replacable)
+				tinted_color.rgba = paint(tint, original_color.rgba, strength + 1);
+		}
+	}
+}
+
 uintptr_t FindDMAAddy(uintptr_t addr, std::vector<unsigned int> offsets) {
 	uintptr_t cAddr = addr;
 	for (unsigned int i = 0; i < offsets.size(); i++) {
@@ -248,6 +295,13 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 			printf("Spray Color: %g %g %g %g\n", spray_color->r, spray_color->g, spray_color->b, spray_color->a);
 			RGBA new_color = OpenColorPicker(spray_color->r, spray_color->g, spray_color->b);
 			Patch((BYTE*)spray_color, (BYTE*)&new_color, sizeof(RGBA));
+
+			const int palette_count = *(int*)FindDMAAddy(moduleBase + 0x00420690, {0xB8, 0x0});
+			Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x00420690, {0xB8, 0x8, 0xC});
+			printf("Palette Count: %d\n", palette_count);
+			printf("Palettes at: %p\n", palettes);
+			for (int i = 0; i < palette_count; i++)
+				updateTintTable(new_color, palettes[i]);
 		}
 		Sleep(10);
 	}
