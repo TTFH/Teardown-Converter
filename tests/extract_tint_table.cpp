@@ -199,13 +199,13 @@ void Spraycan::save(const char* filename) {
 	printf("Palette count: %d\n", palette_count);
 	//WriteInt(palette_count);
 	for (unsigned int i = 0; i < palette_count; i++) {
-		/*string vox_filename = "palette" + to_string(i) + ".vox";
+		string vox_filename = "palette" + to_string(i) + ".vox";
 		MV_FILE* vox_file = new MV_FILE(vox_filename.c_str());
 		for (int index = 0; index < 256; index++) {
 			Material& entry = scene.palettes[i].materials[index];
 			vox_file->AddColor(index, 255.0 * entry.rgba.r, 255.0 * entry.rgba.g, 255.0 * entry.rgba.b);
 		}
-		vox_file->SaveModel(false);*/
+		vox_file->SaveModel(false);
 		WritePaletteRAM(scene.palettes[i]);
 	}
 
@@ -256,8 +256,8 @@ int main(int argc, char* argv[]) {
 	Spraycan parser(argv[1]);
 	parser.parse();
 	parser.save("memory_dump_original.cem");
-	parser.hijackTintTable();
-	parser.save("memory_dump_painted.cem");
+	//parser.hijackTintTable();
+	//parser.save("memory_dump_painted.cem");
 	printf("Done!\n");
 
 	return 0;
