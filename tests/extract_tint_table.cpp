@@ -4,8 +4,8 @@
 
 #include <SDL.h>
 
-#include "src/parser.h"
-#include "src/vox_writer.h"
+#include "../src/parser.h"
+#include "../src/vox_writer.h"
 
 using namespace std;
 float progress = 0;

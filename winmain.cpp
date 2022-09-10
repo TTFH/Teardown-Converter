@@ -1,11 +1,13 @@
-// g++ -Wall -Werror winmain.cpp -o winmm.dll -s -shared -lcomdlg32 -static
+// g++ -Wall -Wextra -Werror -Wpedantic winmain.cpp -o winmm.dll -s -shared -lcomdlg32 -static
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <commdlg.h>
+#include <vector>
+#include <math.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <vector>
+#include <string.h>
 
 #define EXPORT(exp_name, target_name) asm(".section .drectve\n\t.ascii \" -export:" #exp_name "= c:/windows/system32/" #target_name "\"")
 #if TRUE
@@ -229,12 +231,11 @@ struct Palette {
 	uint32_t padding[4];
 };
 
-// TODO: use alpha
 RGBA operator*(const RGBA& color, float scale) {
-	return { color.r * scale, color.g * scale, color.b * scale, 1 };
+	return { color.r * scale, color.g * scale, color.b * scale, color.a * scale };
 }
 RGBA operator+(const RGBA& color1, const RGBA& color2) {
-	return { color1.r + color2.r, color1.g + color2.g, color1.b + color2.b, 1 };
+	return { color1.r + color2.r, color1.g + color2.g, color1.b + color2.b, color1.a + color2.a };
 }
 RGBA operator-(const RGBA& color1, const RGBA& color2) {
 	return { color1.r - color2.r, color1.g - color2.g, color1.b - color2.b, 1 };
@@ -249,7 +250,7 @@ RGBA paint(RGBA spray_color, RGBA voxel_color, uint8_t strength) {
 void updateTintTable(RGBA tint, Palette& palette) {
 	for (int i = 0; i < 256; i++) {
 		for (int strength = 0; strength < 4; strength++) {
-			int tint_index = 4 * 256 + 256 * strength + i;
+			int tint_index = 4 * 256 + strength * 256 + i;
 			int index = palette.tint_table[tint_index];
 			Material& original_color = palette.materials[i];
 			Material& tinted_color = palette.materials[index];
@@ -277,15 +278,21 @@ void Patch(BYTE* dst, BYTE* src, unsigned int size) {
 	VirtualProtect(dst, size, oldProtect, &oldProtect);
 }
 
+static COLORREF selectedColors[16] = {
+	RGB(229, 178,  25), RGB(178, 229,  25), RGB( 25, 229, 178), RGB( 25, 178, 229),
+	RGB(178,  25, 229), RGB(229,  25, 178), RGB(229,  25,  28), RGB(151, 151, 151),
+	RGB(229, 120,  25), RGB( 35, 229,  25), RGB(234, 176,  92), RGB(169, 129,  68),
+	RGB(138,  91,   0), RGB(100,  44,   0), RGB( 56,  39,  32), RGB( 50,  33,  26),
+};
+
 RGBA OpenColorPicker(float r, float g, float b) {
 	CHOOSECOLOR cc;
-	static COLORREF acrCustClr[16];
 	static COLORREF rgbCurrent = RGB(r * 255, g * 255, b * 255);
 
 	ZeroMemory(&cc, sizeof(cc));
 	cc.lStructSize = sizeof(cc);
 	cc.hwndOwner = NULL;
-	cc.lpCustColors = (LPDWORD)acrCustClr;
+	cc.lpCustColors = (LPDWORD)selectedColors;
 	cc.rgbResult = rgbCurrent;
 	cc.Flags = CC_FULLOPEN | CC_RGBINIT;
 
@@ -293,70 +300,79 @@ RGBA OpenColorPicker(float r, float g, float b) {
 		rgbCurrent = cc.rgbResult;
 
 	RGBA rgba;
-	rgba.r = GetRValue(rgbCurrent) / 255.0f;
-	rgba.g = GetGValue(rgbCurrent) / 255.0f;
-	rgba.b = GetBValue(rgbCurrent) / 255.0f;
-	rgba.a = 1.0f;
+	rgba.r = GetRValue(rgbCurrent) / 255.0;
+	rgba.g = GetGValue(rgbCurrent) / 255.0;
+	rgba.b = GetBValue(rgbCurrent) / 255.0;
+	rgba.a = 1.0;
 	return rgba;
 }
 
 DWORD WINAPI MainThread(HMODULE hModule) {
-	//AllocConsole();
-	//FILE* stream;
-	//freopen_s(&stream, "CONOUT$", "w", stdout);
+	int color_offset = 0;
+	const uint8_t START_INDEX = 209;
 	uintptr_t moduleBase = (uintptr_t)GetModuleHandleA("teardown.exe");
-	const uint8_t START_INDEX = 248;
-	uint8_t color_offset = 0; // [0..5] 6 colors
+
+	// 0.9 0.7 0.1 1.0
+	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x34D390, { });
+	if (memcmp(spray_color, "\x66\x66\x66\x3F\x33\x33\x33\x3F\xCD\xCC\xCC\x3D\x00\x00\x80\x3F", sizeof(RGBA)) != 0) {
+		MessageBoxA(NULL, "This MOD is not compatible with the version of Teardown you're using, please uninstall it by deleting winmm.dll", "Unsupported version", MB_OK | MB_ICONERROR);
+		FreeLibraryAndExitThread(hModule, 0);
+		return 0;
+	}
 
 	while (true) {
-		/*if (GetAsyncKeyState(VK_F1) & 1) {
-			const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x34D390, {});
-			// Removing the next line make the linker unhappy
-			printf("Spray Color: %g %g %g %g\n", spray_color->r, spray_color->g, spray_color->b, spray_color->a);
+		if (GetAsyncKeyState(VK_F1) & 1) {
+			const int palette_count = *(int*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x0 });
+			Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0xC });
+			// Removing this comment will cause the linker to crash ¯\_(ツ)_/¯
+			printf("Palette count: %d\n", palette_count);
+
 			RGBA new_color = OpenColorPicker(spray_color->r, spray_color->g, spray_color->b);
 			Patch((BYTE*)spray_color, (BYTE*)&new_color, sizeof(RGBA));
 
-			const int palette_count = *(int*)FindDMAAddy(moduleBase + 0x420690, {0xB8, 0x0});
-			Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, {0xB8, 0x8, 0xC});
-			printf("Palette count: %d\n", palette_count);
-			printf("Palettes at: %p\n", palettes);
-			for (int i = 0; i < palette_count; i++)
-				updateTintTable(new_color, palettes[i]);
-		}*/
-
-		if (GetAsyncKeyState(VK_F2) & 1) {
-			const int palette_count = *(int*)FindDMAAddy(moduleBase + 0x420690, {0xB8, 0x0});
-			Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, {0xB8, 0x8, 0xC});
-			printf("Palette count: %d\n", palette_count);
 			for (int i = 0; i < palette_count; i++) {
-				for (int k = 1; k < 7; k++) {
-					Material& material = palettes[i].materials[START_INDEX + k - 1];
-					float r = (k & 4) >> 2 ? 0.9 : 0.1;
-					float g = (k & 2) >> 1 ? 0.9 : 0.1;
-					float b = k & 1 ? 0.9 : 0.1;
+				updateTintTable(new_color, palettes[i]);
+				for (int k = 0; k < 16; k++) {
+					Material& material = palettes[i].materials[START_INDEX + k];
+					float r = GetRValue(selectedColors[k]) / 255.0;
+					float g = GetGValue(selectedColors[k]) / 255.0;
+					float b = GetBValue(selectedColors[k]) / 255.0;
 					material.rgba = { r, g, b, 1.0 };
 					material.kind = Masonry;
 				}
 			}
+
+			// je teardown.exe+B37F8
+			//const uint8_t* no_update_gpu_texture = (uint8_t*)FindDMAAddy(moduleBase + 0xB3616, { });
+			//uint8_t update_gpu_texture[6] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+			//Patch((BYTE*)no_update_gpu_texture, update_gpu_texture, sizeof(update_gpu_texture));
+		}
+
+		if (GetAsyncKeyState(VK_F2) & 1) {
+			color_offset = (16 + (color_offset - 1) % 16) % 16; // Really?
+			// movzx esi, byte ptr [rcx + rsi + 0x2C04];
+			const uint8_t* painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFEA01, { });
+			// mov esi, 0x01; nop; nop; nop;
+			uint8_t new_painter[8] = { 0xBE, 0x01, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90 };
+			new_painter[1] = START_INDEX + color_offset;
+			Patch((BYTE*)painter_func, new_painter, sizeof(new_painter));
 		}
 
 		if (GetAsyncKeyState(VK_F3) & 1) {
-			color_offset = (color_offset + 1) % 6;
-			// movzx esi, byte ptr [rcx + rsi + 0x2C04];
-			const uint8_t* painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFEA01, {});
-			// mov esi, 0x01; nop; nop; nop;
-			uint8_t new_painter[8] = {0xBE, 0x01, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90};
+			color_offset = (color_offset + 1) % 16;
+			const uint8_t* painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFEA01, { });
+			uint8_t new_painter[8] = { 0xBE, 0x01, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90 };
 			new_painter[1] = START_INDEX + color_offset;
-			Patch((BYTE*)painter_func, new_painter, 8);
+			Patch((BYTE*)painter_func, new_painter, sizeof(new_painter));
 		}
 
-		Sleep(10);
+		Sleep(34);
 	}
-	FreeLibraryAndExitThread(hModule, 0);
 	return 0;
 }
 
 BOOL APIENTRY DllMain(HMODULE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+	(void)lpvReserved;
 	if (fdwReason == DLL_PROCESS_ATTACH)
 		CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)MainThread, hinstDLL, 0, nullptr);
 	return TRUE;

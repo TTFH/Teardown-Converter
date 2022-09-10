@@ -121,21 +121,18 @@ struct Fire {
 
 struct Material {
 	uint8_t kind; // MaterialKind
-	// padding: 3 bytes
 	Rgba rgba;
 	float reflectivity;
 	float shinyness;
 	float metalness;
 	float emissive;	// [0..32]
 	bool replacable;
-	// padding: 3 bytes
 };
 
 struct Palette {
 	Material materials[256];
-	uint8_t z_u8; // THE FUCK IS THIS VALUE FOR?
+	uint8_t z_u8;
 	uint8_t tint_table[2 * 4 * 256];
-	// padding: 16 bytes
 };
 
 struct PostProcessing {
