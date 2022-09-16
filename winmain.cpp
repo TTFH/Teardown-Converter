@@ -259,7 +259,7 @@ RGBA operator+(const RGBA& color1, const RGBA& color2) {
 	return { color1.r + color2.r, color1.g + color2.g, color1.b + color2.b, color1.a + color2.a };
 }
 RGBA operator-(const RGBA& color1, const RGBA& color2) {
-	return { color1.r - color2.r, color1.g - color2.g, color1.b - color2.b, 1 };
+	return { color1.r - color2.r, color1.g - color2.g, color1.b - color2.b, color1.a - color2.a };
 }
 
 // strength in range [0-4], 0: no paint, 4: fully painted
@@ -390,6 +390,10 @@ map<int, int> shape_palette;
 int UpdatePalette(lua_State *L) {
 	int g_shape = lua_tointeger(L, 1);
 	printf("Get palette for shape %d\n", g_shape);
+	if (shape_palette.find(g_shape) == shape_palette.end()) {
+		printf("Shape %d not found in palette\n", g_shape);
+		return 0;
+	}
 	int palette_id = shape_palette[g_shape];
 	LuaSetInt(L, "g_palette_id", palette_id);
 
@@ -406,6 +410,10 @@ int UpdateMaterial(lua_State *L) {
 	int g_shape = lua_tointeger(L, 1);
 	int index = lua_tointeger(L, 2);
 	printf("Get material for shape %d and index %d\n", g_shape, index);
+	if (shape_palette.find(g_shape) == shape_palette.end()) {
+		printf("Shape %d not found in palette\n", g_shape);
+		return 0;
+	}
 
 	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0xC });
 	int palette_id = shape_palette[g_shape];
@@ -435,7 +443,12 @@ int ChangeMaterial(lua_State *L) {
 		printf("Invalid index 256\n");
 		return 0;
 	}
+	if (shape_palette.find(g_shape) == shape_palette.end()) {
+		printf("Shape %d not found in palette\n", g_shape);
+		return 0;
+	}
 
+	// TODO: read global instead
 	int type = lua_tointeger(L, 3);
 	float red = lua_tonumber(L, 4) / 255.0;
 	float green = lua_tonumber(L, 5) / 255.0;
@@ -500,6 +513,10 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 				}
 			}
 
+			const uint8_t* painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFEA01, { });
+			uint8_t old_painter[8] = { 0x0F, 0xB6, 0xB4, 0x31, 0x04, 0x2C, 0x00, 0x00 };
+			Patch((BYTE*)painter_func, old_painter, sizeof(old_painter));
+
 			// je teardown.exe+B37F8
 			//const uint8_t* no_update_gpu_texture = (uint8_t*)FindDMAAddy(moduleBase + 0xB3616, { });
 			//uint8_t update_gpu_texture[6] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
@@ -536,6 +553,7 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 				//	shape_data->size[0], shape_data->size[1], shape_data->size[2], shape_data->voxel_count, shape_data->palette);
 				shape_palette[shape_handle] = shape_data->palette;
 			}
+
 			const unsigned int script_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x1E8 });
 			printf("Script count: %d\n", script_count);
 			for (unsigned int i = 0; i < script_count; i++) {
