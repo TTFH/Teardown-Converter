@@ -142,7 +142,7 @@ Palette TDBIN::ReadPalette() {
 		p.materials[i].shinyness = ReadFloat();
 		p.materials[i].metalness = ReadFloat();
 		p.materials[i].emissive = ReadFloat();
-		p.materials[i].replacable = ReadByte() != 0;
+		p.materials[i].replaceable = ReadByte() != 0;
 	}
 	p.z_u8 = ReadByte();
 	fread(&p.tint_table, sizeof(uint8_t), 2 * 4 * 256, bin_file);
