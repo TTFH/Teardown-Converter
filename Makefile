@@ -26,8 +26,7 @@ OBJS = $(addprefix obj/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic #-DNDEBUG -O2
-CXXFLAGS += -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog
-CXXFLAGS += -Ilib -static
+CXXFLAGS += -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog -Ilib
 LIBS = -lz -lstdc++fs
 
 ##---------------------------------------------------------------------
@@ -43,7 +42,7 @@ endif
 
 ifeq ($(OS), Windows_NT)
 	ECHO_MESSAGE = "MinGW"
-	CXXFLAGS += `pkg-config --cflags sdl2`
+	CXXFLAGS += `pkg-config --cflags sdl2` -static
 	LIBS += -lgdi32 -lopengl32 -limm32 `pkg-config --static --libs sdl2` -mconsole icon.res
 endif
 
