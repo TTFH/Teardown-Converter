@@ -409,7 +409,7 @@ void MV_FILE::SaveModel(bool compress) {
 	vox_file = fopen(filename.c_str(), "wb+");
 	if (vox_file == NULL) {
 		printf("Error: Could not open %s for writing\n", filename.c_str());
-		exit(EXIT_FAILURE);
+		return;
 	}
 
 	WriteFileHeader();
@@ -431,6 +431,7 @@ void MV_FILE::SaveModel(bool compress) {
 	long int size = ftell(vox_file);
 	fseek(vox_file, childrenSize_ptr, SEEK_SET);
 	WriteInt(size - childrenSize_ptr - sizeof(int)); // Minus 4 bytes of childrenSize
+	fclose(vox_file);
 }
 
 void MV_FILE::AddColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
@@ -471,6 +472,4 @@ void MV_FILE::AddPBR(uint8_t index, uint8_t type, float reflectivity, float shin
 MV_FILE::~MV_FILE() {
 	for (vector<MVShape>::iterator it = models.begin(); it != models.end(); it++)
 		MatrixDelete(it->voxels, it->sizex, it->sizey);
-	if (vox_file != NULL)
-		fclose(vox_file);
 }

@@ -33,7 +33,7 @@ LIBS = -lz -lstdc++fs
 ## BUILD FLAGS PER PLATFORM
 ##---------------------------------------------------------------------
 
-ifeq ($(UNAME_S), Linux) #LINUX
+ifeq ($(UNAME_S), Linux)
 	ECHO_MESSAGE = "Linux"
 	CXXFLAGS += -Wno-unused-parameter -Wno-unused-result -Wno-format-security
 	CXXFLAGS += `sdl2-config --cflags`

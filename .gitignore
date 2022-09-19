@@ -1,5 +1,6 @@
 .vscode/
 obj/*.o
+TDLL/obj/*.o
 release/*.exe
 release/*.bin
 release/*.tdbin

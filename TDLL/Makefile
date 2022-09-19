@@ -1,4 +1,3 @@
-CXX = g++
 DLL = winmm.dll
 ODIR = obj
 
@@ -8,18 +7,20 @@ OBJS = $(addprefix obj/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic
-CXXFLAGS += -s -shared -static #-DDEBUG
+CXXFLAGS += -s -shared -static #-DDEBUGCONSOLE
 LIBS = -lcomdlg32 -llua5.1
 
 ##---------------------------------------------------------------------
 ## BUILD FLAGS PER PLATFORM
 ##---------------------------------------------------------------------
 
-ifeq ($(UNAME_S), Linux) #LINUX
+ifeq ($(UNAME_S), Linux)
+	CXX = x86_64-w64-mingw32-g++
 	ECHO_MESSAGE = "Linux"
 endif
 
 ifeq ($(OS), Windows_NT)
+	CXX = g++
 	ECHO_MESSAGE = "MinGW"
 endif
 

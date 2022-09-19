@@ -192,10 +192,10 @@ uintptr_t moduleBase = 0;
 int UpdatePalette(lua_State *L) {
 	int g_shape = LuaGetTableField(L, "shape", "handle");
 
-	const unsigned int shapes_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
 	unsigned int i = 0;
 	int palette_id = 0;
 	bool found = false;
+	const unsigned int shapes_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
 	while (i < shapes_count && !found) {
 		const int shape_handle = *(int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x160, 0x8 * i, 0xC });
 		if (shape_handle == g_shape) {
@@ -213,7 +213,7 @@ int UpdatePalette(lua_State *L) {
 
 	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0xC });
 	Palette selected_palette = palettes[palette_id];
-	for (int i = 0; i < 255; i++) {
+	for (int i = 0; i < 256; i++) {
 		RGBA color = selected_palette.materials[i].rgba;
 		LuaSetPaletteColor(L, i != 0 ? i : 256, color.r, color.g, color.b);
 	}
@@ -222,32 +222,29 @@ int UpdatePalette(lua_State *L) {
 
 int UpdateMaterial(lua_State *L) {
 	int index = lua_tointeger(L, 1);
+	if (index == 256) index = 0;
 	int g_shape = LuaGetTableField(L, "shape", "handle");
 
-	const unsigned int shapes_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
-	Vox* shape_data = NULL;
 	unsigned int i = 0;
-	int palette_id = 0;
-	bool found = false;
+	Vox* shape_data = NULL;
 	unsigned int shape_index = 0;
-	while (i < shapes_count && !found) {
+	const unsigned int shapes_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
+	while (i < shapes_count && shape_data == NULL) {
 		const int shape_handle = *(int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x160, 0x8 * i, 0xC });
 		if (shape_handle == g_shape) {
-			found = true;
 			shape_data = (Vox*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x160, 0x8 * i, 0x98, 0x0 });
-			palette_id = shape_data->palette;
 			shape_index = i;
 		}
 		i++;
 	}
 
-	if (!found) {
+	if (shape_data == NULL) {
 		printf("[UpdateMaterial] Shape %d not found\n", g_shape);
 		return 0;
 	}
 
 	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0xC });
-	Palette selected_palette = palettes[palette_id];
+	Palette selected_palette = palettes[shape_data->palette];
 	Material material = selected_palette.materials[index];
 	LuaSetTableField(L, "indexMaterial", "type", material.kind);
 	LuaSetTableField(L, "indexMaterial", "r", material.rgba.r * 255);
@@ -258,20 +255,14 @@ int UpdateMaterial(lua_State *L) {
 	LuaSetTableField(L, "indexMaterial", "shinyness", material.shinyness * 100);
 	LuaSetTableField(L, "indexMaterial", "metalness", material.metalness * 100);
 	LuaSetTableField(L, "indexMaterial", "emissive", material.emissive * 10);
-	/*lua_getglobal(L, "indexMaterial");
-	lua_pushboolean(L, material.replaceable);
-	lua_setfield(L, -2, "replaceable");
-	lua_pop(L, 1);*/
 
 	LuaSetTableField(L, "shape", "scale", shape_data->scale * 1000);
 
 	const Texture* texture = (Texture*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x160, 0x8 * shape_index, 0x7C });
-	if (texture != NULL) {
-		LuaSetTableField(L, "shape", "texture", texture->texture_tile);
-		LuaSetTableField(L, "shape", "tex_weight", texture->texture_weight * 100);
-		LuaSetTableField(L, "shape", "blend_texture", texture->blendtexture_tile);
-		LuaSetTableField(L, "shape", "blend_tex_weight", texture->blendtexture_weight * 100);
-	}
+	LuaSetTableField(L, "shape", "texture", texture->texture_tile);
+	LuaSetTableField(L, "shape", "tex_weight", texture->texture_weight * 100);
+	LuaSetTableField(L, "shape", "blend_texture", texture->blendtexture_tile);
+	LuaSetTableField(L, "shape", "blend_tex_weight", texture->blendtexture_weight * 100);
 
 	return 0;
 }
@@ -279,25 +270,25 @@ int UpdateMaterial(lua_State *L) {
 int ChangeMaterial(lua_State *L) {
 	int g_shape = LuaGetTableField(L, "shape", "handle");
 	int index = LuaGetTableField(L, "indexMaterial", "index");
+	if (index == 256) {
+		printf("[ChangeMaterial] Invalid index %d\n", index);
+		return 0;
+	}
 
-	const unsigned int shapes_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
-	Vox* shape_data = NULL;
 	unsigned int i = 0;
-	int palette_id = 0;
-	bool found = false;
+	Vox* shape_data = NULL;
 	unsigned int shape_index = 0;
-	while (i < shapes_count && !found) {
+	const unsigned int shapes_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
+	while (i < shapes_count && shape_data == NULL) {
 		const int shape_handle = *(int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x160, 0x8 * i, 0xC });
 		if (shape_handle == g_shape) {
-			found = true;
 			shape_data = (Vox*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x160, 0x8 * i, 0x98, 0x0 });
-			palette_id = shape_data->palette;
 			shape_index = i;
 		}
 		i++;
 	}
 
-	if (!found) {
+	if (shape_data == NULL) {
 		printf("[ChangeMaterial] Shape %d not found\n", g_shape);
 		return 0;
 	}
@@ -313,7 +304,7 @@ int ChangeMaterial(lua_State *L) {
 	float emissive = LuaGetTableField(L, "indexMaterial", "emissive") / 10.0;
 
 	Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0xC });
-	Material& material = palettes[palette_id].materials[index];
+	Material& material = palettes[shape_data->palette].materials[index];
 	material.kind = type;
 	material.rgba = { red, green, blue, alpha };
 	material.reflectivity = reflectivity;
@@ -339,7 +330,7 @@ int ChangeMaterial(lua_State *L) {
 }
 
 DWORD WINAPI MainThread(HMODULE hModule) {
-#ifdef DEBUG
+#ifdef DEBUGCONSOLE
 	AllocConsole();
 	FILE* stream;
 	freopen_s(&stream, "CONOUT$", "w", stdout);
