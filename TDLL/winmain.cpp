@@ -67,7 +67,7 @@ struct Palette {
 struct Entity {
 	void* steam;		// 0x00
 	uint8_t kind;		// 0x08
-	uint8_t flags;
+	uint8_t flags;		// ????
 	uint8_t padd[2];
 	uint32_t handle;	// 0x0C
 	Entity* parent;		// 0x10
@@ -81,9 +81,9 @@ struct Vox {
 	uint8_t* voxels;		// 0x10
 	void* physics_buffer;
 	float scale;			// 0x20
-	uint8_t padding2[48];
+	uint8_t unknown1[48];	// ????
 	uint32_t palette;		// 0x54
-	uint8_t padding3[4];
+	uint8_t unknown2[4];	// ????
 	int32_t voxel_count;	// 0x5C
 }; // size: 0x60
 
