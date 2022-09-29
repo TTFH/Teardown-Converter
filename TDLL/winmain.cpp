@@ -59,16 +59,17 @@ struct Material {
 };
 
 struct Palette {
+	uint32_t padding1[3];
 	Material materials[256];
 	uint8_t tint_table[2 * 4 * 256];
-	uint32_t padding[4];
+	uint32_t padding2;
 };
 
 struct Entity {
-	void* steam;		// 0x00
+	void* unknown;		// 0x00
 	uint8_t kind;		// 0x08
-	uint8_t flags;		// ????
-	uint8_t padd[2];
+	uint8_t flags;		// 0x09
+	uint8_t padding[2];
 	uint32_t handle;	// 0x0C
 	Entity* parent;		// 0x10
 	Entity* sibling;	// 0x18
@@ -112,7 +113,61 @@ struct Shape {
 	bool broken;				// 0xAC
 	uint8_t padding3[3];
 	Transform world_tr;			// 0xB0
-}; // size: 0xCC
+	uint8_t padding4[4];
+}; // size: 0xD0
+
+class td_string {
+	union {
+		char* HeapBuffer;
+		char StackBuffer[16] = { 0 };
+	};
+public:
+	const char* c_str() const {
+		return StackBuffer[15] != '\0' ? HeapBuffer : &StackBuffer[0];
+	}
+};
+
+template<typename T>
+class td_vector {
+	uint32_t size = 0;
+	uint32_t capacity = 0;
+	T* data = nullptr;
+public:
+	uint32_t getSize() const {
+		return size;
+	}
+	T operator[](uint32_t index) const {
+		return data[index];
+	}
+	T& operator[](uint32_t index) {
+		return data[index];
+	}
+};
+
+struct LuaStateInfo {
+	lua_State* state;
+};
+
+struct Script {
+	Entity self;
+	td_string name;				// 0x28
+	uint8_t padding1[8];
+	float runtime;				// 0x40
+	float delta;
+	td_string path;				// 0x48
+	td_string location;			// 0x58
+	uint8_t padding2[56];
+	LuaStateInfo* state_info;	// 0xA0
+	bool is_loaded;				// 0xA8
+	bool has_init;
+	bool has_tick;
+	bool has_update;
+	bool has_draw;
+	bool has_command;
+	uint8_t padding3[2];
+	float runtime2;				// 0xB0
+	float update_runtime;		// 0xB4
+}; // size: ?
 
 RGBA operator*(const RGBA& color, float scale) {
 	return { color.r * scale, color.g * scale, color.b * scale, color.a * scale };
@@ -234,7 +289,7 @@ void LuaSetPaletteColor(lua_State* L, int index, double r, double g, double b) {
 
 uintptr_t moduleBase = 0;
 
-int UpdatePalette(lua_State *L) {
+int GetPalette(lua_State *L) {
 	unsigned int handle = LuaGetTableField(L, "shape", "handle");
 
 	unsigned int i = 0;
@@ -248,11 +303,11 @@ int UpdatePalette(lua_State *L) {
 	}
 
 	if (shape == NULL) {
-		printf("[UpdatePalette] Shape %d not found\n", handle);
+		printf("[GetPalette] Shape %d not found\n", handle);
 		return 0;
 	}
 
-	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0xC });
+	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0x0 });
 	Palette selected_palette = palettes[shape->vox->palette];
 	for (int i = 0; i < 256; i++) {
 		RGBA color = selected_palette.materials[i].rgba;
@@ -261,7 +316,7 @@ int UpdatePalette(lua_State *L) {
 	return 0;
 }
 
-int UpdateMaterial(lua_State *L) {
+int GetMaterial(lua_State *L) {
 	int index = lua_tointeger(L, 1);
 	if (index == 256) index = 0;
 	unsigned int handle = LuaGetTableField(L, "shape", "handle");
@@ -277,13 +332,12 @@ int UpdateMaterial(lua_State *L) {
 	}
 
 	if (shape == NULL) {
-		printf("[UpdateMaterial] Shape %d not found\n", handle);
+		printf("[GetMaterial] Shape %d not found\n", handle);
 		return 0;
 	}
 
-	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0xC });
-	Palette selected_palette = palettes[shape->vox->palette];
-	Material material = selected_palette.materials[index];
+	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0x0 });
+	Material material = palettes[shape->vox->palette].materials[index];
 	LuaSetTableField(L, "indexMaterial", "type", material.kind);
 	LuaSetTableField(L, "indexMaterial", "r", material.rgba.r * 255);
 	LuaSetTableField(L, "indexMaterial", "g", material.rgba.g * 255);
@@ -299,8 +353,14 @@ int UpdateMaterial(lua_State *L) {
 	LuaSetTableField(L, "shape", "tex_weight", shape->texture_weight * 100);
 	LuaSetTableField(L, "shape", "blend_texture", shape->blendtexture_tile);
 	LuaSetTableField(L, "shape", "blend_tex_weight", shape->blendtexture_weight * 100);
+	LuaSetTableField(L, "shape", "density", shape->density * 100);
+	LuaSetTableField(L, "shape", "strength", shape->strength * 100);
 	return 0;
 }
+
+typedef void (*VoxInitializer) (Vox* vox);
+VoxInitializer GenVoxTexture;
+VoxInitializer GenVoxBuffers;
 
 int ChangeMaterial(lua_State *L) {
 	unsigned int handle = LuaGetTableField(L, "shape", "handle");
@@ -335,7 +395,7 @@ int ChangeMaterial(lua_State *L) {
 	float metalness = LuaGetTableField(L, "indexMaterial", "metalness") / 100.0;
 	float emissive = LuaGetTableField(L, "indexMaterial", "emissive") / 10.0;
 
-	Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0xC });
+	Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0x0 });
 	Material& material = palettes[shape->vox->palette].materials[index];
 	material.kind = type;
 	material.rgba = { red, green, blue, alpha };
@@ -349,12 +409,58 @@ int ChangeMaterial(lua_State *L) {
 	float texture_weight = LuaGetTableField(L, "shape", "tex_weight") / 100.0;
 	int blendtexture_tile = LuaGetTableField(L, "shape", "blend_texture");
 	float blendtexture_weight = LuaGetTableField(L, "shape", "blend_tex_weight") / 100.0;
+	float density = LuaGetTableField(L, "shape", "density") / 100.0;
+	float strength = LuaGetTableField(L, "shape", "strength") / 100.0;
 
 	shape->vox->scale = scale;
 	shape->texture_tile = texture_tile;
 	shape->texture_weight = texture_weight;
 	shape->blendtexture_tile = blendtexture_tile;
 	shape->blendtexture_weight = blendtexture_weight;
+	shape->density = density;
+	shape->strength = strength;
+	return 0;
+}
+
+int SetShapeVoxelAtIndex(lua_State *L) {
+	unsigned int shape_handle = lua_tointeger(L, 1);
+	unsigned int x = lua_tointeger(L, 2);
+	unsigned int y = lua_tointeger(L, 3);
+	unsigned int z = lua_tointeger(L, 4);
+	unsigned int index = lua_tointeger(L, 5);
+	if (index == 256) index = 0;
+
+	//printf("[SetShapeVoxelAtIndex] shape_handle: %d, x: %d, y: %d, z: %d, index: %d\n", shape_handle, x, y, z, index);
+
+	// TODO: Move to getShape()
+	unsigned int i = 0;
+	Shape* shape = NULL;
+	// TODO: use td_vector<>
+	const unsigned int shapes_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
+	while (i < shapes_count && shape == NULL) {
+		shape = (Shape*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x160, 0x8 * i, 0x0 });
+		if (shape->self.handle != shape_handle)
+			shape = NULL;
+		i++;
+	}
+
+	if (shape == NULL) {
+		printf("[SetShapeVoxelAtIndex] Shape %d not found\n", shape_handle);
+		return 0;
+	}
+
+	//shape->vox->voxels[x][y][z] = index;
+	int sizex = shape->vox->size[0];
+	int sizey = shape->vox->size[1];
+	//int sizez = shape->vox->size[2];
+	shape->vox->voxels[x + y * sizex + z * sizex * sizey] = index;
+
+	// TODO: Check if both are needed
+	GenVoxTexture = (VoxInitializer)FindDMAAddy(moduleBase + 0xFB190, { });
+	GenVoxBuffers = (VoxInitializer)FindDMAAddy(moduleBase + 0xFAEE0, { });
+	GenVoxTexture(shape->vox);
+	GenVoxBuffers(shape->vox);
+
 	return 0;
 }
 
@@ -369,6 +475,8 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 	int color_offset = 0;
 	const uint8_t START_INDEX = 209;
 	moduleBase = (uintptr_t)GetModuleHandleA("teardown.exe");
+	//uintptr_t game = moduleBase + 0x420690;
+	//uintptr_t scene = FindDMAAddy(game, { 0x48 });
 
 	// 0.9 0.7 0.1 1.0
 	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x34D390, { });
@@ -380,15 +488,18 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 
 	while (true) {
 		if (GetAsyncKeyState(VK_F1) & 1) {
-			const int palette_count = *(int*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x0 });
-			Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0xC });
+			//const int palette_count = *(int*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x0 });
+			//Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0x0 });
 			// Removing this comment will cause the linker to crash ¯\_(ツ)_/¯
-			printf("Palette count: %d\n", palette_count);
+			//printf("Palette count: %d\n", palette_count);
+
+			td_vector<Palette> palettes = *(td_vector<Palette>*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x0 });
+			printf("Palette count: %d\n", palettes.getSize());
 
 			RGBA new_color = OpenColorPicker(spray_color->r, spray_color->g, spray_color->b);
 			Patch((BYTE*)spray_color, (BYTE*)&new_color, sizeof(RGBA));
 
-			for (int i = 0; i < palette_count; i++) {
+			for (unsigned int i = 0; i < palettes.getSize(); i++) {
 				updateTintTable(new_color, palettes[i]);
 				for (int k = 0; k < 16; k++) {
 					Material& material = palettes[i].materials[START_INDEX + k];
@@ -432,17 +543,19 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 			bool init = false;
 			const unsigned int script_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x1E8 });
 			for (unsigned int i = 0; i < script_count; i++) {
-				const char* script_path = (char*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x1F0, 0x8 * i, 0x28, 0x0 });
-				if (!init && (strstr(script_path, "Colored Spraycan") != NULL || strstr(script_path, "2767789311") != NULL)) {
+				const Script* script = (Script*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x1F0, 0x8 * i, 0x0 });
+				if (!init && (strstr(script->name.c_str(), "Colored Spraycan") != NULL || strstr(script->name.c_str(), "2767789311") != NULL)) {
 					init = true;
-					L = (lua_State*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x1F0, 0x8 * i, 0xA0, 0x0, 0x0 });
-					printf("Script %s has state @0x%p\n", script_path, (void*)L);
-					lua_pushcfunction(L, UpdatePalette);
-					lua_setglobal(L, "UpdatePalette");
-					lua_pushcfunction(L, UpdateMaterial);
-					lua_setglobal(L, "UpdateMaterial");
+					L = script->state_info->state;
+					printf("Script %s has state @0x%p\n", script->name.c_str(), (void*)L);
+					lua_pushcfunction(L, GetPalette);
+					lua_setglobal(L, "GetPalette");
+					lua_pushcfunction(L, GetMaterial);
+					lua_setglobal(L, "GetMaterial");
 					lua_pushcfunction(L, ChangeMaterial);
 					lua_setglobal(L, "ChangeMaterial");
+					lua_pushcfunction(L, SetShapeVoxelAtIndex);
+					lua_setglobal(L, "SetShapeVoxelAtIndex");
 				}
 			}
 		}

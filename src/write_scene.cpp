@@ -537,9 +537,10 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 			int exhausts_count = vehicle->exhausts.getSize();
 			for (int i = 0; i < exhausts_count; i++) {
+				string exhaust_tag = "exhaust=" + (int)vehicle->exhausts[i].strength; // TODO: use float
 				XMLElement* exhaust = xml.CreateElement("location");
 				xml.AddElement(entity_element, exhaust);
-				xml.AddAttribute(exhaust, "tags", "exhaust");
+				xml.AddStrAttribute(exhaust, "tags", exhaust_tag);
 				WriteTransform(exhaust, vehicle->exhausts[i].transform);
 			}
 

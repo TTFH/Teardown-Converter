@@ -263,7 +263,7 @@ struct VehicleProperties {
 
 struct Exhaust {
 	Transform transform;
-	float z_f32;
+	float strength;
 };
 
 struct Vital {
