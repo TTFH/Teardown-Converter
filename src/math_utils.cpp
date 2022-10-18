@@ -154,9 +154,8 @@ void Tensor3D::FromRunLengthEncoding(RLE rle) {
 	for (RLE::iterator it = rle.begin(); it != rle.end(); it++) {
 		int run_length = it->first;
 		uint8_t entry = it->second;
-		for (int j = 0; j <= run_length; j++) {
+		for (int j = 0; j <= run_length; j++)
 			array[k++] = entry;
-		}
 	}
 
 	k = 0;
@@ -191,7 +190,9 @@ int Tensor3D::GetNonZeroCount() {
 }
 
 uint8_t* Tensor3D::ToArray() {
-	uint8_t* array = new uint8_t[GetVolume()];
+	int volume = GetVolume();
+	if (volume == 0) return NULL;
+	uint8_t* array = new uint8_t[volume];
 	int i = 0;
 	for (int z = 0; z < sizez; z++)
 		for (int y = 0; y < sizey; y++)

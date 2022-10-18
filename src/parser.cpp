@@ -455,7 +455,7 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->exhausts.resize(exhaust_count);
 	for (int i = 0; i < exhaust_count; i++) {
 		vehicle->exhausts[i].transform = ReadTransform();
-		vehicle->exhausts[i].z_f32 = ReadFloat();
+		vehicle->exhausts[i].strength = ReadFloat();
 	}
 
 	int vital_count = ReadInt();
@@ -685,7 +685,7 @@ void TDBIN::parse() {
 		scene.magic[i] = ReadByte();
 	for (int i = 0; i < 3; i++)
 		scene.version[i] = ReadByte();
-	assert(scene.version[0] == 1 && scene.version[1] == 1 && scene.version[2] == 0);
+	assert(scene.version[0] == 1 && scene.version[1] == 2 && scene.version[2] == 0);
 	scene.level = ReadString();
 	scene.driven_vehicle = ReadInt();
 	for (int i = 0; i < 3; i++)

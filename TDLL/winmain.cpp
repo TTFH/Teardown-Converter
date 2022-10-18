@@ -289,18 +289,17 @@ void LuaSetPaletteColor(lua_State* L, int index, double r, double g, double b) {
 
 uintptr_t moduleBase = 0;
 
+Shape* GetShape(unsigned int handle) {
+	td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
+	for (unsigned int i = 0; i < shapes.getSize(); i++)
+		if (shapes[i]->self.handle == handle)
+			return shapes[i];
+	return NULL;
+}
+
 int GetPalette(lua_State *L) {
 	unsigned int handle = LuaGetTableField(L, "shape", "handle");
-
-	unsigned int i = 0;
-	Shape* shape = NULL;
-	const unsigned int shapes_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
-	while (i < shapes_count && shape == NULL) {
-		shape = (Shape*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x160, 0x8 * i, 0x0 });
-		if (shape->self.handle != handle)
-			shape = NULL;
-		i++;
-	}
+	Shape* shape = GetShape(handle);
 
 	if (shape == NULL) {
 		printf("[GetPalette] Shape %d not found\n", handle);
@@ -320,16 +319,7 @@ int GetMaterial(lua_State *L) {
 	int index = lua_tointeger(L, 1);
 	if (index == 256) index = 0;
 	unsigned int handle = LuaGetTableField(L, "shape", "handle");
-
-	unsigned int i = 0;
-	Shape* shape = NULL;
-	const unsigned int shapes_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
-	while (i < shapes_count && shape == NULL) {
-		shape = (Shape*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x160, 0x8 * i, 0x0 });
-		if (shape->self.handle != handle)
-			shape = NULL;
-		i++;
-	}
+	Shape* shape = GetShape(handle);
 
 	if (shape == NULL) {
 		printf("[GetMaterial] Shape %d not found\n", handle);
@@ -358,10 +348,6 @@ int GetMaterial(lua_State *L) {
 	return 0;
 }
 
-typedef void (*VoxInitializer) (Vox* vox);
-VoxInitializer GenVoxTexture;
-VoxInitializer GenVoxBuffers;
-
 int ChangeMaterial(lua_State *L) {
 	unsigned int handle = LuaGetTableField(L, "shape", "handle");
 	int index = LuaGetTableField(L, "indexMaterial", "index");
@@ -369,16 +355,7 @@ int ChangeMaterial(lua_State *L) {
 		printf("[ChangeMaterial] Invalid index %d\n", index);
 		return 0;
 	}
-
-	unsigned int i = 0;
-	Shape* shape = NULL;
-	const unsigned int shapes_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
-	while (i < shapes_count && shape == NULL) {
-		shape = (Shape*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x160, 0x8 * i, 0x0 });
-		if (shape->self.handle != handle)
-			shape = NULL;
-		i++;
-	}
+	Shape* shape = GetShape(handle);
 
 	if (shape == NULL) {
 		printf("[ChangeMaterial] Shape %d not found\n", handle);
@@ -422,45 +399,43 @@ int ChangeMaterial(lua_State *L) {
 	return 0;
 }
 
+typedef void (*VoxInitializer) (Vox* vox);
+VoxInitializer UpdateVox;
+/*
+void SetShapeVoxelAtIndex(int handle, int x, int y, int z, int index) {
+	Shape* shape = GetShape(handle);
+	shape->vox->voxels[x][y][z] = index;
+	UpdateVox(shape->vox);
+}
+*/
 int SetShapeVoxelAtIndex(lua_State *L) {
-	unsigned int shape_handle = lua_tointeger(L, 1);
+	unsigned int handle = lua_tointeger(L, 1);
 	unsigned int x = lua_tointeger(L, 2);
 	unsigned int y = lua_tointeger(L, 3);
 	unsigned int z = lua_tointeger(L, 4);
 	unsigned int index = lua_tointeger(L, 5);
+
 	if (index == 256) index = 0;
-
-	//printf("[SetShapeVoxelAtIndex] shape_handle: %d, x: %d, y: %d, z: %d, index: %d\n", shape_handle, x, y, z, index);
-
-	// TODO: Move to getShape()
-	unsigned int i = 0;
-	Shape* shape = NULL;
-	// TODO: use td_vector<>
-	const unsigned int shapes_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
-	while (i < shapes_count && shape == NULL) {
-		shape = (Shape*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x160, 0x8 * i, 0x0 });
-		if (shape->self.handle != shape_handle)
-			shape = NULL;
-		i++;
-	}
+	Shape* shape = GetShape(handle);
 
 	if (shape == NULL) {
-		printf("[SetShapeVoxelAtIndex] Shape %d not found\n", shape_handle);
+		printf("[SetShapeVoxelAtIndex] Shape %d not found\n", handle);
 		return 0;
 	}
 
-	//shape->vox->voxels[x][y][z] = index;
 	int sizex = shape->vox->size[0];
 	int sizey = shape->vox->size[1];
 	//int sizez = shape->vox->size[2];
 	shape->vox->voxels[x + y * sizex + z * sizex * sizey] = index;
 
-	// TODO: Check if both are needed
-	GenVoxTexture = (VoxInitializer)FindDMAAddy(moduleBase + 0xFB190, { });
-	GenVoxBuffers = (VoxInitializer)FindDMAAddy(moduleBase + 0xFAEE0, { });
-	GenVoxTexture(shape->vox);
-	GenVoxBuffers(shape->vox);
+	UpdateVox = (VoxInitializer)FindDMAAddy(moduleBase + 0xFB190, { });
+	UpdateVox(shape->vox);
+	return 0;
+}
 
+int SetRenderDistance(lua_State *L) {
+	float dist = lua_tonumber(L, 1);
+	Patch((BYTE*)(moduleBase + 0x337620), (BYTE*)&dist, sizeof(float));
 	return 0;
 }
 
@@ -475,24 +450,22 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 	int color_offset = 0;
 	const uint8_t START_INDEX = 209;
 	moduleBase = (uintptr_t)GetModuleHandleA("teardown.exe");
+
 	//uintptr_t game = moduleBase + 0x420690;
 	//uintptr_t scene = FindDMAAddy(game, { 0x48 });
+	//HMODULE OpenGL = GetModuleHandleA("opengl32.dll");
+	//wglSwapBuffers = (wglSwapBuffers_t)GetProcAddress(OpenGL, "wglSwapBuffers");
 
 	// 0.9 0.7 0.1 1.0
 	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x34D390, { });
 	if (memcmp(spray_color, "\x66\x66\x66\x3F\x33\x33\x33\x3F\xCD\xCC\xCC\x3D\x00\x00\x80\x3F", sizeof(RGBA)) != 0) {
-		MessageBoxA(NULL, "This MOD is not compatible with the version of Teardown you're using, please uninstall it by deleting winmm.dll", "Unsupported version", MB_OK | MB_ICONERROR);
+		MessageBoxA(NULL, "The Colored Spraycan DLL mod is not compatible with the version of Teardown you're using, please uninstall it by deleting winmm.dll", "Unsupported version", MB_OK | MB_ICONERROR);
 		FreeLibraryAndExitThread(hModule, 0);
 		return 0;
 	}
 
 	while (true) {
 		if (GetAsyncKeyState(VK_F1) & 1) {
-			//const int palette_count = *(int*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x0 });
-			//Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0x0 });
-			// Removing this comment will cause the linker to crash ¯\_(ツ)_/¯
-			//printf("Palette count: %d\n", palette_count);
-
 			td_vector<Palette> palettes = *(td_vector<Palette>*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x0 });
 			printf("Palette count: %d\n", palettes.getSize());
 
@@ -540,13 +513,11 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 		}
 
 		if (GetAsyncKeyState(VK_F4) & 1) {
-			bool init = false;
 			const unsigned int script_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x1E8 });
 			for (unsigned int i = 0; i < script_count; i++) {
 				const Script* script = (Script*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x1F0, 0x8 * i, 0x0 });
-				if (!init && (strstr(script->name.c_str(), "Colored Spraycan") != NULL || strstr(script->name.c_str(), "2767789311") != NULL)) {
-					init = true;
-					L = script->state_info->state;
+				L = script->state_info->state;
+				if (strstr(script->name.c_str(), "Colored Spraycan") != NULL || strstr(script->name.c_str(), "2767789311") != NULL) {
 					printf("Script %s has state @0x%p\n", script->name.c_str(), (void*)L);
 					lua_pushcfunction(L, GetPalette);
 					lua_setglobal(L, "GetPalette");
@@ -557,9 +528,10 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 					lua_pushcfunction(L, SetShapeVoxelAtIndex);
 					lua_setglobal(L, "SetShapeVoxelAtIndex");
 				}
+				lua_pushcfunction(L, SetRenderDistance);
+				lua_setglobal(L, "SetRenderDistance");
 			}
 		}
-
 		Sleep(34);
 	}
 	return 0;
