@@ -43,7 +43,7 @@ App ID		1167630
 Depot ID 	1167634
 Manifest ID	7508456906693476405
 
-DepotDownloader -app 1167630 -depot 1167634 -manifest 7508456906693476405 -username <username> -password <password>
+DepotDownloader -app 1167630 -depot 1167634 -manifest 7508456906693476405 -username <username> -password <password> -filelist files.txt
 
 https://github.com/SteamRE/DepotDownloader
 https://steamdb.info/depot/1167634/manifests/

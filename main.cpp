@@ -212,6 +212,8 @@ vector<LevelInfo> LoadLevels() {
 	levels.push_back(info);
 	info = { "", "quicksave", "Last Saved Level", "" };
 	levels.push_back(info);
+	info = { "lee", "test", "Performance Test", "" };
+	//levels.push_back(info);
 
 	printf("%lld levels loaded\n", levels.size());
 	return levels;
@@ -268,11 +270,11 @@ int main(int argc, char* argv[]) {
 #ifdef _WIN32
 	char quicksave_folder[256] = "C:\\Users\\User\\AppData\\Local\\Teardown";
 	char mods_folder[256] = "C:\\Users\\User\\Documents\\Teardown\\mods";
-	char game_folder[256] = "E:\\JUEGOS\\SteamLibrary\\steamapps\\common\\Teardown";
+	char game_folder[256] = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown";
 #else
-	char quicksave_folder[256] = "test";
-	char mods_folder[256] = "test";
-	char game_folder[256] = "test";
+	char quicksave_folder[256] = "quicksave_folder";
+	char mods_folder[256] = "mods_folder";
+	char game_folder[256] = "game_folder";
 #endif
 
 	XMLDocument config_file;
@@ -365,7 +367,7 @@ int main(int argc, char* argv[]) {
 			/*ImGui::Text("Game Version:    ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
-			ImGui::Combo("##gameversion", &game_version, " 1.1.0\0 0.6.0\0");
+			ImGui::Combo("##gameversion", &game_version, " 1.2.0\0 0.6.0\0 0.3.0\0");
 			ImGui::PopItemWidth();*/
 
 			ImGui::Dummy(ImVec2(0, 10));

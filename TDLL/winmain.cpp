@@ -290,14 +290,14 @@ void LuaSetPaletteColor(lua_State* L, int index, double r, double g, double b) {
 uintptr_t moduleBase = 0;
 
 Shape* GetShape(unsigned int handle) {
-	td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x158 });
+	td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x158 });
 	for (unsigned int i = 0; i < shapes.getSize(); i++)
 		if (shapes[i]->self.handle == handle)
 			return shapes[i];
 	return NULL;
 }
 
-int GetPalette(lua_State *L) {
+int GetPalette(lua_State* L) {
 	unsigned int handle = LuaGetTableField(L, "shape", "handle");
 	Shape* shape = GetShape(handle);
 
@@ -306,7 +306,7 @@ int GetPalette(lua_State *L) {
 		return 0;
 	}
 
-	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0x0 });
+	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x4256C0, { 0xB8, 0x8, 0x0 });
 	Palette selected_palette = palettes[shape->vox->palette];
 	for (int i = 0; i < 256; i++) {
 		RGBA color = selected_palette.materials[i].rgba;
@@ -315,7 +315,7 @@ int GetPalette(lua_State *L) {
 	return 0;
 }
 
-int GetMaterial(lua_State *L) {
+int GetMaterial(lua_State* L) {
 	int index = lua_tointeger(L, 1);
 	if (index == 256) index = 0;
 	unsigned int handle = LuaGetTableField(L, "shape", "handle");
@@ -326,7 +326,7 @@ int GetMaterial(lua_State *L) {
 		return 0;
 	}
 
-	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0x0 });
+	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x4256C0, { 0xB8, 0x8, 0x0 });
 	Material material = palettes[shape->vox->palette].materials[index];
 	LuaSetTableField(L, "indexMaterial", "type", material.kind);
 	LuaSetTableField(L, "indexMaterial", "r", material.rgba.r * 255);
@@ -348,7 +348,7 @@ int GetMaterial(lua_State *L) {
 	return 0;
 }
 
-int ChangeMaterial(lua_State *L) {
+int ChangeMaterial(lua_State* L) {
 	unsigned int handle = LuaGetTableField(L, "shape", "handle");
 	int index = LuaGetTableField(L, "indexMaterial", "index");
 	if (index == 256) {
@@ -372,7 +372,7 @@ int ChangeMaterial(lua_State *L) {
 	float metalness = LuaGetTableField(L, "indexMaterial", "metalness") / 100.0;
 	float emissive = LuaGetTableField(L, "indexMaterial", "emissive") / 10.0;
 
-	Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x8, 0x0 });
+	Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x4256C0, { 0xB8, 0x8, 0x0 });
 	Material& material = palettes[shape->vox->palette].materials[index];
 	material.kind = type;
 	material.rgba = { red, green, blue, alpha };
@@ -399,7 +399,7 @@ int ChangeMaterial(lua_State *L) {
 	return 0;
 }
 
-typedef void (*VoxInitializer) (Vox* vox);
+typedef void (*VoxInitializer)(Vox* vox);
 VoxInitializer UpdateVox;
 /*
 void SetShapeVoxelAtIndex(int handle, int x, int y, int z, int index) {
@@ -408,7 +408,7 @@ void SetShapeVoxelAtIndex(int handle, int x, int y, int z, int index) {
 	UpdateVox(shape->vox);
 }
 */
-int SetShapeVoxelAtIndex(lua_State *L) {
+int SetShapeVoxelAtIndex(lua_State* L) {
 	unsigned int handle = lua_tointeger(L, 1);
 	unsigned int x = lua_tointeger(L, 2);
 	unsigned int y = lua_tointeger(L, 3);
@@ -428,14 +428,21 @@ int SetShapeVoxelAtIndex(lua_State *L) {
 	//int sizez = shape->vox->size[2];
 	shape->vox->voxels[x + y * sizex + z * sizex * sizey] = index;
 
-	UpdateVox = (VoxInitializer)FindDMAAddy(moduleBase + 0xFB190, { });
+	// mov [rsp+08], rcx; push rbp; push rsi; push r12;
+	UpdateVox = (VoxInitializer)FindDMAAddy(moduleBase + 0xFC590, { });
 	UpdateVox(shape->vox);
 	return 0;
 }
 
-int SetRenderDistance(lua_State *L) {
+int SetRenderDistance(lua_State* L) {
 	float dist = lua_tonumber(L, 1);
-	Patch((BYTE*)(moduleBase + 0x337620), (BYTE*)&dist, sizeof(float));
+	Patch((BYTE*)(moduleBase + 0x33B630), (BYTE*)&dist, sizeof(float));
+	return 0;
+}
+
+int SetDevMenuVisibility(lua_State* L) {
+	bool& toggle = *(bool*)FindDMAAddy(moduleBase + 0x4256C0, { 0x90, 0x0 });
+	toggle = lua_toboolean(L, 1);
 	return 0;
 }
 
@@ -451,22 +458,27 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 	const uint8_t START_INDEX = 209;
 	moduleBase = (uintptr_t)GetModuleHandleA("teardown.exe");
 
-	//uintptr_t game = moduleBase + 0x420690;
-	//uintptr_t scene = FindDMAAddy(game, { 0x48 });
+	// 4:1920 4:1080 1:4
+	//Game* game = (Game*)moduleBase + 0x4256C0;
 	//HMODULE OpenGL = GetModuleHandleA("opengl32.dll");
 	//wglSwapBuffers = (wglSwapBuffers_t)GetProcAddress(OpenGL, "wglSwapBuffers");
 
-	// 0.9 0.7 0.1 1.0
-	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x34D390, { });
+	// f:0.9 f:0.7 f:0.1 f:1.0
+	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x351400, { });
 	if (memcmp(spray_color, "\x66\x66\x66\x3F\x33\x33\x33\x3F\xCD\xCC\xCC\x3D\x00\x00\x80\x3F", sizeof(RGBA)) != 0) {
 		MessageBoxA(NULL, "The Colored Spraycan DLL mod is not compatible with the version of Teardown you're using, please uninstall it by deleting winmm.dll", "Unsupported version", MB_OK | MB_ICONERROR);
 		FreeLibraryAndExitThread(hModule, 0);
 		return 0;
 	}
 
+	//const RGBA* snow_color = (RGBA*)FindDMAAddy(moduleBase + 0x350DC0, { });
+
+	// movzx esi, byte ptr [rcx + rsi + 0x2C04];
+	const uint8_t* painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFFE01, { });
+
 	while (true) {
 		if (GetAsyncKeyState(VK_F1) & 1) {
-			td_vector<Palette> palettes = *(td_vector<Palette>*)FindDMAAddy(moduleBase + 0x420690, { 0xB8, 0x0 });
+			td_vector<Palette> palettes = *(td_vector<Palette>*)FindDMAAddy(moduleBase + 0x4256C0, { 0xB8, 0x0 });
 			printf("Palette count: %d\n", palettes.getSize());
 
 			RGBA new_color = OpenColorPicker(spray_color->r, spray_color->g, spray_color->b);
@@ -484,8 +496,6 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 				}
 			}
 
-			// movzx esi, byte ptr [rcx + rsi + 0x2C04];
-			const uint8_t* painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFEA01, { });
 			uint8_t old_painter[8] = { 0x0F, 0xB6, 0xB4, 0x31, 0x04, 0x2C, 0x00, 0x00 };
 			Patch((BYTE*)painter_func, old_painter, sizeof(old_painter));
 
@@ -497,7 +507,6 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 
 		if (GetAsyncKeyState(VK_F2) & 1) {
 			color_offset = (16 + (color_offset - 1) % 16) % 16; // Really?
-			const uint8_t* painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFEA01, { });
 			// mov esi, 0x01; nop; nop; nop;
 			uint8_t new_painter[8] = { 0xBE, 0x01, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90 };
 			new_painter[1] = START_INDEX + color_offset;
@@ -506,16 +515,15 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 
 		if (GetAsyncKeyState(VK_F3) & 1) {
 			color_offset = (color_offset + 1) % 16;
-			const uint8_t* painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFEA01, { });
 			uint8_t new_painter[8] = { 0xBE, 0x01, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90 };
 			new_painter[1] = START_INDEX + color_offset;
 			Patch((BYTE*)painter_func, new_painter, sizeof(new_painter));
 		}
 
 		if (GetAsyncKeyState(VK_F4) & 1) {
-			const unsigned int script_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x1E8 });
+			const unsigned int script_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x1E8 });
 			for (unsigned int i = 0; i < script_count; i++) {
-				const Script* script = (Script*)FindDMAAddy(moduleBase + 0x420690, { 0x48, 0x1F0, 0x8 * i, 0x0 });
+				const Script* script = (Script*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x1F0, 0x8 * i, 0x0 });
 				L = script->state_info->state;
 				if (strstr(script->name.c_str(), "Colored Spraycan") != NULL || strstr(script->name.c_str(), "2767789311") != NULL) {
 					printf("Script %s has state @0x%p\n", script->name.c_str(), (void*)L);
@@ -530,10 +538,13 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 				}
 				lua_pushcfunction(L, SetRenderDistance);
 				lua_setglobal(L, "SetRenderDistance");
+				lua_pushcfunction(L, SetDevMenuVisibility);
+				lua_setglobal(L, "SetDevMenuVisibility");
 			}
 		}
 		Sleep(34);
 	}
+	FreeLibraryAndExitThread(hModule, 0);
 	return 0;
 }
 
