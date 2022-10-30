@@ -54,9 +54,12 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc) {
 	return wglSwapBuffersGateway(hDc);
 }
 
-typedef BOOL(__stdcall* wglSwapBuffers_t) (HDC hDc);
+typedef BOOL(__stdcall* wglSwapBuffers_t)(HDC hDc);
 wglSwapBuffers_t wglSwapBuffers;
 
 Hook SwapBuffersHook("wglSwapBuffers", "opengl32.dll", (BYTE*)hkwglSwapBuffers, (BYTE*)&wglSwapBuffersGateway, 5);
 if (GetAsyncKeyState(VK_F5) & 1)
 	SwapBuffersHook.Enable();
+
+HMODULE OpenGL = GetModuleHandleA("opengl32.dll");
+wglSwapBuffers = (wglSwapBuffers_t)GetProcAddress(OpenGL, "wglSwapBuffers");

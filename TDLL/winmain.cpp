@@ -5,179 +5,25 @@
 #include <vector>
 #include <math.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 
 #include "lua.h"
 #include "winmm_proxy.h"
+#include "teardown_structs.h"
 
 using namespace std;
 
-enum MaterialKind {
-	None,
-	Glass,
-	Wood,
-	Masonry,
-	Plaster,
-	Metal,
-	HeavyMetal,
-	Rock,
-	Dirt,
-	Foliage,
-	Plastic,
-	HardMetal,
-	HardMasonry,
-	Ice,
-	Unphysical
-};
+int color_offset = 0;
+bool dithering = true;
+uintptr_t moduleBase = 0;
+uint8_t* painter_func = NULL;
 
-struct Vector {
-	float x, y, z;
-};
+const uint8_t START_INDEX = 209;
+const uint8_t COLOR_COUNT = 16;
+const RGBA WHITE = { 1.0, 1.0, 1.0, 1.0 };
 
-struct Quat {
-	float x, y, z, w;
-};
-
-struct Transform {
-	Vector pos;
-	Quat rot;
-};
-
-struct RGBA {
-	float r, g, b, a;
-};
-
-struct Material {
-	uint32_t kind;
-	RGBA rgba;
-	float reflectivity;
-	float shinyness;
-	float metalness;
-	float emissive;
-	uint32_t replaceable;
-};
-
-struct Palette {
-	uint32_t padding1[3];
-	Material materials[256];
-	uint8_t tint_table[2 * 4 * 256];
-	uint32_t padding2;
-};
-
-struct Entity {
-	void* unknown;		// 0x00
-	uint8_t kind;		// 0x08
-	uint8_t flags;		// 0x09
-	uint8_t padding[2];
-	uint32_t handle;	// 0x0C
-	Entity* parent;		// 0x10
-	Entity* sibling;	// 0x18
-	Entity* child;		// 0x20
-}; // size: 0x20
-
-struct Vox {
-	uint32_t size[3];		// 0x00
-	uint8_t padding1[4];
-	uint8_t* voxels;		// 0x10
-	void* physics_buffer;
-	float scale;			// 0x20
-	uint8_t unknown1[48];	// ????
-	uint32_t palette;		// 0x54
-	uint8_t unknown2[4];	// ????
-	int32_t voxel_count;	// 0x5C
-}; // size: 0x60
-
-struct Shape {
-	Entity self;
-	Transform local_tr;			// 0x28
-	Vector min_aabb;			// 0x44
-	Vector max_aabb;			// 0x50
-	uint8_t padding1[4];
-	void* dormant;				// 0x60
-	void* active;				// 0x68
-	uint16_t collision_flags;	// 0x70
-	uint8_t collision_layer;	// 0x72
-	uint8_t collision_mask;		// 0x73
-	float density;				// 0x74
-	float strength;				// 0x78
-	uint16_t texture_tile;		// 0x7C
-	uint16_t blendtexture_tile;	// 0x7E
-	float texture_weight;		// 0x80
-	float blendtexture_weight;	// 0x84
-	Vector starting_wpos;		// 0x88
-	uint8_t padding2[4];
-	Vox* vox;					// 0x98
-	void* joints;				// 0xA0
-	float emissive_scale;		// 0xA8
-	bool broken;				// 0xAC
-	uint8_t padding3[3];
-	Transform world_tr;			// 0xB0
-	uint8_t padding4[4];
-}; // size: 0xD0
-
-class td_string {
-	union {
-		char* HeapBuffer;
-		char StackBuffer[16] = { 0 };
-	};
-public:
-	const char* c_str() const {
-		return StackBuffer[15] != '\0' ? HeapBuffer : &StackBuffer[0];
-	}
-};
-
-template<typename T>
-class td_vector {
-	uint32_t size = 0;
-	uint32_t capacity = 0;
-	T* data = nullptr;
-public:
-	uint32_t getSize() const {
-		return size;
-	}
-	T operator[](uint32_t index) const {
-		return data[index];
-	}
-	T& operator[](uint32_t index) {
-		return data[index];
-	}
-};
-
-struct LuaStateInfo {
-	lua_State* state;
-};
-
-struct Script {
-	Entity self;
-	td_string name;				// 0x28
-	uint8_t padding1[8];
-	float runtime;				// 0x40
-	float delta;
-	td_string path;				// 0x48
-	td_string location;			// 0x58
-	uint8_t padding2[56];
-	LuaStateInfo* state_info;	// 0xA0
-	bool is_loaded;				// 0xA8
-	bool has_init;
-	bool has_tick;
-	bool has_update;
-	bool has_draw;
-	bool has_command;
-	uint8_t padding3[2];
-	float runtime2;				// 0xB0
-	float update_runtime;		// 0xB4
-}; // size: ?
-
-RGBA operator*(const RGBA& color, float scale) {
-	return { color.r * scale, color.g * scale, color.b * scale, color.a * scale };
-}
-RGBA operator+(const RGBA& color1, const RGBA& color2) {
-	return { color1.r + color2.r, color1.g + color2.g, color1.b + color2.b, color1.a + color2.a };
-}
-RGBA operator-(const RGBA& color1, const RGBA& color2) {
-	return { color1.r - color2.r, color1.g - color2.g, color1.b - color2.b, color1.a - color2.a };
-}
+typedef void (*VoxInitializer)(Vox* vox);
+VoxInitializer UpdateVox;
 
 // strength in range [0-4], 0: no paint, 4: fully painted
 RGBA paint(RGBA spray_color, RGBA voxel_color, uint8_t strength) {
@@ -217,7 +63,7 @@ void Patch(BYTE* dst, BYTE* src, unsigned int size) {
 	VirtualProtect(dst, size, oldProtect, &oldProtect);
 }
 
-static COLORREF selectedColors[16] = {
+static COLORREF selectedColors[COLOR_COUNT] = {
 	RGB(229, 178,  25), RGB(178, 229,  25), RGB( 25, 229, 178), RGB( 25, 178, 229),
 	RGB(178,  25, 229), RGB(229,  25, 178), RGB(229,  25,  28), RGB(151, 151, 151),
 	RGB(229, 120,  25), RGB( 35, 229,  25), RGB(234, 176,  92), RGB(169, 129,  68),
@@ -245,49 +91,6 @@ RGBA OpenColorPicker(float r, float g, float b) {
 	rgba.a = 1.0;
 	return rgba;
 }
-
-int LuaGetTableField(lua_State* L, const char* name, const char* key) {
-	int result = 0;
-	lua_getglobal(L, name);
-	if (lua_istable(L, -1)) {
-		lua_getfield(L, -1, key);
-		if (lua_isnumber(L, -1))
-			result = lua_tointeger(L, -1);
-		lua_pop(L, 1);
-	}
-	lua_pop(L, 1);
-	return result;
-}
-
-void LuaSetTableField(lua_State* L, const char* name, const char* key, double value) {
-	lua_getglobal(L, name);
-	lua_pushnumber(L, value);
-	lua_setfield(L, -2, key);
-	lua_pop(L, 1);
-}
-
-void LuaSetPaletteColor(lua_State* L, int index, double r, double g, double b) {
-	lua_getglobal(L, "palette");
-	lua_pushnumber(L, index);
-	lua_gettable(L, -2);
-	//assert(lua_istable(L, -1))
-
-	lua_pushnumber(L, 1);
-	lua_pushnumber(L, r);
-	lua_settable(L, -3);
-
-	lua_pushnumber(L, 2);
-	lua_pushnumber(L, g);
-	lua_settable(L, -3);
-
-	lua_pushnumber(L, 3);
-	lua_pushnumber(L, b);
-	lua_settable(L, -3);
-
-	lua_pop(L, 2);
-}
-
-uintptr_t moduleBase = 0;
 
 Shape* GetShape(unsigned int handle) {
 	td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x158 });
@@ -399,15 +202,6 @@ int ChangeMaterial(lua_State* L) {
 	return 0;
 }
 
-typedef void (*VoxInitializer)(Vox* vox);
-VoxInitializer UpdateVox;
-/*
-void SetShapeVoxelAtIndex(int handle, int x, int y, int z, int index) {
-	Shape* shape = GetShape(handle);
-	shape->vox->voxels[x][y][z] = index;
-	UpdateVox(shape->vox);
-}
-*/
 int SetShapeVoxelAtIndex(lua_State* L) {
 	unsigned int handle = lua_tointeger(L, 1);
 	unsigned int x = lua_tointeger(L, 2);
@@ -425,12 +219,60 @@ int SetShapeVoxelAtIndex(lua_State* L) {
 
 	int sizex = shape->vox->size[0];
 	int sizey = shape->vox->size[1];
-	//int sizez = shape->vox->size[2];
 	shape->vox->voxels[x + y * sizex + z * sizex * sizey] = index;
 
 	// mov [rsp+08], rcx; push rbp; push rsi; push r12;
 	UpdateVox = (VoxInitializer)FindDMAAddy(moduleBase + 0xFC590, { });
 	UpdateVox(shape->vox);
+	return 0;
+}
+
+int UpdateSpraycanColors(lua_State* L) {
+	if (dithering) {
+		// movzx esi, byte ptr [rcx + rsi + 0x2C04];
+		uint8_t old_painter[8] = { 0x0F, 0xB6, 0xB4, 0x31, 0x04, 0x2C, 0x00, 0x00 };
+		Patch((BYTE*)painter_func, old_painter, sizeof(old_painter));
+		LuaSetTableField(L, "paint_colors", "selected", 0);
+	} else {
+		// mov esi, 0x01; nop; nop; nop;
+		uint8_t new_painter[8] = { 0xBE, 0x01, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90 };
+		new_painter[1] = START_INDEX + color_offset;
+		Patch((BYTE*)painter_func, new_painter, sizeof(new_painter));
+		LuaSetTableField(L, "paint_colors", "selected", color_offset + 1);
+	}
+
+	for (int k = 0; k < COLOR_COUNT; k++) {
+		float r = GetRValue(selectedColors[k]) / 255.0;
+		float g = GetGValue(selectedColors[k]) / 255.0;
+		float b = GetBValue(selectedColors[k]) / 255.0;
+		LuaSetTableColor(L, "paint_colors", "solid", k + 1, r, g, b);
+	}
+
+	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x351400, { });
+	for (int strength = 1; strength <= 4; strength++) {
+		RGBA color = paint(*spray_color, WHITE, strength);
+		LuaSetTableColor(L, "paint_colors", "dithering", strength, color.r, color.g, color.b);
+	}
+	return 0;
+}
+
+int ToggleDithering(lua_State* L) {
+	(void)L;
+	dithering = !dithering;
+	return 0;
+}
+
+int NextSpraycanColor(lua_State* L) {
+	(void)L;
+	dithering = false;
+	color_offset = (color_offset + 1) % COLOR_COUNT;
+	return 0;
+}
+
+int PrevSpraycanColor(lua_State* L) {
+	(void)L;
+	dithering = false;
+	color_offset = (COLOR_COUNT + (color_offset - 1) % COLOR_COUNT) % COLOR_COUNT;
 	return 0;
 }
 
@@ -446,22 +288,19 @@ int SetDevMenuVisibility(lua_State* L) {
 	return 0;
 }
 
+int GetDllVersion(lua_State* L) {
+	lua_pushstring(L, "v1.2.0p1_b01");
+	return 1;
+}
+
 DWORD WINAPI MainThread(HMODULE hModule) {
 #ifdef DEBUGCONSOLE
 	AllocConsole();
 	FILE* stream;
 	freopen_s(&stream, "CONOUT$", "w", stdout);
 #endif
-
-	lua_State* L = NULL;
-	int color_offset = 0;
-	const uint8_t START_INDEX = 209;
 	moduleBase = (uintptr_t)GetModuleHandleA("teardown.exe");
-
-	// 4:1920 4:1080 1:4
-	//Game* game = (Game*)moduleBase + 0x4256C0;
-	//HMODULE OpenGL = GetModuleHandleA("opengl32.dll");
-	//wglSwapBuffers = (wglSwapBuffers_t)GetProcAddress(OpenGL, "wglSwapBuffers");
+	painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFFE01, { });
 
 	// f:0.9 f:0.7 f:0.1 f:1.0
 	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x351400, { });
@@ -471,61 +310,28 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 		return 0;
 	}
 
-	//const RGBA* snow_color = (RGBA*)FindDMAAddy(moduleBase + 0x350DC0, { });
-
-	// movzx esi, byte ptr [rcx + rsi + 0x2C04];
-	const uint8_t* painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFFE01, { });
-
+	//unsigned int prev_state = Playing; // Default value for some reason
 	while (true) {
-		if (GetAsyncKeyState(VK_F1) & 1) {
-			td_vector<Palette> palettes = *(td_vector<Palette>*)FindDMAAddy(moduleBase + 0x4256C0, { 0xB8, 0x0 });
-			printf("Palette count: %d\n", palettes.getSize());
-
-			RGBA new_color = OpenColorPicker(spray_color->r, spray_color->g, spray_color->b);
-			Patch((BYTE*)spray_color, (BYTE*)&new_color, sizeof(RGBA));
-
-			for (unsigned int i = 0; i < palettes.getSize(); i++) {
-				updateTintTable(new_color, palettes[i]);
-				for (int k = 0; k < 16; k++) {
-					Material& material = palettes[i].materials[START_INDEX + k];
-					float r = GetRValue(selectedColors[k]) / 255.0;
-					float g = GetGValue(selectedColors[k]) / 255.0;
-					float b = GetBValue(selectedColors[k]) / 255.0;
-					material.rgba = { r, g, b, 1.0 };
-					material.kind = Masonry;
-				}
+		// grouped scan 4:1920 4:1080 4:4
+		/*const Game* game = (Game*)FindDMAAddy(moduleBase + 0x4256C0, { 0x0 });
+		if (game != NULL && game->state != prev_state) {
+			prev_state = game->state;
+			printf("Game state: %d\n", game->state);
+			if (game->state == Playing) {
+				printf("DLL Injected!\n");
+				Sleep(5000); // Wait for the level to load
+				// And this is where I'd put my code… if I can get it to work [Mr. Turner meme]
 			}
+		}*/
 
-			uint8_t old_painter[8] = { 0x0F, 0xB6, 0xB4, 0x31, 0x04, 0x2C, 0x00, 0x00 };
-			Patch((BYTE*)painter_func, old_painter, sizeof(old_painter));
-
-			// je teardown.exe+B37F8
-			//const uint8_t* no_update_gpu_texture = (uint8_t*)FindDMAAddy(moduleBase + 0xB3616, { });
-			//uint8_t update_gpu_texture[6] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-			//Patch((BYTE*)no_update_gpu_texture, update_gpu_texture, sizeof(update_gpu_texture));
-		}
-
-		if (GetAsyncKeyState(VK_F2) & 1) {
-			color_offset = (16 + (color_offset - 1) % 16) % 16; // Really?
-			// mov esi, 0x01; nop; nop; nop;
-			uint8_t new_painter[8] = { 0xBE, 0x01, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90 };
-			new_painter[1] = START_INDEX + color_offset;
-			Patch((BYTE*)painter_func, new_painter, sizeof(new_painter));
-		}
-
-		if (GetAsyncKeyState(VK_F3) & 1) {
-			color_offset = (color_offset + 1) % 16;
-			uint8_t new_painter[8] = { 0xBE, 0x01, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90 };
-			new_painter[1] = START_INDEX + color_offset;
-			Patch((BYTE*)painter_func, new_painter, sizeof(new_painter));
-		}
-
-		if (GetAsyncKeyState(VK_F4) & 1) {
+		if (GetAsyncKeyState(VK_F1) & 1) {
+			bool init = false;
 			const unsigned int script_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x1E8 });
 			for (unsigned int i = 0; i < script_count; i++) {
 				const Script* script = (Script*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x1F0, 0x8 * i, 0x0 });
-				L = script->state_info->state;
-				if (strstr(script->name.c_str(), "Colored Spraycan") != NULL || strstr(script->name.c_str(), "2767789311") != NULL) {
+				lua_State* L = script->state_info->state;
+				if (!init && (strstr(script->name.c_str(), "Colored Spraycan") != NULL || strstr(script->name.c_str(), "2767789311") != NULL)) {
+					init = true; // In case there are multiples copies of the mod
 					printf("Script %s has state @0x%p\n", script->name.c_str(), (void*)L);
 					lua_pushcfunction(L, GetPalette);
 					lua_setglobal(L, "GetPalette");
@@ -535,16 +341,54 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 					lua_setglobal(L, "ChangeMaterial");
 					lua_pushcfunction(L, SetShapeVoxelAtIndex);
 					lua_setglobal(L, "SetShapeVoxelAtIndex");
+
+					lua_pushcfunction(L, UpdateSpraycanColors);
+					lua_setglobal(L, "UpdateSpraycanColors");
+					lua_pushcfunction(L, ToggleDithering);
+					lua_setglobal(L, "ToggleDithering");
+					lua_pushcfunction(L, NextSpraycanColor);
+					lua_setglobal(L, "NextSpraycanColor");
+					lua_pushcfunction(L, PrevSpraycanColor);
+					lua_setglobal(L, "PrevSpraycanColor");
 				}
+
+				// Public functions
 				lua_pushcfunction(L, SetRenderDistance);
 				lua_setglobal(L, "SetRenderDistance");
 				lua_pushcfunction(L, SetDevMenuVisibility);
 				lua_setglobal(L, "SetDevMenuVisibility");
+				lua_pushcfunction(L, GetDllVersion);
+				lua_setglobal(L, "GetDllVersion");
+				// TODO: EnableShapeCollision
 			}
 		}
+
+		if (GetAsyncKeyState(VK_F2) & 1) {
+			td_vector<Palette> palettes = *(td_vector<Palette>*)FindDMAAddy(moduleBase + 0x4256C0, { 0xB8, 0x0 });
+			RGBA new_color = OpenColorPicker(spray_color->r, spray_color->g, spray_color->b);
+			Patch((BYTE*)spray_color, (BYTE*)&new_color, sizeof(RGBA));
+
+			for (unsigned int i = 0; i < palettes.getSize(); i++) {
+				updateTintTable(new_color, palettes[i]);
+				for (int k = 0; k < COLOR_COUNT; k++) {
+					Material& material = palettes[i].materials[START_INDEX + k];
+					float r = GetRValue(selectedColors[k]) / 255.0;
+					float g = GetGValue(selectedColors[k]) / 255.0;
+					float b = GetBValue(selectedColors[k]) / 255.0;
+					material.rgba = { r, g, b, 1.0 };
+					material.kind = Masonry;
+				}
+			}
+		}
+
+		/*if (GetAsyncKeyState(VK_F3) & 1) {
+			const RGBA* snow_color = (RGBA*)FindDMAAddy(moduleBase + 0x350DC0, { });
+			RGBA new_color = OpenColorPicker(snow_color->r, snow_color->g, snow_color->b);
+			Patch((BYTE*)snow_color, (BYTE*)&new_color, sizeof(RGBA));
+		}*/
+
 		Sleep(34);
 	}
-	FreeLibraryAndExitThread(hModule, 0);
 	return 0;
 }
 
