@@ -34,6 +34,13 @@ struct Vector {
 	float x, y, z;
 };
 
+Vector operator*=(Vector& a, float s) {
+	a.x *= s;
+	a.y *= s;
+	a.z *= s;
+	return a;
+}
+
 struct Quat {
 	float x, y, z, w;
 };
@@ -114,6 +121,35 @@ struct Shape {
 	Transform world_tr;			// 0xB0
 	uint8_t padding4[4];
 }; // size: 0xD0
+
+struct Body {
+	Entity self;
+	Transform tr1;	// 0x28
+	Transform tr2;	// 0x44
+	Transform tr3;	// 0x60
+	//Transform tr4; // jk
+	// ... more transforms or something
+}; // size: 0xE8
+
+struct Joint {
+	Entity self;
+	// TODO: format
+	Shape* m_ChildShape; //0x0028
+	Shape* m_ParentShape; //0x0030
+	void* m_ParentJoint; //0x0038
+	void* m_SiblingJoint; //0x0040
+	uint32_t m_Type; //0x0048 1 - ball | 2 - hinge | 3 - prismatic | 4 - rope
+	float m_Size; //0x004C
+	bool m_Collide; //0x0050
+	bool m_Enabled; //0x0051
+	uint8_t pad_0052[2]; //0x0052
+	float m_RotStrength; //0x0054
+	float m_RotSpring; //0x0058
+	Vector m_RotForce; //0x005C
+	Vector local_pos_parent; //0x0068
+	Vector local_pos_child; //0x0074
+	// ...
+}; // some size, idk
 
 class td_string {
 	union {

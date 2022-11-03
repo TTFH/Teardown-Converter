@@ -310,6 +310,8 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 		return 0;
 	}
 
+	bool scaled = false;
+
 	//unsigned int prev_state = Playing; // Default value for some reason
 	while (true) {
 		// grouped scan 4:1920 4:1080 4:4
@@ -324,8 +326,28 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 			}
 		}*/
 
+		if (!scaled && GetAsyncKeyState(VK_F3) & 1) {
+			scaled = true;
+			td_vector<Body*> bodies = *(td_vector<Body*>*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x148 });
+			for (unsigned int i = 0; i < bodies.getSize(); i++) {
+				bodies[i]->tr1.pos *= 2.0f;
+			}
+			td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x158 });
+			for (unsigned int i = 0; i < shapes.getSize(); i++) {
+				shapes[i]->vox->scale *= 2.0f;
+				shapes[i]->local_tr.pos *= 2.0f;
+			}
+			td_vector<Joint*> joints = *(td_vector<Joint*>*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x198 });
+			for (unsigned int i = 0; i < joints.getSize(); i++) {
+				joints[i]->local_pos_parent *= 2.0f;
+				joints[i]->local_pos_child *= 2.0f;
+			}
+			// TODO: wheels, water, boundary, etc.
+		}
+
 		if (GetAsyncKeyState(VK_F1) & 1) {
 			bool init = false;
+			// TODO: use td_vector<>
 			const unsigned int script_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x1E8 });
 			for (unsigned int i = 0; i < script_count; i++) {
 				const Script* script = (Script*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x1F0, 0x8 * i, 0x0 });
