@@ -158,9 +158,9 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	shape->old_transform = shape->transform;
 	bool collide = (shape->shape_flags & 0x10) != 0;
 
-	bool is_filled_voxbox = true;
+	bool is_filled_voxbox = shape->voxels.palette_index.getSize() == volume;
 	uint8_t index = shape->voxels.palette_index[0];
-	for (unsigned int i = 0; i < shape->voxels.palette_index.getSize(); i++)
+	for (unsigned int i = 0; i < shape->voxels.palette_index.getSize() && is_filled_voxbox; i++)
 		is_filled_voxbox = is_filled_voxbox && shape->voxels.palette_index[i] == index;
 
 	if (is_filled_voxbox) {

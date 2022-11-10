@@ -9,7 +9,7 @@
 #   pacman -S mingw-w64-i686-SDL2
 #
 # Oh, and zlib too!
-# Figure out how to download that
+# Figure out how to install that
 
 CXX = g++
 EXE = release/teardown-converter
@@ -25,7 +25,7 @@ SOURCES += file_dialog/ImGuiFileDialog.cpp
 OBJS = $(addprefix obj/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 
-CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -DNDEBUG -O2
+CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -g #-DNDEBUG -O2
 CXXFLAGS += -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog -Ilib
 LIBS = -lz -lstdc++fs
 

@@ -215,7 +215,7 @@ vector<LevelInfo> LoadLevels() {
 	info = { "lee", "test", "Performance Test", "" };
 	//levels.push_back(info);
 
-	printf("%lld levels loaded\n", levels.size());
+	printf("%d levels loaded\n", (int)levels.size());
 	return levels;
 }
 

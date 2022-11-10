@@ -93,7 +93,7 @@ RGBA OpenColorPicker(float r, float g, float b) {
 }
 
 Shape* GetShape(unsigned int handle) {
-	td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x158 });
+	td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + 0x422710, { 0x48, 0x158 });
 	for (unsigned int i = 0; i < shapes.getSize(); i++)
 		if (shapes[i]->self.handle == handle)
 			return shapes[i];
@@ -109,7 +109,7 @@ int GetPalette(lua_State* L) {
 		return 0;
 	}
 
-	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x4256C0, { 0xB8, 0x8, 0x0 });
+	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x422710, { 0xB8, 0x8, 0x0 });
 	Palette selected_palette = palettes[shape->vox->palette];
 	for (int i = 0; i < 256; i++) {
 		RGBA color = selected_palette.materials[i].rgba;
@@ -129,7 +129,7 @@ int GetMaterial(lua_State* L) {
 		return 0;
 	}
 
-	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x4256C0, { 0xB8, 0x8, 0x0 });
+	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x422710, { 0xB8, 0x8, 0x0 });
 	Material material = palettes[shape->vox->palette].materials[index];
 	LuaSetTableField(L, "indexMaterial", "type", material.kind);
 	LuaSetTableField(L, "indexMaterial", "r", material.rgba.r * 255);
@@ -139,7 +139,7 @@ int GetMaterial(lua_State* L) {
 	LuaSetTableField(L, "indexMaterial", "reflectivity", material.reflectivity * 100);
 	LuaSetTableField(L, "indexMaterial", "shinyness", material.shinyness * 100);
 	LuaSetTableField(L, "indexMaterial", "metalness", material.metalness * 100);
-	LuaSetTableField(L, "indexMaterial", "emissive", material.emissive * 10);
+	LuaSetTableField(L, "indexMaterial", "emissive", material.emissive * 100);
 
 	LuaSetTableField(L, "shape", "scale", shape->vox->scale * 1000);
 	LuaSetTableField(L, "shape", "texture", shape->texture_tile);
@@ -173,9 +173,9 @@ int ChangeMaterial(lua_State* L) {
 	float reflectivity = LuaGetTableField(L, "indexMaterial", "reflectivity") / 100.0;
 	float shinyness = LuaGetTableField(L, "indexMaterial", "shinyness") / 100.0;
 	float metalness = LuaGetTableField(L, "indexMaterial", "metalness") / 100.0;
-	float emissive = LuaGetTableField(L, "indexMaterial", "emissive") / 10.0;
+	float emissive = LuaGetTableField(L, "indexMaterial", "emissive") / 100.0;
 
-	Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x4256C0, { 0xB8, 0x8, 0x0 });
+	Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x422710, { 0xB8, 0x8, 0x0 });
 	Material& material = palettes[shape->vox->palette].materials[index];
 	material.kind = type;
 	material.rgba = { red, green, blue, alpha };
@@ -221,9 +221,10 @@ int SetShapeVoxelAtIndex(lua_State* L) {
 	int sizey = shape->vox->size[1];
 	shape->vox->voxels[x + y * sizex + z * sizex * sizey] = index;
 
-	// mov [rsp+08], rcx; push rbp; push rsi; push r12;
-	UpdateVox = (VoxInitializer)FindDMAAddy(moduleBase + 0xFC590, { });
-	UpdateVox(shape->vox);
+	// View -> Referenced Funtions
+	// mov [rsp+08], rcx; push rbp; push rbx; push rsi; push rdi;
+	//UpdateVox = (VoxInitializer)FindDMAAddy(moduleBase + 0xF8EA0, { });
+	//UpdateVox(shape->vox);
 	return 0;
 }
 
@@ -248,7 +249,7 @@ int UpdateSpraycanColors(lua_State* L) {
 		LuaSetTableColor(L, "paint_colors", "solid", k + 1, r, g, b);
 	}
 
-	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x351400, { });
+	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x34C420, { });
 	for (int strength = 1; strength <= 4; strength++) {
 		RGBA color = paint(*spray_color, WHITE, strength);
 		LuaSetTableColor(L, "paint_colors", "dithering", strength, color.r, color.g, color.b);
@@ -278,18 +279,18 @@ int PrevSpraycanColor(lua_State* L) {
 
 int SetRenderDistance(lua_State* L) {
 	float dist = lua_tonumber(L, 1);
-	Patch((BYTE*)(moduleBase + 0x33B630), (BYTE*)&dist, sizeof(float));
+	Patch((BYTE*)(moduleBase + 0x336650), (BYTE*)&dist, sizeof(float));
 	return 0;
 }
 
 int SetDevMenuVisibility(lua_State* L) {
-	bool& toggle = *(bool*)FindDMAAddy(moduleBase + 0x4256C0, { 0x90, 0x0 });
+	bool& toggle = *(bool*)FindDMAAddy(moduleBase + 0x422710, { 0x90, 0x0 });
 	toggle = lua_toboolean(L, 1);
 	return 0;
 }
 
 int GetDllVersion(lua_State* L) {
-	lua_pushstring(L, "v1.2.0p1_b01");
+	lua_pushstring(L, "v1.2.0p2_b01");
 	return 1;
 }
 
@@ -300,57 +301,61 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 	freopen_s(&stream, "CONOUT$", "w", stdout);
 #endif
 	moduleBase = (uintptr_t)GetModuleHandleA("teardown.exe");
-	painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFFE01, { });
+	painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0xFE0C1, { });
 
 	// f:0.9 f:0.7 f:0.1 f:1.0
-	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x351400, { });
+	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x34C420, { });
 	if (memcmp(spray_color, "\x66\x66\x66\x3F\x33\x33\x33\x3F\xCD\xCC\xCC\x3D\x00\x00\x80\x3F", sizeof(RGBA)) != 0) {
 		MessageBoxA(NULL, "The Colored Spraycan DLL mod is not compatible with the version of Teardown you're using, please uninstall it by deleting winmm.dll", "Unsupported version", MB_OK | MB_ICONERROR);
 		FreeLibraryAndExitThread(hModule, 0);
 		return 0;
 	}
 
-	bool scaled = false;
-
+	//bool scaled = false;
 	//unsigned int prev_state = Playing; // Default value for some reason
 	while (true) {
 		// grouped scan 4:1920 4:1080 4:4
-		/*const Game* game = (Game*)FindDMAAddy(moduleBase + 0x4256C0, { 0x0 });
+		/*const Game* game = (Game*)FindDMAAddy(moduleBase + 0x422710, { 0x0 });
 		if (game != NULL && game->state != prev_state) {
 			prev_state = game->state;
 			printf("Game state: %d\n", game->state);
 			if (game->state == Playing) {
 				printf("DLL Injected!\n");
 				Sleep(5000); // Wait for the level to load
-				// And this is where I'd put my code… if I can get it to work [Mr. Turner meme]
+				// Init code goes here
 			}
-		}*/
-
+		}
 		if (!scaled && GetAsyncKeyState(VK_F3) & 1) {
 			scaled = true;
-			td_vector<Body*> bodies = *(td_vector<Body*>*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x148 });
+			float scale = 0.5f
+			td_vector<Body*> bodies = *(td_vector<Body*>*)FindDMAAddy(moduleBase + 0x422710, { 0x48, 0x148 });
 			for (unsigned int i = 0; i < bodies.getSize(); i++) {
-				bodies[i]->tr1.pos *= 2.0f;
+				bodies[i]->tr1.pos *= scale;
 			}
-			td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x158 });
+			td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + 0x422710, { 0x48, 0x158 });
 			for (unsigned int i = 0; i < shapes.getSize(); i++) {
-				shapes[i]->vox->scale *= 2.0f;
-				shapes[i]->local_tr.pos *= 2.0f;
+				shapes[i]->vox->scale *= scale;
+				shapes[i]->local_tr.pos *= scale;
 			}
-			td_vector<Joint*> joints = *(td_vector<Joint*>*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x198 });
+			td_vector<Joint*> joints = *(td_vector<Joint*>*)FindDMAAddy(moduleBase + 0x422710, { 0x48, 0x198 });
 			for (unsigned int i = 0; i < joints.getSize(); i++) {
-				joints[i]->local_pos_parent *= 2.0f;
-				joints[i]->local_pos_child *= 2.0f;
+				joints[i]->local_pos_parent *= scale;
+				joints[i]->local_pos_child *= scale;
 			}
 			// TODO: wheels, water, boundary, etc.
+		}*/
+		if (GetAsyncKeyState(VK_F4) & 1) {
+			const RGBA* snow_color = (RGBA*)FindDMAAddy(moduleBase + ~0x350DC0, { });
+			RGBA new_color = OpenColorPicker(snow_color->r, snow_color->g, snow_color->b);
+			Patch((BYTE*)snow_color, (BYTE*)&new_color, sizeof(RGBA));
 		}
 
 		if (GetAsyncKeyState(VK_F1) & 1) {
 			bool init = false;
 			// TODO: use td_vector<>
-			const unsigned int script_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x1E8 });
+			const unsigned int script_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x422710, { 0x48, 0x1E8 });
 			for (unsigned int i = 0; i < script_count; i++) {
-				const Script* script = (Script*)FindDMAAddy(moduleBase + 0x4256C0, { 0x48, 0x1F0, 0x8 * i, 0x0 });
+				const Script* script = (Script*)FindDMAAddy(moduleBase + 0x422710, { 0x48, 0x1F0, 0x8 * i, 0x0 });
 				lua_State* L = script->state_info->state;
 				if (!init && (strstr(script->name.c_str(), "Colored Spraycan") != NULL || strstr(script->name.c_str(), "2767789311") != NULL)) {
 					init = true; // In case there are multiples copies of the mod
@@ -386,7 +391,7 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 		}
 
 		if (GetAsyncKeyState(VK_F2) & 1) {
-			td_vector<Palette> palettes = *(td_vector<Palette>*)FindDMAAddy(moduleBase + 0x4256C0, { 0xB8, 0x0 });
+			td_vector<Palette> palettes = *(td_vector<Palette>*)FindDMAAddy(moduleBase + 0x422710, { 0xB8, 0x0 });
 			RGBA new_color = OpenColorPicker(spray_color->r, spray_color->g, spray_color->b);
 			Patch((BYTE*)spray_color, (BYTE*)&new_color, sizeof(RGBA));
 
@@ -402,12 +407,6 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 				}
 			}
 		}
-
-		/*if (GetAsyncKeyState(VK_F3) & 1) {
-			const RGBA* snow_color = (RGBA*)FindDMAAddy(moduleBase + 0x350DC0, { });
-			RGBA new_color = OpenColorPicker(snow_color->r, snow_color->g, snow_color->b);
-			Patch((BYTE*)snow_color, (BYTE*)&new_color, sizeof(RGBA));
-		}*/
 
 		Sleep(34);
 	}

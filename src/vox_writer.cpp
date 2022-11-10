@@ -265,9 +265,9 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 			palette_map[mapped_index] = palette_map[empty_index];
 			palette_map[empty_index] = temp;
 		} else {
-			if (FixMapping(mapped_index, 193, 224))
-				return true;
 			if (FixMapping(mapped_index, 241, 253))
+				return true;
+			if (FixMapping(mapped_index, 193, 224))
 				return true;
 			return false;
 		}
@@ -439,27 +439,52 @@ void MV_FILE::AddColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
 	is_index_used[index] = true;
 }
 
+/*
+_type = _emit
+reflectivity = 0.1
+shinyness = 1.0
+metalness = 0.0
+emissive = _emit * 10 ^ _flux
+alpha = 1.0
+
+_type = _glass
+reflectivity = 0.1
+shinyness = 1.0 - _rough
+metalness = 0.0
+emissive = 0.0
+alpha = _alpha != 1.0 ? 0.5 : 1.0
+
+_type = _metal
+reflectivity = _metal
+shinyness = 1.0 - _rough
+metalness = _metal
+emissive = 0.0
+alpha = 1.0
+*/
 void MV_FILE::AddPBR(uint8_t index, uint8_t type, float reflectivity, float shinyness, float metalness, float emissive, float alpha) {
 	PBR pbr;
 	pbr.material_index = index;
 	pbr.material_type = type;
+	(void)reflectivity;
 
-	if (alpha != 0 && alpha != 1) {
+	if (alpha != 1) {
 		pbr.type = "_glass";
-		pbr.rough = reflectivity;
-		pbr.alpha = alpha;
+		pbr.rough = 1.0 - shinyness;
+		pbr.alpha = 0.5;
 	} else if (emissive > 0) {
 		pbr.type = "_emit";
-		if (emissive > 100)
+		if (emissive > 100.0)
 			pbr.flux = 4;
-		else if (emissive > 10)
+		else if (emissive > 10.0)
 			pbr.flux = 3;
-		else if (emissive > 1)
+		else if (emissive > 1.0)
 			pbr.flux = 2;
-		else
+		else if (emissive > 0.1)
 			pbr.flux = 1;
+		else
+			pbr.flux = 0;
 		pbr.emit = emissive / pow(10, pbr.flux - 1);
-	} else if (shinyness > 0) {
+	} else if (shinyness > 0 || metalness > 0) {
 		pbr.type = "_metal";
 		pbr.rough = 1.0 - shinyness;
 		pbr.metal = metalness != 1 ? metalness : 0;

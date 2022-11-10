@@ -34,6 +34,13 @@ struct Vector {
 	float x, y, z;
 };
 
+Vector operator+=(Vector& a, Vector b) {
+	a.x += b.x;
+	a.y += b.y;
+	a.z += b.z;
+	return a;
+}
+
 Vector operator*=(Vector& a, float s) {
 	a.x *= s;
 	a.y *= s;
