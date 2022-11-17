@@ -109,10 +109,16 @@ Registry TDBIN::ReadRegistry() {
 	return entry;
 }
 
-Rgba TDBIN::ReadRgba() {
-	Rgba color;
-	fread(&color, sizeof(Rgba), 1, bin_file);
+Color TDBIN::ReadColor() {
+	Color color;
+	fread(&color, sizeof(Color), 1, bin_file);
 	return color;
+}
+
+Vector TDBIN::ReadVector() {
+	Vector vec;
+	fread(&vec, sizeof(Vector), 1, bin_file);
+	return vec;
 }
 
 Transform TDBIN::ReadTransform() {
@@ -124,8 +130,7 @@ Transform TDBIN::ReadTransform() {
 Fire TDBIN::ReadFire() {
 	Fire fire;
 	fire.entity_handle = ReadInt();
-	for (int i = 0; i < 3; i++)
-		fire.pos[i] = ReadFloat();
+	fire.pos = ReadVector();
 	fire.max_time = ReadFloat();
 	fire.time = ReadFloat();
 	for (int i = 0; i < 6; i++)
@@ -137,7 +142,7 @@ Palette TDBIN::ReadPalette() {
 	Palette p;
 	for (int i = 0; i < 256; i++) {
 		p.materials[i].kind = ReadByte();
-		p.materials[i].rgba = ReadRgba();
+		p.materials[i].rgba = ReadColor();
 		p.materials[i].reflectivity = ReadFloat();
 		p.materials[i].shinyness = ReadFloat();
 		p.materials[i].metalness = ReadFloat();
@@ -145,13 +150,14 @@ Palette TDBIN::ReadPalette() {
 		p.materials[i].replaceable = ReadByte() != 0;
 	}
 	p.z_u8 = ReadByte();
-	fread(&p.tint_table, sizeof(uint8_t), 2 * 4 * 256, bin_file);
+	fread(&p.black_tint, sizeof(uint8_t), 4 * 256, bin_file);
+	fread(&p.yellow_tint, sizeof(uint8_t), 4 * 256, bin_file);
 	return p;
 }
 
 Rope TDBIN::ReadRope() {
 	Rope rope;
-	rope.color = ReadRgba();
+	rope.color = ReadColor();
 	rope.z_f32 = ReadFloat();
 	rope.strength = ReadFloat();
 	rope.maxstretch = ReadFloat();
@@ -162,10 +168,8 @@ Rope TDBIN::ReadRope() {
 	int knot_count = ReadInt();
 	rope.knots.resize(knot_count);
 	for (int i = 0; i < knot_count; i++) {
-		for (int j = 0; j < 3; j++)
-			rope.knots[i].from[j] = ReadFloat();
-		for (int j = 0; j < 3; j++)
-			rope.knots[i].to[j] = ReadFloat();
+		rope.knots[i].from = ReadVector();
+		rope.knots[i].to = ReadVector();
 	}
 	return rope;
 }
@@ -295,10 +299,8 @@ Body* TDBIN::ReadBody() {
 	Body* res = new Body;
 	res->entity_flags = ReadWord();
 	res->transform = ReadTransform();
-	for (int i = 0; i < 3; i++)
-		res->velocity[i] = ReadFloat();
-	for (int i = 0; i < 3; i++)
-		res->angular_velocity[i] = ReadFloat();
+	res->velocity = ReadVector();
+	res->angular_velocity = ReadVector();
 	res->dynamic = ReadByte() != 0;
 	res->body_flags = ReadByte();
 	return res;
@@ -317,8 +319,7 @@ Shape* TDBIN::ReadShape() {
 	res->blendtexture_tile = ReadWord();
 	res->texture_weight = ReadFloat();
 	res->blendtexture_weight = ReadFloat();
-	for (int i = 0; i < 3; i++)
-		res->starting_world_position[i] = ReadFloat();
+	res->starting_world_position = ReadVector();
 	res->z_f32 = ReadFloat();
 	res->z1_u8 = ReadByte();
 	res->z2_u8 = ReadByte();
@@ -336,7 +337,7 @@ Light* TDBIN::ReadLight() {
 	light->is_on = ReadByte() != 0;
 	light->type = ReadByte();
 	light->transform = ReadTransform();
-	light->color = ReadRgba();
+	light->color = ReadColor();
 	light->scale = ReadFloat();
 	light->reach = ReadFloat();
 	light->size = ReadFloat();
@@ -373,7 +374,7 @@ Water* TDBIN::ReadWater() {
 	water->ripple = ReadFloat();
 	water->motion = ReadFloat();
 	water->foam = ReadFloat();
-	water->color = ReadRgba();
+	water->color = ReadColor();
 	int vertex_count = ReadInt();
 	water->water_vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++) {
@@ -389,11 +390,9 @@ Joint* TDBIN::ReadJoint() {
 	for (int i = 0; i < 2; i++)
 		joint->shape_handles[i] = ReadInt();
 	for (int i = 0; i < 2; i++)
-		for (int j = 0; j < 3; j++)
-			joint->shape_positions[i][j] = ReadFloat();
+			joint->shape_positions[i] = ReadVector();
 	for (int i = 0; i < 2; i++)
-		for (int j = 0; j < 3; j++)
-			joint->shape_axes[i][j] = ReadFloat();
+		joint->shape_axes[i] = ReadVector();
 	joint->connected = ReadByte() != 0;
 	joint->collide = ReadByte() != 0;
 	joint->rotstrength = ReadFloat();
@@ -419,10 +418,8 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->flags = ReadWord();
 	vehicle->body_handle = ReadInt();
 	vehicle->transform = ReadTransform();
-	for (int i = 0; i < 3; i++)
-		vehicle->velocity[i] = ReadFloat();
-	for (int i = 0; i < 3; i++)
-		vehicle->angular_velocity[i] = ReadFloat();
+	vehicle->velocity = ReadVector();
+	vehicle->angular_velocity = ReadVector();
 	vehicle->z1_f32 = ReadFloat();
 
 	int wheel_count = ReadInt();
@@ -432,14 +429,10 @@ Vehicle* TDBIN::ReadVehicle() {
 
 	vehicle->properties = ReadVehicleProperties();
 
-	for (int i = 0; i < 3; i++)
-		vehicle->camera[i] = ReadFloat();
-	for (int i = 0; i < 3; i++)
-		vehicle->player[i] = ReadFloat();
-	for (int i = 0; i < 3; i++)
-		vehicle->exit[i] = ReadFloat();
-	for (int i = 0; i < 3; i++)
-		vehicle->propeller[i] = ReadFloat();
+	vehicle->camera = ReadVector();
+	vehicle->player = ReadVector();
+	vehicle->exit = ReadVector();
+	vehicle->propeller = ReadVector();
 	vehicle->difflock = ReadFloat();
 	vehicle->z2_f32 = ReadFloat();
 	vehicle->z_u32 = ReadInt();
@@ -462,8 +455,7 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->vitals.resize(vital_count);
 	for (int i = 0; i < vital_count; i++) {
 		vehicle->vitals[i].body_handle = ReadInt();
-		for (int j = 0; j < 3; j++)
-			vehicle->vitals[i].pos[j] = ReadFloat();
+		vehicle->vitals[i].pos = ReadVector();
 		vehicle->vitals[i].z_f32 = ReadFloat();
 		vehicle->vitals[i].shape_index = ReadInt();
 	}
@@ -616,8 +608,7 @@ void TDBIN::ReadPlayer() {
 	scene.player.transform = ReadTransform();
 	scene.player.yaw = ReadFloat();
 	scene.player.pitch = ReadFloat();
-	for (int i = 0; i < 3; i++)
-		scene.player.velocity[i] = ReadFloat();
+	scene.player.velocity = ReadVector();
 	scene.player.health = ReadFloat();
 	for (int i = 0; i < 4; i++)
 		scene.player.z_f32_4[i] = ReadFloat();
@@ -626,21 +617,20 @@ void TDBIN::ReadPlayer() {
 void TDBIN::ReadEnvironment() {
 	Skybox* skybox = &scene.environment.skybox;
 	skybox->texture = ReadString();
-	skybox->tint = ReadRgba();
+	skybox->tint = ReadColor();
 	skybox->brightness = ReadFloat();
 	skybox->rot = ReadFloat();
 	for (int i = 0; i < 3; i++)
 		skybox->sun.tint_brightness[i] = ReadFloat();
-	skybox->sun.colorTint = ReadRgba();
-	for (int i = 0; i < 3; i++)
-		skybox->sun.dir[i] = ReadFloat();
+	skybox->sun.colorTint = ReadColor();
+	skybox->sun.dir = ReadVector();
 	skybox->sun.brightness = ReadFloat();
 	skybox->sun.spread = ReadFloat();
 	skybox->sun.length = ReadFloat();
 	skybox->sun.fogScale = ReadFloat();
 	skybox->sun.glare = ReadFloat();
 	skybox->z_u8 = ReadByte();
-	skybox->constant = ReadRgba();
+	skybox->constant = ReadColor();
 	skybox->ambient = ReadFloat();
 	skybox->ambientexponent = ReadFloat();
 
@@ -649,7 +639,7 @@ void TDBIN::ReadEnvironment() {
 	scene.environment.brightness = ReadFloat();
 
 	Fog* fog = &scene.environment.fog;
-	fog->color = ReadRgba();
+	fog->color = ReadColor();
 	fog->start = ReadFloat();
 	fog->distance = ReadFloat();
 	fog->amount = ReadFloat();
@@ -668,15 +658,13 @@ void TDBIN::ReadEnvironment() {
 	scene.environment.fogscale = ReadFloat();
 
 	Snow* snow = &scene.environment.snow;
-	for (int i = 0; i < 3; i++)
-		snow->dir[i] = ReadFloat();
+	snow->dir = ReadVector();
 	snow->spread = ReadFloat();
 	snow->amount = ReadFloat();
 	snow->speed = ReadFloat();
 	snow->onground = ReadByte() != 0;
 
-	for (int i = 0; i < 3; i++)
-		scene.environment.wind[i] = ReadFloat();
+	scene.environment.wind = ReadVector();
 	scene.environment.waterhurt = ReadFloat();
 }
 
@@ -688,31 +676,33 @@ void TDBIN::parse() {
 	assert(scene.version[0] == 1 && scene.version[1] == 2 && scene.version[2] == 0);
 	scene.level = ReadString();
 	scene.driven_vehicle = ReadInt();
-	for (int i = 0; i < 3; i++)
-		scene.shadowVolume[i] = ReadFloat();
+	scene.shadowVolume = ReadVector();
 	scene.spawnpoint = ReadTransform();
 
 	for (int i = 0; i < 4; i++)
 		scene.z_u32_4[i] = ReadInt();
-	scene.postpro.brightness = ReadFloat();
-	scene.postpro.colorbalance = ReadRgba();
-	scene.postpro.saturation = ReadFloat();
-	scene.postpro.gamma = ReadFloat();
-	scene.postpro.bloom = ReadFloat();
+
+	PostProcessing* postpro = &scene.postpro;
+	postpro->brightness = ReadFloat();
+	postpro->colorbalance = ReadColor();
+	postpro->saturation = ReadFloat();
+	postpro->gamma = ReadFloat();
+	postpro->bloom = ReadFloat();
 
 	ReadPlayer();
 	ReadEnvironment();
 
+	Boundary* boundary = &scene.boundary;
 	int vertex_count = ReadInt();
-	scene.boundary.vertices.resize(vertex_count);
+	boundary->vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++) {
-		scene.boundary.vertices[i].pos[0] = ReadFloat();
-		scene.boundary.vertices[i].pos[1] = ReadFloat();
+		boundary->vertices[i].pos[0] = ReadFloat();
+		boundary->vertices[i].pos[1] = ReadFloat();
 	}
-	scene.boundary.padleft = ReadFloat();
-	scene.boundary.padtop = ReadFloat();
-	scene.boundary.padright = ReadFloat();
-	scene.boundary.padbottom = ReadFloat();
+	boundary->padleft = ReadFloat();
+	boundary->padtop = ReadFloat();
+	boundary->padright = ReadFloat();
+	boundary->padbottom = ReadFloat();
 
 	int fire_count = ReadInt();
 	scene.fires.resize(fire_count);

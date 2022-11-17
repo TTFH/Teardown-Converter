@@ -17,6 +17,7 @@ struct Vector {
 	Vector(float x, float y, float z) : x(x), y(y), z(z) {}
 	Vector(float v[3]) : x(v[0]), y(v[1]), z(v[2]) {}
 	float length();
+	bool nonZero();
 	bool operator==(const Vector& v);
 	Vector operator+(const Vector& v);
 	Vector operator-(const Vector& v) const;

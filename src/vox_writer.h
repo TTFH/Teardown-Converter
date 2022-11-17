@@ -37,7 +37,7 @@ const int rOBJ = ID('r', 'O', 'B', 'J');
 const int rCAM = ID('r', 'C', 'A', 'M');
 const int NOTE = ID('N', 'O', 'T', 'E');
 
-struct Color {
+struct MV_Entry {
 	uint8_t r, g, b, a;
 };
 
@@ -70,7 +70,7 @@ private:
 	FILE* vox_file;
 	string filename;
 	vector<PBR> pbrs;
-	Color palette[256];
+	MV_Entry palette[256];
 	uint8_t palette_map[256];
 	long int childrenSize_ptr;
 

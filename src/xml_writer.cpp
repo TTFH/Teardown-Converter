@@ -106,6 +106,12 @@ void XML_Writer::AddStrFloatAttribute(XMLElement* element, const char* name, str
 		element->SetAttribute(name, value1.c_str());
 }
 
+void XML_Writer::AddVectorAttribute(XMLElement* element, const char* name, Vector value, string default_value) {
+	string buffer = FloatToString(value.x) + " " + FloatToString(value.y) + " " + FloatToString(value.z);
+	if (default_value == "" || buffer != default_value)
+		element->SetAttribute(name, buffer.c_str());
+}
+
 void XML_Writer::AddFloat2Attribute(XMLElement* element, const char* name, float value1, float value2) {
 	string buffer = FloatToString(value1) + " " + FloatToString(value2);
 	element->SetAttribute(name, buffer.c_str());
@@ -134,7 +140,7 @@ void XML_Writer::AddFloatNAttribute(XMLElement* element, const char* name, const
 		element->SetAttribute(name, buffer.c_str());
 }
 
-void XML_Writer::AddRgbaAttribute(XMLElement* element, const char* name, Rgba value, string default_value) {
+void XML_Writer::AddColorAttribute(XMLElement* element, const char* name, Color value, string default_value) {
 	string buffer = FloatToString(value.r) + " " + FloatToString(value.g) + " " + FloatToString(value.b);
 	if (value.a != 0.0 && value.a != 1.0)
 		buffer += " " + FloatToString(value.a);

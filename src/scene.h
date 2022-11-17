@@ -36,15 +36,15 @@ struct Player {
 	Transform transform;
 	float yaw;
 	float pitch;
-	float velocity[3];
+	Vector velocity;
 	float health;
 	float z_f32_4[4];
 };
 
 struct Sun {
 	float tint_brightness[3];
-	Rgba colorTint;		// sunColorTint
-	float dir[3];		// sunDir
+	Color colorTint;	// sunColorTint
+	Vector dir;			// sunDir
 	float brightness;	// sunBrightness
 	float spread;		// sunSpread
 	float length;		// sunLength
@@ -54,18 +54,18 @@ struct Sun {
 
 struct Skybox {
 	string texture;			// skybox
-	Rgba tint;				// skyboxtint
+	Color tint;				// skyboxtint
 	float brightness;		// skyboxbrightness
 	float rot;				// skyboxrot in radians
 	Sun sun;
 	uint8_t z_u8;
-	Rgba constant;			// constant
+	Color constant;			// constant
 	float ambient;			// ambient
 	float ambientexponent;	// ambientexponent
 };
 
 struct Fog {
-	Rgba color;			// fogColor
+	Color color;			// fogColor
 	// fogParams:
 	float start;
 	float distance;		// end = start + distance
@@ -81,7 +81,7 @@ struct EnvWater {
 };
 
 struct Snow {
-	float dir[3];	// snowdir x y z
+	Vector dir;		// snowdir x y z
 	float spread;	// snowdir spread
 	float amount;	// snowamount
 	float speed;
@@ -99,7 +99,7 @@ struct Environment {
 	float slippery;		// slippery
 	float fogscale;		// fogscale
 	Snow snow;
-	float wind[3];		// wind
+	Vector wind;		// wind
 	float waterhurt;	// waterhurt
 };
 
@@ -113,7 +113,7 @@ struct Boundary {
 
 struct Fire {
 	uint32_t entity_handle;
-	float pos[3];
+	Vector pos;
 	float max_time;
 	float time;
 	uint8_t z_u8_6[6];
@@ -121,7 +121,7 @@ struct Fire {
 
 struct Material {
 	uint8_t kind; // MaterialKind
-	Rgba rgba;
+	Color rgba;
 	float reflectivity;
 	float shinyness;
 	float metalness;
@@ -132,23 +132,24 @@ struct Material {
 struct Palette {
 	Material materials[256];
 	uint8_t z_u8;
-	uint8_t tint_table[2 * 4 * 256];
+	uint8_t black_tint[4 * 256];
+	uint8_t yellow_tint[4 * 256];
 };
 
 struct PostProcessing {
 	float brightness;		// brightness
-	Rgba colorbalance;		// colorbalance
+	Color colorbalance;		// colorbalance
 	float saturation;		// saturation
 	float gamma;			// gamma
 	float bloom;			// bloom
 };
 
 struct Scene {
-	uint8_t magic[5];		// TDBIN
+	char magic[5];			// TDBIN
 	uint8_t version[3];		// version
 	string level;
 	uint32_t driven_vehicle;// driven
-	float shadowVolume[3];	// shadowVolume
+	Vector shadowVolume;	// shadowVolume
 	Transform spawnpoint;	// spawnpoint
 	uint32_t z_u32_4[4];
 	PostProcessing postpro;

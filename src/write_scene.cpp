@@ -18,12 +18,11 @@
 void WriteXML::WriteScene() {
 	string version = to_string(scene.version[0]) + "." + to_string(scene.version[1]) + "." + to_string(scene.version[2]);
 	xml.AddStrAttribute(xml.getScene(), "version", version);
-	xml.AddFloatNAttribute(xml.getScene(), "shadowVolume", scene.shadowVolume, 3, "100 25 100");
+	xml.AddVectorAttribute(xml.getScene(), "shadowVolume", scene.shadowVolume, "100 25 100");
 }
 
 void WriteXML::WriteTransform(XMLElement* element, Transform tr) {
-	float tr_pos[3] = {tr.pos.x, tr.pos.y, tr.pos.z};
-	xml.AddFloatNAttribute(element, "pos", tr_pos, 3, "0 0 0");
+	xml.AddVectorAttribute(element, "pos", tr.pos, "0 0 0");
 	float rotation[3];
 	QuatToEuler(tr.rot, rotation[0], rotation[1], rotation[2]);
 	xml.AddFloatNAttribute(element, "rot", rotation, 3, "0 0 0");
@@ -51,17 +50,17 @@ void WriteXML::WriteEnvironment() {
 		skybox_texture = skybox_texture.substr(prefix.size());
 
 	xml.AddStrAttribute(environment, "skybox", skybox_texture, "cloudy.dds");
-	xml.AddRgbaAttribute(environment, "skyboxtint", skybox->tint, "1 1 1");
+	xml.AddColorAttribute(environment, "skyboxtint", skybox->tint, "1 1 1");
 	xml.AddFloatAttribute(environment, "skyboxbrightness", skybox->brightness, "1");
 	xml.AddFloatAttribute(environment, "skyboxrot", deg(skybox->rot), "0");
-	xml.AddRgbaAttribute(environment, "constant", skybox->constant, "0.003 0.003 0.003");
+	xml.AddColorAttribute(environment, "constant", skybox->constant, "0.003 0.003 0.003");
 	xml.AddFloatAttribute(environment, "ambient", skybox->ambient, "1");
 	xml.AddFloatAttribute(environment, "ambientexponent", skybox->ambientexponent, "1.3");
-	xml.AddRgbaAttribute(environment, "fogColor", fog->color, "1 1 1");
+	xml.AddColorAttribute(environment, "fogColor", fog->color, "1 1 1");
 	xml.AddFloat4Attribute(environment, "fogParams", fog->start, fog->start + fog->distance, fog->amount, fog->exponent, "40 100 0.9 4");
 	xml.AddFloatAttribute(environment, "sunBrightness", skybox->sun.brightness, "0");
-	xml.AddRgbaAttribute(environment, "sunColorTint", skybox->sun.colorTint, "1 1 1");
-	xml.AddFloatNAttribute(environment, "sunDir", skybox->sun.dir, 3);
+	xml.AddColorAttribute(environment, "sunColorTint", skybox->sun.colorTint, "1 1 1");
+	xml.AddVectorAttribute(environment, "sunDir", skybox->sun.dir);
 	xml.AddFloatAttribute(environment, "sunSpread", skybox->sun.spread, "0");
 	xml.AddFloatAttribute(environment, "sunLength", skybox->sun.length, "32");
 	xml.AddFloatAttribute(environment, "sunFogScale", skybox->sun.fogScale, "1");
@@ -77,10 +76,10 @@ void WriteXML::WriteEnvironment() {
 	xml.AddFloatAttribute(environment, "fogscale", scene.environment.fogscale, "1");
 	xml.AddFloatAttribute(environment, "slippery", scene.environment.slippery, "0");
 	xml.AddFloatAttribute(environment, "waterhurt", scene.environment.waterhurt, "0");
-	xml.AddFloat4Attribute(environment, "snowdir", snow->dir[0], snow->dir[1], snow->dir[2], snow->spread, "0 -1 0 0.2");
+	xml.AddFloat4Attribute(environment, "snowdir", snow->dir.x, snow->dir.y, snow->dir.z, snow->spread, "0 -1 0 0.2");
 	xml.AddFloatAttribute(environment, "snowamount", snow->amount, "0");
 	xml.AddBoolAttribute(environment, "snowonground", snow->onground && !params.remove_snow, false);
-	xml.AddFloatNAttribute(environment, "wind", scene.environment.wind, 3, "0 0 0");
+	xml.AddVectorAttribute(environment, "wind", scene.environment.wind, "0 0 0");
 
 	params.remove_snow = params.remove_snow && snow->onground; // Only remove snow if there is snow to remove
 }
@@ -110,7 +109,7 @@ void WriteXML::WritePostProcessing() {
 	xml.AddElement(xml.getScene(), postprocessing);
 
 	xml.AddFloatAttribute(postprocessing, "saturation", scene.postpro.saturation, "1");
-	xml.AddRgbaAttribute(postprocessing, "colorbalance", scene.postpro.colorbalance, "1 1 1");
+	xml.AddColorAttribute(postprocessing, "colorbalance", scene.postpro.colorbalance, "1 1 1");
 	xml.AddFloatAttribute(postprocessing, "brightness", scene.postpro.brightness, "1");
 	xml.AddFloatAttribute(postprocessing, "gamma", scene.postpro.gamma, "1");
 	xml.AddFloatAttribute(postprocessing, "bloom", scene.postpro.bloom, "1");
@@ -177,7 +176,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		xml.AddBoolAttribute(entity_element, "collide", collide, true);
 		xml.AddFloat3Attribute(entity_element, "size", sizex, sizey, sizez);
 		xml.AddStrAttribute(entity_element, "material", MaterialKindName[palette_entry.kind], "none");
-		xml.AddRgbaAttribute(entity_element, "color", palette_entry.rgba, "1 1 1");
+		xml.AddColorAttribute(entity_element, "color", palette_entry.rgba, "1 1 1");
 		xml.AddFloat4Attribute(entity_element, "pbr", palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, "0 0 0 0");
 		return;
 	}
@@ -478,7 +477,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddFloatAttribute(entity_element, "ripple", water->ripple, "0.5");
 			xml.AddFloatAttribute(entity_element, "motion", water->motion, "0.5");
 			xml.AddFloatAttribute(entity_element, "foam", water->foam, "0.5");
-			xml.AddRgbaAttribute(entity_element, "color", water->color, "0.01 0.01 0.01");
+			xml.AddColorAttribute(entity_element, "color", water->color, "0.01 0.01 0.01");
 
 			int vertex_count = water->water_vertices.getSize();
 			for (int i = 0; i < vertex_count; i++) {
@@ -493,17 +492,17 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			if (joint->type == _Rope) {
 				entity_element->SetName("rope");
 				xml.AddFloatAttribute(entity_element, "size", joint->size, "0.2");
-				xml.AddRgbaAttribute(entity_element, "color", joint->rope.color, "0 0 0");
+				xml.AddColorAttribute(entity_element, "color", joint->rope.color, "0 0 0");
 
 				int knot_count = joint->rope.knots.getSize();
 				if (knot_count > 0) {
 					XMLElement* location_from = xml.CreateElement("location");
 					xml.AddElement(entity_element, location_from);
-					xml.AddFloatNAttribute(location_from, "pos", joint->rope.knots[0].from, 3);
+					xml.AddVectorAttribute(location_from, "pos", joint->rope.knots[0].from);
 
 					XMLElement* location_to = xml.CreateElement("location");
 					xml.AddElement(entity_element, location_to);
-					xml.AddFloatNAttribute(location_to, "pos", joint->rope.knots[knot_count - 1].to, 3);
+					xml.AddVectorAttribute(location_to, "pos", joint->rope.knots[knot_count - 1].to);
 
 					Vector rope_start = joint->rope.knots[0].from;
 					Vector rope_end = joint->rope.knots[knot_count - 1].to;
@@ -547,20 +546,20 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			XMLElement* player = xml.CreateElement("location");
 			xml.AddElement(entity_element, player);
 			xml.AddAttribute(player, "tags", "player");
-			xml.AddFloatNAttribute(player, "pos", vehicle->player, 3);
+			xml.AddVectorAttribute(player, "pos", vehicle->player);
 
-			if (vehicle->camera[0] != vehicle->player[0] || vehicle->camera[1] != vehicle->player[1] || vehicle->camera[2] != vehicle->player[2]) {
+			if (vehicle->camera.nonZero()) {
 				XMLElement* camera = xml.CreateElement("location");
 				xml.AddElement(entity_element, camera);
 				xml.AddAttribute(camera, "tags", "camera");
-				xml.AddFloatNAttribute(camera, "pos", vehicle->camera, 3);
+				xml.AddVectorAttribute(camera, "pos", vehicle->camera);
 			}
 
-			if (vehicle->exit[0] != 0 || vehicle->exit[1] != 0 || vehicle->exit[2] != 0) {
+			if (vehicle->exit.nonZero()) {
 				XMLElement* exit = xml.CreateElement("location");
 				xml.AddElement(entity_element, exit);
 				xml.AddAttribute(exit, "tags", "exit");
-				xml.AddFloatNAttribute(exit, "pos", vehicle->exit, 3);
+				xml.AddVectorAttribute(exit, "pos", vehicle->exit);
 			}
 
 			bool is_boat = false;
@@ -571,7 +570,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				XMLElement* propeller = xml.CreateElement("location");
 				xml.AddElement(entity_element, propeller);
 				xml.AddAttribute(propeller, "tags", "propeller");
-				xml.AddFloatNAttribute(propeller, "pos", vehicle->propeller, 3);
+				xml.AddVectorAttribute(propeller, "pos", vehicle->propeller);
 			}
 		}
 			break;
@@ -686,7 +685,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				XMLElement* vital = xml.CreateElement("location");
 				xml.AddElement(xml_body, vital);
 				xml.AddAttribute(vital, "tags", "vital");
-				xml.AddFloatNAttribute(vital, "pos", vehicle->vitals[i].pos, 3);
+				xml.AddVectorAttribute(vital, "pos", vehicle->vitals[i].pos);
 			}
 		}
 	} else if (entity->kind_byte == KindJoint) {
@@ -712,7 +711,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				assert(entity->kind_byte == KindShape);
 				Shape* shape = (Shape*)entity->kind;
 				Transform shape_tr = shape->transform;
-				Vector relative_pos(joint->shape_positions[0][0], joint->shape_positions[0][1], joint->shape_positions[0][2]);
+				Vector relative_pos = joint->shape_positions[0];
 
 				Quat relative_rot;
 				if (joint->type != Ball) {

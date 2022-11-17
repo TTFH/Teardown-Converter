@@ -31,7 +31,8 @@ private:
 	string ReadString();
 
 	Registry ReadRegistry();
-	Rgba ReadRgba();
+	Color ReadColor();
+	Vector ReadVector();
 	Transform ReadTransform();
 
 	Fire ReadFire();

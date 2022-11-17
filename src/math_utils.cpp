@@ -16,6 +16,10 @@ float Vector::length() {
 	return sqrt(x * x + y * y + z * z);
 }
 
+bool Vector::nonZero() {
+	return x != 0 || y != 0 || z != 0;
+}
+
 static bool CompareFloat(float a, float b) {
 	return fabs(a - b) < 0.0001;
 }

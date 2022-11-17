@@ -265,9 +265,9 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 			palette_map[mapped_index] = palette_map[empty_index];
 			palette_map[empty_index] = temp;
 		} else {
-			if (FixMapping(mapped_index, 241, 253))
-				return true;
 			if (FixMapping(mapped_index, 193, 224))
+				return true;
+			if (FixMapping(mapped_index, 241, 253))
 				return true;
 			return false;
 		}

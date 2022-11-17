@@ -12,7 +12,7 @@ enum GameState {
 	Quitting = 6
 };
 
-enum MaterialKind {
+enum MaterialKind { // uint8_t
 	None,
 	Glass,
 	Wood,

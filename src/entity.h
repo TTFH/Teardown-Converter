@@ -69,7 +69,7 @@ struct Registry {
 	string value;
 };
 
-struct Rgba {
+struct Color {
 	float r, g, b, a;
 };
 
@@ -115,8 +115,8 @@ struct Entity {
 struct Body {
 	BitFlags entity_flags;
 	Transform transform;
-	float velocity[3];
-	float angular_velocity[3];
+	Vector velocity;
+	Vector angular_velocity;
 	bool dynamic;				// dynamic
 	uint8_t body_flags;
 };
@@ -133,13 +133,13 @@ struct Shape {
 	Transform transform;
 	uint8_t shape_flags;		// 0x10 = collide
 	uint8_t z_u8_3[3];
-	float density;
+	float density;				// density
 	float strength;				// strength
 	uint16_t texture_tile;		// texture
 	uint16_t blendtexture_tile;	// blendtexture
 	float texture_weight;		// texture
 	float blendtexture_weight;	// blendtexture
-	float starting_world_position[3];
+	Vector starting_world_position;
 	float z_f32;
 	uint8_t z1_u8;
 	uint8_t z2_u8;
@@ -163,7 +163,7 @@ struct Light {
 	bool is_on;
 	uint8_t type;		// type
 	Transform transform;
-	Rgba color;			// color = pow(this, 0.454545)
+	Color color;			// color = pow(this, 0.454545)
 	float scale;		// scale
 	float reach;		// reach
 	float size;			// size
@@ -193,7 +193,7 @@ struct Water {
 	float ripple;		// ripple
 	float motion;		// motion
 	float foam;			// foam
-	Rgba color;			// color
+	Color color;			// color
 	Vec<Vertex> water_vertices;
 };
 
@@ -205,12 +205,12 @@ enum JointType { // uint32_t
 };
 
 struct Knot {
-	float from[3];
-	float to[3];
+	Vector from;
+	Vector to;
 };
 
 struct Rope {
-	Rgba color;			// color
+	Color color;			// color
 	float z_f32;
 	float strength;		// strength
 	float maxstretch;	// maxstretch
@@ -223,8 +223,8 @@ struct Rope {
 struct Joint {
 	uint32_t type;				// type
 	uint32_t shape_handles[2];	// Conected shapes handles
-	float shape_positions[2][3];// Relative position to each shape
-	float shape_axes[2][3];		// Last column of YZX rotation matrix
+	Vector shape_positions[2];	// Relative position to each shape
+	Vector shape_axes[2];		// Last column of YZX rotation matrix
 	bool connected;
 	bool collide;				// collide
 	float rotstrength;			// rotstrength
@@ -268,7 +268,7 @@ struct Exhaust {
 
 struct Vital {
 	uint32_t body_handle;
-	float pos[3];
+	Vector pos;
 	float z_f32;
 	uint32_t shape_index;
 };
@@ -277,15 +277,15 @@ struct Vehicle {
 	BitFlags flags;
 	uint32_t body_handle;
 	Transform transform;
-	float velocity[3];
-	float angular_velocity[3];
+	Vector velocity;
+	Vector angular_velocity;
 	float z1_f32;
 	Vec<uint32_t> wheel_handles;
 	VehicleProperties properties;
-	float camera[3];		// camera
-	float player[3];		// player
-	float exit[3];			// exit
-	float propeller[3];		// propeller
+	Vector camera;		// camera
+	Vector player;		// player
+	Vector exit;			// exit
+	Vector propeller;		// propeller
 	float difflock;			// difflock
 	float z2_f32;
 	uint32_t z_u32;
