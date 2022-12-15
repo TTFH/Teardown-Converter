@@ -243,8 +243,8 @@ void MV_FILE::WriteMain_nTRN() {
 
 void MV_FILE::WriteRGBA() {
 	WriteChunkHeader(RGBA, 1024, 0);
-	fwrite(&palette[1], sizeof(Color), 255, vox_file);
-	fwrite(&palette[0], sizeof(Color), 1, vox_file);
+	fwrite(&palette[1], sizeof(MV_Entry), 255, vox_file);
+	fwrite(&palette[0], sizeof(MV_Entry), 1, vox_file);
 }
 
 bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
