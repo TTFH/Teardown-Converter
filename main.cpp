@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <string.h>
-#include <map>
-#include <list>
 #include <vector>
 #include <chrono>
 #include <string>
 #include <thread>
-#include <experimental/filesystem>
+#include <filesystem>
 
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -16,13 +14,13 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl2.h"
 #include "file_dialog/ImGuiFileDialog.h"
-#include "lib/tinyxml2.h"
 
+#include "lib/tinyxml2.h"
 #include "src/parser.h"
 
 using namespace std;
 using namespace tinyxml2;
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 float progress = 0;
 
@@ -43,7 +41,7 @@ void SaveInfoTxt(string map_folder, string level_name, string level_desc) {
 	fprintf(info_file, "name = %s\n", level_name.c_str());
 	fprintf(info_file, "author = Tuxedo Labs\n");
 	fprintf(info_file, "description = %s\n", level_desc.c_str());
-	fprintf(info_file, "tags = Map Asset\n");
+	fprintf(info_file, "tags = Map, Asset\n");
 	fclose(info_file);
 }
 
@@ -52,7 +50,6 @@ int DecompileMap(void* param) {
 
 	fs::create_directories(data->map_folder);
 	fs::create_directories(data->map_folder + "vox");
-	fs::create_directories(data->map_folder + "compounds");
 	SaveInfoTxt(data->map_folder, data->level_name, data->level_desc);
 
 	string preview_image = "preview\\" + data->level_id + ".jpg";
@@ -215,7 +212,7 @@ vector<LevelInfo> LoadLevels() {
 	info = { "lee", "test", "Performance Test", "" };
 	//levels.push_back(info);
 
-	printf("%d levels loaded\n", (int)levels.size());
+	printf("%d levels loaded\n", (int)levels.size() - 1);
 	return levels;
 }
 
@@ -225,11 +222,7 @@ int main(int argc, char* argv[]) {
 #endif
 	if (argc > 1) {
 		if (argc == 2) {
-			#ifdef _WIN32
-				ParseFile({argv[1], "converted\\", "", "", "", "", false, false, false});
-			#else
-				ParseFile({argv[1], "converted/", "", "", "", "", false, false, false});
-			#endif
+			ParseFile({argv[1], "converted/", "", "", "", "", false, false, false});
 		} else
 			printf("CLI Usage: %s quicksave.bin\n", argv[0]);
 		return 0;
@@ -263,8 +256,7 @@ int main(int argc, char* argv[]) {
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
 
 	ImGuiWindowFlags dialog_flags = 0;
-    //dialog_flags |= ImGuiWindowFlags_NoMove;
-    //dialog_flags |= ImGuiWindowFlags_NoResize;
+	dialog_flags |= ImGuiWindowFlags_NoResize;
 
 	// Needs to be char[] for InputText to work
 #ifdef _WIN32
@@ -290,8 +282,7 @@ int main(int argc, char* argv[]) {
 	bool remove_snow = false;
 	bool xml_only = false;
 	bool use_tdcz = false;
-	/*bool use_mega_prop_pack = false;
-	int game_version = 0;*/
+	//int game_version = 0;
 
 	ConverterParams* params = new ConverterParams();
 	SDL_Thread* parse_thread = NULL;
@@ -399,7 +390,6 @@ int main(int argc, char* argv[]) {
 			ImGui::Checkbox("Remove Snow", &remove_snow);
 			ImGui::Checkbox("Generate XML only", &xml_only);
 			ImGui::Checkbox("Compress Vox Files", &use_tdcz);
-			//ImGui::Checkbox("Use Mega Prop Pack", &use_mega_prop_pack);
 			ImGui::Dummy(ImVec2(0, 5));
 
 			if (disable_convert) {
@@ -410,9 +400,9 @@ int main(int argc, char* argv[]) {
 			}
 
 			const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-        	const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
+			const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
 			if (progress > 0 && progress <= 1)
-        		ImGui::BufferingBar("##buffer_bar", progress, ImVec2(600, 8), bg, col);
+				ImGui::BufferingBar("##buffer_bar", progress, ImVec2(600, 8), bg, col);
 
 			ImGui::Dummy(ImVec2(0, 10));
 			bool disabled = disable_convert;

@@ -1,4 +1,11 @@
+#ifndef _WINMM_PROXY_H
+#define _WINMM_PROXY_H
+
+#ifdef _MSC_VER
+#define EXPORT(exp_name, target_name) __pragma(comment(linker, "/export:" #exp_name "=C:\\Windows\\System32\\" #target_name))
+#else
 #define EXPORT(exp_name, target_name) asm(".section .drectve\n\t.ascii \" -export:" #exp_name "= c:/windows/system32/" #target_name "\"")
+#endif
 
 EXPORT(CloseDriver, winmm.CloseDriver);
 EXPORT(DefDriverProc, winmm.DefDriverProc);
@@ -180,3 +187,5 @@ EXPORT(waveOutSetPlaybackRate, winmm.waveOutSetPlaybackRate);
 EXPORT(waveOutSetVolume, winmm.waveOutSetVolume);
 EXPORT(waveOutUnprepareHeader, winmm.waveOutUnprepareHeader);
 EXPORT(waveOutWrite, winmm.waveOutWrite);
+
+#endif

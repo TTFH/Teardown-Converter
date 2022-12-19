@@ -154,16 +154,14 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	}
 
 	Palette palette = scene.palettes[shape->palette];
-	shape->old_transform = shape->transform;
+	shape->old_transform = shape->transform; // Fix for screens, TODO: improve
 	bool collide = (shape->shape_flags & 0x10) != 0;
 
-	bool is_filled_voxbox = shape->voxels.palette_index.getSize() == volume;
-	uint8_t index = shape->voxels.palette_index[0];
-	for (unsigned int i = 0; i < shape->voxels.palette_index.getSize() && is_filled_voxbox; i++)
-		is_filled_voxbox = is_filled_voxbox && shape->voxels.palette_index[i] == index;
+	Tensor3D voxels(sizex, sizey, sizez);
+	voxels.FromRunLengthEncoding(shape->voxels.palette_indexes);
 
-	if (is_filled_voxbox) {
-		uint8_t index = shape->voxels.palette_index[0];
+	if (voxels.isFilledSingleColor()) {
+		uint8_t index = voxels.Get(0, 0, 0);
 		Material palette_entry = palette.materials[index];
 
 		entity_element->SetName("voxbox");
@@ -197,26 +195,18 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	xml.AddBoolAttribute(entity_element, "collide", collide, true);
 
 	if (volume > 0 && sizex <= 256 && sizey <= 256 && sizez <= 256) {
-	#ifdef _WIN32
-		string vox_filename = params.map_folder + "vox\\palette" + to_string(shape->palette) + ".vox";
-	#else
 		string vox_filename = params.map_folder + "vox/palette" + to_string(shape->palette) + ".vox";
-	#endif
 		string vox_path = "MOD/vox/palette" + to_string(shape->palette) + ".vox";
 		string vox_object = "shape" + to_string(handle);
 
 		MV_FILE* vox_file;
-		bool is_new_palette = true;
 		if (vox_files.find(shape->palette) == vox_files.end()) {
 			vox_file = new MV_FILE(vox_filename.c_str());
 			vox_files[shape->palette] = vox_file;
-		} else {
+		} else
 			vox_file = vox_files[shape->palette];
-			is_new_palette = false;
-		}
 
-		MVShape mvshape = { sizex, sizey, sizez, NULL, vox_object.c_str(), 0, 0, sizez / 2 };
-		mvshape.voxels = MatrixInit(sizex, sizey, sizez);
+		MVShape mvshape = { vox_object.c_str(), 0, 0, sizez / 2, voxels };
 
 		bool is_wheel_shape = false;
 		if (params.remove_snow) {
@@ -229,67 +219,66 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 			}
 		}
 
-		unsigned int k = 0;
 		for (int z = 0; z < sizez; z++)
 			for (int y = 0; y < sizey; y++)
 				for (int x = 0; x < sizex; x++) {
-					uint8_t index = shape->voxels.palette_index[k];
+					uint8_t index = voxels.Get(x, y, z);
 					if (index != 0) {
 						Material palette_entry = palette.materials[index];
-						mvshape.voxels[x][y][z] = index;
-
 						if (params.remove_snow && palette_entry.kind == MaterialKind::Unphysical &&
 							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
-							mvshape.voxels[x][y][z] = 0;
+							mvshape.voxels.Set(x, y, z, 0);
 
+						// TODO: load palette separately
 						if (!vox_file->is_index_used[index]) {
 							vox_file->AddColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
-							vox_file->AddPBR(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
+							vox_file->AddMaterial(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
 						}
 					}
-					k++;
 				}
 
 		if (params.remove_snow && !is_wheel_shape) {
-			if (mvshape.voxels[0][0][0] == 0)
-				mvshape.voxels[0][0][0] = 255;
-			if (mvshape.voxels[sizex-1][sizey-1][sizez-1] == 0)
-				mvshape.voxels[sizex-1][sizey-1][sizez-1] = 255;
+			if (mvshape.voxels.Get(0, 0, 0) == 0)
+				mvshape.voxels.Set(0, 0, 0, 255);
+			if (mvshape.voxels.Get(sizex - 1, sizey - 1, sizez - 1) == 0)
+				mvshape.voxels.Set(sizex - 1, sizey - 1, sizez - 1, 255);
 			vox_file->AddColor(255, 255, 0, 0);
+			vox_file->AddMaterial(255, 14, 0.1, 1.0, 0.0, 0.0, 1.0);
 		}
 
 		bool duplicated = false;
-		if (!is_new_palette)
-			for (vector<MVShape>::iterator it = vox_file->models.begin(); it != vox_file->models.end() && !duplicated; it++)
-				if (*it == mvshape) {
-					duplicated = true;
-					vox_object = it->name;
-				}
+		for (vector<MVShape>::iterator it = vox_file->models.begin(); it != vox_file->models.end() && !duplicated; it++)
+			if (*it == mvshape) {
+				duplicated = true;
+				vox_object = it->name;
+			}
 		if (!duplicated)
 			vox_file->AddShape(mvshape);
+		// TODO: else clear
 
 		xml.AddStrAttribute(entity_element, "file", vox_path);
 		xml.AddStrAttribute(entity_element, "object", vox_object);
 		xml.AddFloatAttribute(entity_element, "scale", 10.0 * shape->scale, "1");
 	} else {
-	#ifdef _WIN32
-		string compound_filename = params.map_folder + "compounds\\compound" + to_string(handle) + ".vox";
-	#else
-		string compound_filename = params.map_folder + "compounds/compound" + to_string(handle) + ".vox";
-	#endif
-		string compound_path = "MOD/compounds/compound" + to_string(handle) + ".vox";
-		MV_FILE* compound_vox = new MV_FILE(compound_filename.c_str());
-		compound_files.push_back(compound_vox);
+		string vox_filename = params.map_folder + "vox/palette" + to_string(shape->palette) + ".vox";
+		string vox_path = "MOD/vox/palette" + to_string(shape->palette) + ".vox";
+
+		MV_FILE* vox_file;
+		if (vox_files.find(shape->palette) == vox_files.end()) {
+			vox_file = new MV_FILE(vox_filename.c_str());
+			vox_files[shape->palette] = vox_file;
+		} else
+			vox_file = vox_files[shape->palette];
 
 		entity_element->SetName("compound");
 		for (int i = 0; i < (sizex + 256 - 1) / 256; i++)
 			for (int j = 0; j < (sizey + 256 - 1) / 256; j++)
 				for (int k = 0; k < (sizez + 256 - 1) / 256; k++)
-					WriteCompound(compound_vox, compound_path, entity_element, shape, i, j, k);
+					WriteCompound(handle, voxels, vox_file, vox_path, entity_element, shape, i, j, k);
 	}
 }
 
-void WriteXML::WriteCompound(MV_FILE* compound_vox, string vox_file, XMLElement* compound_xml, Shape* shape, int i, int j, int k) {
+void WriteXML::WriteCompound(uint32_t handle, const Tensor3D &voxels, MV_FILE* compound_vox, string vox_file, XMLElement* compound_xml, Shape* shape, int i, int j, int k) {
 	XMLElement* shape_xml = xml.CreateElement("vox");
 	Palette palette = scene.palettes[shape->palette];
 
@@ -309,44 +298,48 @@ void WriteXML::WriteCompound(MV_FILE* compound_vox, string vox_file, XMLElement*
 	pos_x -= (sizex / 2) * 0.1;
 	pos_z += (sizey / 2) * 0.1;
 
-	string vox_object = "part" + to_string(i) + to_string(j) + to_string(k);
-	xml.AddFloat3Attribute(shape_xml, "pos", pos_x, pos_y, pos_z);
-	xml.AddStrAttribute(shape_xml, "file", vox_file);
-	xml.AddStrAttribute(shape_xml, "object", vox_object);
-
-	MVShape mvshape = { part_sizex, part_sizey, part_sizez, NULL, vox_object, 0, 0, part_sizez / 2 };
-	mvshape.voxels = MatrixInit(part_sizex, part_sizey, part_sizez);
-	mvshape.voxels[0][0][0] = 255;
-	mvshape.voxels[part_sizex-1][part_sizey-1][part_sizez-1] = 255;
+	string vox_object = "shape" + to_string(handle) + "_part" + to_string(i) + to_string(j) + to_string(k);
+	MVShape mvshape = { vox_object, 0, 0, part_sizez / 2, Tensor3D(part_sizex, part_sizey, part_sizez) };
+	mvshape.voxels.Set(0, 0, 0, 255);
+	mvshape.voxels.Set(part_sizex - 1, part_sizey - 1, part_sizez - 1, 255);
 	compound_vox->AddColor(255, 255, 0, 0);
+	compound_vox->AddMaterial(255, 14, 0.1, 1.0, 0.0, 0.0, 1.0);
 
 	bool empty = true;
-	unsigned int it = 0; // TODO: optimize
-	for (int z = 0; z < sizez; z++)
-		for (int y = 0; y < sizey; y++)
-			for (int x = 0; x < sizex; x++) {
-				if (x >= offsetx && x < part_sizex + offsetx && y >= offsety && y < part_sizey + offsety && z >= offsetz && z < part_sizez + offsetz) {
-					uint8_t index = shape->voxels.palette_index[it];
-					if (index != 0) {
-						Material palette_entry = palette.materials[index];
-						mvshape.voxels[x - offsetx][y - offsety][z - offsetz] = index;
+	for (int z = offsetz; z < part_sizez + offsetz; z++)
+		for (int y = offsety; y < part_sizey + offsety; y++)
+			for (int x = offsetx; x < part_sizex + offsetx; x++) {
+				uint8_t index = voxels.Get(x, y, z);
+				if (index != 0) {
+					Material palette_entry = palette.materials[index];
+					if (params.remove_snow && palette_entry.kind == MaterialKind::Unphysical &&
+						int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
+						mvshape.voxels.Set(x - offsetx, y - offsety, z - offsetz, 0);
+					else
+						mvshape.voxels.Set(x - offsetx, y - offsety, z - offsetz, index);
 
-						if (params.remove_snow && palette_entry.kind == MaterialKind::Unphysical &&
-							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
-							mvshape.voxels[x - offsetx][y - offsety][z - offsetz] = 0;
-
-						if (!compound_vox->is_index_used[index]) {
-							compound_vox->AddColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
-							compound_vox->AddPBR(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
-						}
-						empty = false;
+					if (!compound_vox->is_index_used[index]) {
+						compound_vox->AddColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
+						compound_vox->AddMaterial(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
 					}
+					empty = false;
 				}
-				it++;
 			}
 	if (!empty) {
+		bool duplicated = false;
+		for (vector<MVShape>::iterator it = compound_vox->models.begin(); it != compound_vox->models.end() && !duplicated; it++)
+			if (*it == mvshape) {
+				duplicated = true;
+				vox_object = it->name;
+			}
+		if (!duplicated)
+			compound_vox->AddShape(mvshape);
+		//else
+		//	printf("[INFO] Reusing compound %s from file %s\n", vox_object.c_str(), vox_file.c_str());
+		xml.AddFloat3Attribute(shape_xml, "pos", pos_x, pos_y, pos_z);
+		xml.AddStrAttribute(shape_xml, "file", vox_file);
+		xml.AddStrAttribute(shape_xml, "object", vox_object);
 		xml.AddElement(compound_xml, shape_xml);
-		compound_vox->AddShape(mvshape);
 	}
 }
 
@@ -536,7 +529,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 			int exhausts_count = vehicle->exhausts.getSize();
 			for (int i = 0; i < exhausts_count; i++) {
-				string exhaust_tag = "exhaust=" + (int)vehicle->exhausts[i].strength; // TODO: use float
+				string exhaust_tag = "exhaust=" + FloatToString(vehicle->exhausts[i].strength);
 				XMLElement* exhaust = xml.CreateElement("location");
 				xml.AddElement(entity_element, exhaust);
 				xml.AddStrAttribute(exhaust, "tags", exhaust_tag);

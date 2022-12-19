@@ -40,13 +40,15 @@ struct Transform {
 class Tensor3D {
 public:
 	int sizex, sizey, sizez;
-	uint8_t*** data;
+	uint8_t*** data = NULL;
 
 	Tensor3D(int sizex, int sizey, int sizez);
 	~Tensor3D();
+
 	void FromRunLengthEncoding(RLE rle);
 	void Set(int x, int y, int z, uint8_t value);
-	uint8_t Get(int x, int y, int z);
+	uint8_t Get(int x, int y, int z) const;
+	bool isFilledSingleColor();
 	int GetVolume();
 	int GetNonZeroCount();
 	uint8_t* ToArray();

@@ -125,7 +125,7 @@ struct Voxels {
 	uint32_t size[3];
 	// if the shape volume is not empty, voxels are stored using run length encoding
 	// with pairs (n-1, i) in xyz order
-	Vec<uint8_t> palette_index;
+	RLE palette_indexes;
 };
 
 struct Shape {
@@ -305,12 +305,13 @@ struct Wheel {
 	uint32_t vehicle_body;
 	uint32_t body;
 	uint32_t shape;
+	uint8_t z_u8_17[17];
 	Transform transform;
-	float z_f32_7[7];
+	float z_f32_7[7];		// another transform?
 	float steer;			// steer
 	float drive;			// drive
 	float travel[2];		// travel
-	float z1_f32_2[2];
+	float z1_f32_2[2];		// radius?, width?
 	float angular_speed;
 	float z2_f32_2[2];
 };

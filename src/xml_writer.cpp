@@ -14,7 +14,7 @@
 using namespace std;
 using namespace tinyxml2;
 
-static string FloatToString(float value) {
+string FloatToString(float value) {
 	if (fabs(value) < 0.001) value = 0;
 	stringstream ss;
 	ss << fixed << setprecision(3) << value;

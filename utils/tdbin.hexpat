@@ -8,24 +8,25 @@
 
 /*
 	RELEASE DATE		MANIFEST ID			VERSION
-2 November 2022 	9007227657098510758		1.2.0
-21 October 2022 	5037891319466838476		1.2.0
-16 June 2022 		7205895291629880249		1.1.0
-21 April 2022 		3736615329123538866		1.0.0
-5 April 2022 		7537052615747297911		0.9.5
-17 March 2022 		7467090028228665435		0.9.5
-1 March 2022 		8184114032844459263		0.9.5
+16 December 2022	7694779606825861502		1.3.0
+2 November 2022		9007227657098510758		1.2.0
+21 October 2022		5037891319466838476		1.2.0
+16 June 2022		7205895291629880249		1.1.0
+21 April 2022		3736615329123538866		1.0.0
+5 April 2022		7537052615747297911		0.9.5
+17 March 2022		7467090028228665435		0.9.5
+1 March 2022		8184114032844459263		0.9.5
 20 December 2021	6815317348286257307		0.9.2
-2 December 2021 	7659409681954156608		0.9.0
-7 October 2021 		1380852899307030446		0.8.0
-28 June 2021 		7593428965132473006		0.7.4
-11 May 2021 		1576673398223395400		0.7.2
-4 March 2021 		7508456906693476405		0.6.2
+2 December 2021		7659409681954156608		0.9.0
+7 October 2021		1380852899307030446		0.8.0
+28 June 2021		7593428965132473006		0.7.4
+11 May 2021			1576673398223395400		0.7.2
+4 March 2021		7508456906693476405		0.6.2
 15 February 2021	3922109535515865206		0.5.5
-5 February 2021 	2728955346983677370		0.5.5
+5 February 2021		2728955346983677370		0.5.5
 22 December 2020	1454856181527574565		0.5.2
-5 November 2020 	8772779893907758192		0.4.6
-29 October 2020 	 755392188540739651		0.4.5
+5 November 2020		8772779893907758192		0.4.6
+29 October 2020		 755392188540739651		0.4.5
 ~24 September 2020			  Perf test		0.3.0
 */
 
@@ -84,7 +85,8 @@ struct Player {
 	float pitch;
 	Vector velocity;
 	float health;
-	float z_f32_4[4] [[hidden]];
+	float z_f32_4[4];
+	std::print("Player z_f32_4: {} {} {} {}", z_f32_4[0], z_f32_4[1], z_f32_4[2], z_f32_4[3]);
 } [[static, single_color]];
 
 struct Sun {
@@ -105,6 +107,7 @@ struct Skybox {
 	float rot;				// skyboxrot in radians
 	Sun sun;				// sun
 	u8 z_u8;
+	std::print("Skybox z_u8: {}", z_u8);
 	Color constant;			// constant
 	float ambient;			// ambient
 	float ambientexponent;	// ambientexponent
@@ -160,6 +163,7 @@ struct Fire {
 	float max_time;
 	float time;
 	u8 z_u8_6[6];
+	std::print("Fire z_u8_6: {} {} {} {} {} {}", z_u8_6[0], z_u8_6[1], z_u8_6[2], z_u8_6[3], z_u8_6[4], z_u8_6[5]);
 } [[static]];
 
 struct Vertex { // vertex
@@ -205,6 +209,7 @@ struct Material {
 struct Palette {
 	Material materials[256];
 	u8 z_u8;
+	std::print("Palette z_u8: {}", z_u8);
 	u8 tint_table[2 * 4 * 256]; // Black | Yellow
 } [[static, sealed, single_color]];
 
@@ -418,6 +423,7 @@ struct Wheel {
 	u32 vehicle_body;
 	u32 body;
 	u32 shape;
+	u8 z_u8_17[17];
 	Transform transform;
 	float z_f32_7[7];
 	float steer;			// steer
@@ -575,7 +581,7 @@ struct Scene {
 	u32 driven;
 	Vector shadowVolume;
 	Transform spawnpoint;
-	u32 z_u32_4[4] [[hidden]];
+	u32 z_u32_4[4];
 	PostProcessing postpro;
 	Player player;
 	Environment environment;

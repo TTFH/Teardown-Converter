@@ -12,6 +12,8 @@ using namespace tinyxml2;
 
 struct Color;
 
+string FloatToString(float value);
+
 class XML_Writer {
 private:
 	map<uint32_t, XMLElement*> element_mapping;

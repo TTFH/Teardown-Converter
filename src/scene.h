@@ -160,6 +160,8 @@ struct Scene {
 	Vec<Palette> palettes;
 	Vec<Registry> registry;
 	Vec<Entity*> entities;
+	//uint32_t z_u32;
+	//uint8_t z_u8_9[9];
 };
 
 #endif

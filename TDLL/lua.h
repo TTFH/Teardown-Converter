@@ -1,3 +1,6 @@
+#ifndef _LUA_H
+#define _LUA_H
+
 extern "C" {
     #include <lua5.1/lualib.h>
     #include <lua5.1/lauxlib.h>
@@ -11,3 +14,5 @@ void LuaSetTableField(lua_State* L, const char* name, const char* key, double va
 void LuaSetPaletteColor(lua_State* L, int index, double r, double g, double b);
 
 void LuaSetTableColor(lua_State* L, const char* name, const char* key, int index, double r, double g, double b);
+
+#endif

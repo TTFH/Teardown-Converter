@@ -63,3 +63,43 @@ if (GetAsyncKeyState(VK_F5) & 1)
 
 HMODULE OpenGL = GetModuleHandleA("opengl32.dll");
 wglSwapBuffers = (wglSwapBuffers_t)GetProcAddress(OpenGL, "wglSwapBuffers");
+
+
+	bool scaled = false;
+	unsigned int prev_state = Playing; // Default value for some reason
+	while (true) {
+		// grouped scan 4:1920 4:1080 4:4
+		const Game* game = (Game*)FindDMAAddy(moduleBase + 0x438820, { 0x0 });
+		if (game != NULL && game->state != prev_state) {
+			prev_state = game->state;
+			printf("Game state: %d\n", game->state);
+			if (game->state == Playing) {
+				printf("DLL Injected!\n");
+				Sleep(5000); // Wait for the level to load
+				// Init code goes here
+			}
+		}
+		if (!scaled && GetAsyncKeyState(VK_F3) & 1) {
+			scaled = true;
+			float scale = 0.5f
+			td_vector<Body*> bodies = *(td_vector<Body*>*)FindDMAAddy(moduleBase + 0x438820, { 0x48, 0x148 });
+			for (unsigned int i = 0; i < bodies.getSize(); i++) {
+				bodies[i]->tr1.pos *= scale;
+			}
+			td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + 0x438820, { 0x48, 0x158 });
+			for (unsigned int i = 0; i < shapes.getSize(); i++) {
+				shapes[i]->vox->scale *= scale;
+				shapes[i]->local_tr.pos *= scale;
+			}
+			td_vector<Joint*> joints = *(td_vector<Joint*>*)FindDMAAddy(moduleBase + 0x438820, { 0x48, 0x198 });
+			for (unsigned int i = 0; i < joints.getSize(); i++) {
+				joints[i]->local_pos_parent *= scale;
+				joints[i]->local_pos_child *= scale;
+			}
+			// TODO: wheels, water, boundary, etc.
+		}
+		if (GetAsyncKeyState(VK_F4) & 1) {
+			const RGBA* snow_color = (RGBA*)FindDMAAddy(moduleBase + ~0x350DC0, { });
+			RGBA new_color = OpenColorPicker(snow_color->r, snow_color->g, snow_color->b);
+			Patch((BYTE*)snow_color, (BYTE*)&new_color, sizeof(RGBA));
+		}

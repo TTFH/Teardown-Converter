@@ -1,32 +1,19 @@
-# Cross Platform Makefile
-# Compatible with MSYS2/MINGW, Ubuntu 14.04.1+
-# Fuck Mac
-#
-# You will need SDL2 (http://www.libsdl.org):
-# Linux:
-#   apt-get install libsdl2-dev
-# MSYS2:
-#   pacman -S mingw-w64-i686-SDL2
-#
-# Oh, and zlib too!
-# Figure out how to install that
-
 CXX = g++
 EXE = release/teardown-converter
 ODIR = obj
 IMGUI_DIR = imgui
 
 SOURCES = main.cpp
-SOURCES += src/entity.cpp src/lua_table.cpp src/math_utils.cpp src/parser.cpp src/scene.cpp src/vox_writer.cpp src/write_scene.cpp src/xml_writer.cpp src/zlib_utils.cpp lib/tinyxml2.cpp
+SOURCES += src/entity.cpp src/lua_table.cpp src/math_utils.cpp src/parser.cpp src/scene.cpp src/vox_writer.cpp src/write_scene.cpp src/xml_writer.cpp src/zlib_utils.cpp
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
-SOURCES += $(IMGUI_DIR)/backend/imgui_impl_sdl.cpp $(IMGUI_DIR)/backend/imgui_impl_opengl2.cpp
-SOURCES += file_dialog/ImGuiFileDialog.cpp
+SOURCES += $(IMGUI_DIR)/backends/imgui_impl_sdl.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl2.cpp
+SOURCES += file_dialog/ImGuiFileDialog.cpp lib/tinyxml2.cpp
 
 OBJS = $(addprefix obj/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 
-CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -g #-DNDEBUG -O2
-CXXFLAGS += -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog -Ilib
+CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -DNDEBUG -O3
+CXXFLAGS += -std=c++17 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog -Ilib
 LIBS = -lz -lstdc++fs
 
 ##---------------------------------------------------------------------
@@ -41,7 +28,7 @@ ifeq ($(UNAME_S), Linux)
 endif
 
 ifeq ($(OS), Windows_NT)
-	ECHO_MESSAGE = "MinGW"
+	ECHO_MESSAGE = "Windows"
 	CXXFLAGS += `pkg-config --cflags sdl2` -static
 	LIBS += -lgdi32 -lopengl32 -limm32 `pkg-config --static --libs sdl2` -mconsole icon.res
 endif

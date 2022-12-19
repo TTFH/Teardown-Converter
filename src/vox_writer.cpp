@@ -13,11 +13,12 @@
 
 #include "scene.h"
 #include "vox_writer.h"
+#include "xml_writer.h"
 #include "zlib_utils.h"
 
 using namespace std;
 
-const char* notes[] = {
+const char* notes[32] = {
 	"snow/hole",
 	"reserved",
 	"unphysical",
@@ -52,50 +53,15 @@ const char* notes[] = {
 	"glass"
 };
 
-static string FloatToString(float value) {
-	if (fabs(value) < 0.001) value = 0;
-	stringstream ss;
-	ss << fixed << setprecision(3) << value;
-	string str = ss.str();
-	if (str.find('.') != string::npos) {
-		str = str.substr(0, str.find_last_not_of('0') + 1);
-		if (str.find('.') == str.size() - 1)
-			str = str.substr(0, str.size() - 1);
-	}
-	return str;
-}
-
-uint8_t*** MatrixInit(int sizex, int sizey, int sizez) {
-	uint8_t*** matrix = new uint8_t**[sizex];
-	for (int i = 0; i < sizex; i++) {
-		matrix[i] = new uint8_t*[sizey];
-		for (int j = 0; j < sizey; j++)
-			matrix[i][j] = new uint8_t[sizez];
-	}
-	for (int i = 0; i < sizex; i++)
-		for (int j = 0; j < sizey; j++)
-			for (int k = 0; k < sizez; k++)
-				matrix[i][j][k] = 0x00;
-	return matrix;
-}
-
-void MatrixDelete(uint8_t*** &matrix, int sizex, int sizey) {
-	for (int i = 0; i < sizex; i++) {
-		for (int j = 0; j < sizey; j++)
-			delete[] matrix[i][j];
-		delete[] matrix[i];
-	}
-	delete[] matrix;
-	matrix = NULL;
-}
+const char* MatOverridePrefix = "$TD_";
 
 bool MVShape::operator==(const MVShape& other) const {
-	if (sizex != other.sizex || sizey != other.sizey || sizez != other.sizez)
+	if (voxels.sizex != other.voxels.sizex || voxels.sizey != other.voxels.sizey || voxels.sizez != other.voxels.sizez)
 		return false;
-	for (int x = 0; x < sizex; x++)
-		for (int y = 0; y < sizey; y++)
-			for (int z = 0; z < sizez; z++)
-				if (voxels[x][y][z] != other.voxels[x][y][z])
+	for (int x = 0; x < voxels.sizex; x++)
+		for (int y = 0; y < voxels.sizey; y++)
+			for (int z = 0; z < voxels.sizez; z++)
+				if (voxels.Get(x, y, z) != other.voxels.Get(x, y, z))
 					return false;
 	return true;
 }
@@ -141,26 +107,21 @@ void MV_FILE::WriteFileHeader() {
 
 void MV_FILE::WriteSIZE(MVShape shape) {
 	WriteChunkHeader(SIZE, 12, 0);
-	WriteInt(shape.sizex);
-	WriteInt(shape.sizey);
-	WriteInt(shape.sizez);
+	WriteInt(shape.voxels.sizex);
+	WriteInt(shape.voxels.sizey);
+	WriteInt(shape.voxels.sizez);
 }
 
 void MV_FILE::WriteXYZI(MVShape shape) {
-	int voxel_count = 0;
-	for (int x = 0; x < shape.sizex; x++)
-		for (int y = 0; y < shape.sizey; y++)
-			for (int z = 0; z < shape.sizez; z++)
-				if (shape.voxels[x][y][z] != 0)
-					voxel_count++;
+	int voxel_count = shape.voxels.GetNonZeroCount();
 
 	WriteChunkHeader(XYZI, 4 * (1 + voxel_count), 0);
 	WriteInt(voxel_count);
 
-	for (int x = 0; x < shape.sizex; x++) {
-		for (int y = 0; y < shape.sizey; y++) {
-			for (int z = 0; z < shape.sizez; z++) {
-				uint8_t index = shape.voxels[x][y][z];
+	for (int x = 0; x < shape.voxels.sizex; x++) {
+		for (int y = 0; y < shape.voxels.sizey; y++) {
+			for (int z = 0; z < shape.voxels.sizez; z++) {
+				uint8_t index = shape.voxels.Get(x, y, z);
 				if (index != 0) {
 					Voxel voxel = { (uint8_t)x, (uint8_t)y, (uint8_t)z, index };
 					fwrite(&voxel, sizeof(Voxel), 1, vox_file);
@@ -171,28 +132,20 @@ void MV_FILE::WriteXYZI(MVShape shape) {
 }
 
 void MV_FILE::WriteTDCZ(MVShape shape) {
-	int volume = shape.sizex * shape.sizey * shape.sizez;
-	uint8_t* voxel_array = new uint8_t[volume];
+	uint8_t* voxel_array = shape.voxels.ToArray();
 
-	int i = 0;
-	int voxel_count = 0; // TODO: remove, not used
-	for (int z = 0; z < shape.sizez; z++) // TDCZ order is ZYX
-		for (int y = 0; y < shape.sizey; y++)
-			for (int x = 0; x < shape.sizex; x++) {
-				voxel_array[i++] = shape.voxels[x][y][z];
-				if (shape.voxels[x][y][z] != 0)
-					voxel_count++;
-			}
-
-	int compressed_size = volume + voxel_count + 10; // TODO: rought estimate, fix
+	int compressed_size = shape.voxels.GetVolume() + shape.voxels.GetNonZeroCount() + 10; // TODO: rought estimate, fix
 	uint8_t* compressed_data = new uint8_t[compressed_size];
-	ZlibBlockCompress(voxel_array, volume, 9, compressed_data, compressed_size);
+	ZlibBlockCompress(voxel_array, shape.voxels.GetVolume(), 9, compressed_data, compressed_size);
 
 	WriteChunkHeader(TDCZ, 3 * sizeof(int) + compressed_size, 0);
-	WriteInt(shape.sizex);
-	WriteInt(shape.sizey);
-	WriteInt(shape.sizez);
+	WriteInt(shape.voxels.sizex);
+	WriteInt(shape.voxels.sizey);
+	WriteInt(shape.voxels.sizez);
 	fwrite(compressed_data, sizeof(uint8_t), compressed_size, vox_file);
+
+	delete[] voxel_array;
+	delete[] compressed_data;
 }
 
 void MV_FILE::WriteMain_nTRN() {
@@ -247,7 +200,60 @@ void MV_FILE::WriteRGBA() {
 	fwrite(&palette[0], sizeof(MV_Entry), 1, vox_file);
 }
 
-bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
+static bool IsInRange(uint8_t index, uint8_t i_min, uint8_t i_max) {
+	return index >= i_min && index <= i_max;
+}
+
+bool MV_FILE::IsSnow(uint8_t index, uint8_t kind) {
+	return kind == MaterialKind::Unphysical &&
+			palette[palette_map[index]].r == 229 &&
+			palette[palette_map[index]].g == 229 &&
+			palette[palette_map[index]].b == 229;
+}
+
+bool MV_FILE::IsHole(uint8_t index, uint8_t kind) {
+	return kind == MaterialKind::Unphysical &&
+			palette[palette_map[index]].r == 255 &&
+			palette[palette_map[index]].g == 0 &&
+			palette[palette_map[index]].b == 0;
+}
+
+bool MV_FILE::IsIndexCorrupted(uint8_t index, uint8_t kind) {
+	bool corrupted = false;
+	if (kind == MaterialKind::Glass)
+		corrupted = !IsInRange(index, 1, 8);
+	else if (kind == MaterialKind::Foliage)
+		corrupted = !IsInRange(index, 9, 24);
+	else if (kind == MaterialKind::Dirt)
+		corrupted = !IsInRange(index, 25, 40);
+	else if (kind == MaterialKind::Rock)
+		corrupted = !IsInRange(index, 41, 56);
+	else if (kind == MaterialKind::Wood)
+		corrupted = !IsInRange(index, 57, 72);
+	else if (kind == MaterialKind::Masonry)
+		corrupted = !IsInRange(index, 73, 104);
+	else if (kind == MaterialKind::Plaster)
+		corrupted = !IsInRange(index, 105, 120);
+	else if (kind == MaterialKind::Metal)
+		corrupted = !IsInRange(index, 121, 136);
+	else if (kind == MaterialKind::HeavyMetal)
+		corrupted = !IsInRange(index, 137, 152);
+	else if (kind == MaterialKind::Plastic)
+		corrupted = !IsInRange(index, 153, 168);
+	else if (kind == MaterialKind::HardMetal)
+		corrupted = !IsInRange(index, 169, 176);
+	else if (kind == MaterialKind::HardMasonry)
+		corrupted = !IsInRange(index, 177, 184);
+	else if (kind == MaterialKind::Ice)
+		corrupted = !IsInRange(index, 185, 192);
+	else if ( kind == MaterialKind::None)
+		corrupted = !IsInRange(index, 193, 224) && !IsInRange(index, 241, 253);
+	else if (kind == MaterialKind::Unphysical)
+		corrupted = !IsInRange(index, 225, 240) && index != 254 && index != 255;
+	return corrupted;
+}
+
+bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max, bool halt) {
 	unsigned int mapped_index = 1;
 	while (palette_map[mapped_index] != index && mapped_index < 256)
 		mapped_index++;
@@ -265,9 +271,9 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 			palette_map[mapped_index] = palette_map[empty_index];
 			palette_map[empty_index] = temp;
 		} else {
-			if (FixMapping(mapped_index, 193, 224))
+			if (!halt && FixMapping(mapped_index, 193, 224, true))
 				return true;
-			if (FixMapping(mapped_index, 241, 253))
+			if (!halt && FixMapping(mapped_index, 241, 253, true))
 				return true;
 			return false;
 		}
@@ -275,18 +281,9 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max) {
 	return true;
 }
 
-bool MV_FILE::CheckMaterial(uint8_t index, uint8_t i_min, uint8_t i_max) {
-	return index >= i_min && index <= i_max;
-}
-
 void MV_FILE::WriteIMAP() {
-	for (int i = 0; i < 2; i++)
-	for (vector<PBR>::iterator it = pbrs.begin(); it != pbrs.end(); it++) {
-		bool is_snow = it->material_type == MaterialKind::Unphysical &&
-			palette[palette_map[it->material_index]].r == 229 &&
-			palette[palette_map[it->material_index]].g == 229 &&
-			palette[palette_map[it->material_index]].b == 229;
-
+	for (int i = 0; i < 3; i++)
+	for (vector<MV_Material>::iterator it = materials.begin(); it != materials.end(); it++) {
 		if (it->material_type == MaterialKind::Glass)
 			FixMapping(it->material_index, 1, 8);
 		else if (it->material_type == MaterialKind::Foliage)
@@ -313,81 +310,65 @@ void MV_FILE::WriteIMAP() {
 			FixMapping(it->material_index, 177, 184);
 		else if (it->material_type == MaterialKind::Ice)
 			FixMapping(it->material_index, 185, 192);
-		else if ( it->material_type == MaterialKind::None)
+		else if (it->material_type == MaterialKind::None)
 			FixMapping(it->material_index, 193, 224);
-		else if (!is_snow)
-			FixMapping(it->material_index, 225, 240);
-		else // Snow
+		else if (IsSnow(it->material_index, it->material_type))
 			FixMapping(it->material_index, 254, 254);
+		else if (IsHole(it->material_index, it->material_type))
+			FixMapping(it->material_index, 255, 255);
+		else // Unphysical
+			FixMapping(it->material_index, 225, 240);
 	}
 
 	uint8_t palette_reverse_map[256];
 	for (int i = 0; i < 256; i++)
-		for (int j = 0; j < 256; j++)
-			if (palette_map[i] == j)
-				palette_reverse_map[j] = i;
+		palette_reverse_map[palette_map[i]] = i;
 
-	bool corrupted = false;
-	for (vector<PBR>::iterator it = pbrs.begin(); it != pbrs.end() && !corrupted; it++) {
+	for (vector<MV_Material>::iterator it = materials.begin(); it != materials.end(); it++) {
 		uint8_t index = palette_reverse_map[it->material_index];
-		if (it->material_type == MaterialKind::Glass)
-			corrupted = !CheckMaterial(index, 1, 8);
-		else if (it->material_type == MaterialKind::Foliage)
-			corrupted = !CheckMaterial(index, 9, 24);
-		else if (it->material_type == MaterialKind::Dirt)
-			corrupted = !CheckMaterial(index, 25, 40);
-		else if (it->material_type == MaterialKind::Rock)
-			corrupted = !CheckMaterial(index, 41, 56);
-		else if (it->material_type == MaterialKind::Wood)
-			corrupted = !CheckMaterial(index, 57, 72);
-		else if (it->material_type == MaterialKind::Masonry)
-			corrupted = !CheckMaterial(index, 73, 104);
-		else if (it->material_type == MaterialKind::Plaster)
-			corrupted = !CheckMaterial(index, 105, 120);
-		else if (it->material_type == MaterialKind::Metal)
-			corrupted = !CheckMaterial(index, 121, 136);
-		else if (it->material_type == MaterialKind::HeavyMetal)
-			corrupted = !CheckMaterial(index, 137, 152);
-		else if (it->material_type == MaterialKind::Plastic)
-			corrupted = !CheckMaterial(index, 153, 168);
-		else if (it->material_type == MaterialKind::HardMetal)
-			corrupted = !CheckMaterial(index, 169, 176);
-		else if (it->material_type == MaterialKind::HardMasonry)
-			corrupted = !CheckMaterial(index, 177, 184);
-		else if (it->material_type == MaterialKind::Ice)
-			corrupted = !CheckMaterial(index, 185, 192);
-		else if ( it->material_type == MaterialKind::None)
-			corrupted = !CheckMaterial(index, 193, 224) && !CheckMaterial(index, 241, 253);
-		else if (it->material_type == MaterialKind::Unphysical)
-			corrupted = !CheckMaterial(index, 225, 240) && !CheckMaterial(index, 254, 255);	
-		if (corrupted)
-			printf("Overflow of %s at pallete: %s.\n", MaterialKindName[it->material_type], filename.c_str());
+		if (IsIndexCorrupted(index, it->material_type)) {
+			//printf("Overflow of %s at pallete: %s\n", MaterialKindName[it->material_type], filename.c_str());
+			bool is_reserved = (index >= 193 && index <= 224) || (index >= 241 && index <= 253);
+			if (!is_reserved) {
+				printf("Overflow of reserved area in file: %s\n", filename.c_str());
+				break;
+			}
+		}
 	}
+
+	bool is_mapped = false;
+	for (int i = 0; i < 256; i++)
+		if (palette_map[i] != i)
+			is_mapped = true;
+	if (!is_mapped) return;
 
 	WriteChunkHeader(IMAP, 256, 0);
 	fwrite(&palette_map[1], sizeof(uint8_t), 255, vox_file);
 	fwrite(&palette_map[0], sizeof(uint8_t), 1, vox_file);
 }
 
-void MV_FILE::WriteMATL(PBR pbr) {
+void MV_FILE::WriteMATL(MV_Material mat) {
 	DICT material_attr;
-	material_attr["_type"] = pbr.type;
-	if (pbr.type == "_metal") {
-		material_attr["_rough"] = FloatToString(pbr.rough);
-		material_attr["_metal"] = FloatToString(pbr.metal);
-	} else if (pbr.type == "_glass") {
-		material_attr["_rough"] = FloatToString(pbr.rough);
-		material_attr["_alpha"] = FloatToString(pbr.alpha);
-	} else if (pbr.type == "_emit") {
-		material_attr["_emit"] = FloatToString(pbr.emit);
-		material_attr["_flux"] = to_string(pbr.flux);
-	}
+	if (mat.render_type == METAL) {
+		material_attr["_type"] = "_metal";
+		material_attr["_rough"] = FloatToString(mat.properties.metal.roughness);
+		material_attr["_sp"] = FloatToString(mat.properties.metal.specular);
+		material_attr["_metal"] = FloatToString(mat.properties.metal.metallic);
+	} else if (mat.render_type == GLASS) {
+		material_attr["_type"] = "_glass";
+		material_attr["_rough"] = FloatToString(mat.properties.glass.roughness);
+		material_attr["_alpha"] = "0.5";
+	} else if (mat.render_type == EMIT) {
+		material_attr["_type"] = "_emit";
+		material_attr["_emit"] = FloatToString(mat.properties.emit.emission);
+		material_attr["_flux"] = to_string(mat.properties.emit.power);
+	} else return;
 	int matl_size = 8 + 8 * material_attr.size();
 	for (DICT::iterator it = material_attr.begin(); it != material_attr.end(); it++)
 		matl_size += it->first.length() + it->second.length();
 
 	WriteChunkHeader(MATL, matl_size, 0);
-	WriteInt(pbr.material_index);
+	WriteInt(mat.material_index);
 	WriteDICT(material_attr);
 }
 
@@ -423,7 +404,7 @@ void MV_FILE::SaveModel(bool compress) {
 	WriteMain_nTRN();
 	WriteRGBA();
 	WriteIMAP();
-	for (vector<PBR>::iterator it = pbrs.begin(); it != pbrs.end(); it++)
+	for (vector<MV_Material>::iterator it = materials.begin(); it != materials.end(); it++)
 		WriteMATL(*it);
 	WriteNOTE();
 
@@ -440,61 +421,53 @@ void MV_FILE::AddColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
 }
 
 /*
-_type = _emit
-reflectivity = 0.1
-shinyness = 1.0
-metalness = 0.0
-emissive = _emit * 10 ^ _flux
+_type = "_metal"
+reflectivity = _sp
+shinyness = 1.0 - _rough
+metalness = _metal
+emissive = 0.0
 alpha = 1.0
 
-_type = _glass
+_type = "_glass"
 reflectivity = 0.1
 shinyness = 1.0 - _rough
 metalness = 0.0
 emissive = 0.0
 alpha = _alpha != 1.0 ? 0.5 : 1.0
 
-_type = _metal
-reflectivity = _metal
-shinyness = 1.0 - _rough
-metalness = _metal
-emissive = 0.0
+_type = "_emit"
+reflectivity = 0.1
+shinyness = 1.0
+metalness = 0.0
+emissive = _emit * 10 ^ _flux
 alpha = 1.0
 */
-void MV_FILE::AddPBR(uint8_t index, uint8_t type, float reflectivity, float shinyness, float metalness, float emissive, float alpha) {
-	PBR pbr;
-	pbr.material_index = index;
-	pbr.material_type = type;
-	(void)reflectivity;
-
+void MV_FILE::AddMaterial(uint8_t index, uint8_t kind, float reflectivity, float shinyness, float metalness, float emissive, float alpha) {
+	MV_Material mat;
+	mat.material_index = index;
+	mat.material_type = kind;
 	if (alpha != 1) {
-		pbr.type = "_glass";
-		pbr.rough = 1.0 - shinyness;
-		pbr.alpha = 0.5;
+		mat.render_type = GLASS;
+		mat.properties.glass.roughness = 1.0 - shinyness;
 	} else if (emissive > 0) {
-		pbr.type = "_emit";
+		mat.render_type = EMIT;
+		int flux = 0;
 		if (emissive > 100.0)
-			pbr.flux = 4;
+			flux = 4;
 		else if (emissive > 10.0)
-			pbr.flux = 3;
+			flux = 3;
 		else if (emissive > 1.0)
-			pbr.flux = 2;
+			flux = 2;
 		else if (emissive > 0.1)
-			pbr.flux = 1;
-		else
-			pbr.flux = 0;
-		pbr.emit = emissive / pow(10, pbr.flux - 1);
-	} else if (shinyness > 0 || metalness > 0) {
-		pbr.type = "_metal";
-		pbr.rough = 1.0 - shinyness;
-		pbr.metal = metalness != 1 ? metalness : 0;
+			flux = 1;
+		mat.properties.emit.emission = emissive / pow(10, flux - 1);
+		mat.properties.emit.power = flux;
+	} else if (reflectivity > 0 || shinyness > 0 || metalness > 0) {
+		mat.render_type = METAL;
+		mat.properties.metal.roughness = 1.0 - shinyness;
+		mat.properties.metal.specular = 1.0 + reflectivity;
+		mat.properties.metal.metallic = metalness;
 	} else
-		pbr.type = "_diffuse";
-
-	pbrs.push_back(pbr);
-}
-
-MV_FILE::~MV_FILE() {
-	for (vector<MVShape>::iterator it = models.begin(); it != models.end(); it++)
-		MatrixDelete(it->voxels, it->sizex, it->sizey);
+		mat.render_type = DIFFUSE;
+	materials.push_back(mat);
 }

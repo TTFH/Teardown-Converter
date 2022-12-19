@@ -142,13 +142,13 @@ Tensor3D::Tensor3D(int sizex, int sizey, int sizez) {
 }
 
 Tensor3D::~Tensor3D() {
-	for (int i = 0; i < sizex; i++) {
+	/*for (int i = 0; i < sizex; i++) {
 		for (int j = 0; j < sizey; j++)
 			delete[] data[i][j];
 		delete[] data[i];
 	}
 	delete[] data;
-	data = NULL;
+	data = NULL;*/
 }
 
 void Tensor3D::FromRunLengthEncoding(RLE rle) {
@@ -156,9 +156,9 @@ void Tensor3D::FromRunLengthEncoding(RLE rle) {
 
 	int k = 0;
 	for (RLE::iterator it = rle.begin(); it != rle.end(); it++) {
-		int run_length = it->first;
+		uint8_t run_length = it->first;
 		uint8_t entry = it->second;
-		for (int j = 0; j <= run_length; j++)
+		for (unsigned int j = 0; j <= run_length; j++)
 			array[k++] = entry;
 	}
 
@@ -175,8 +175,18 @@ void Tensor3D::Set(int x, int y, int z, uint8_t value) {
 	data[x][y][z] = value;
 }
 
-uint8_t Tensor3D::Get(int x, int y, int z) {
+uint8_t Tensor3D::Get(int x, int y, int z) const {
 	return data[x][y][z];
+}
+
+bool Tensor3D::isFilledSingleColor() {
+	uint8_t color = data[0][0][0];
+	for (int x = 0; x < sizex; x++)
+		for (int y = 0; y < sizey; y++)
+			for (int z = 0; z < sizez; z++)
+				if (data[x][y][z] != color)
+					return false;
+	return true;
 }
 
 int Tensor3D::GetVolume() {

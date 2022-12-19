@@ -7,7 +7,7 @@ OBJS = $(addprefix obj/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic
-CXXFLAGS += -s -shared -static -DDEBUGCONSOLE -g
+CXXFLAGS += -s -shared -static #-DDEBUGCONSOLE -g
 LIBS = -lcomdlg32 -llua5.1
 
 ##---------------------------------------------------------------------

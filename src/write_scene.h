@@ -29,7 +29,7 @@ struct ConverterParams {
 	bool compress_vox;
 };
 
-class WriteXML{
+class WriteXML {
 protected:
 	Scene scene;
 	XML_Writer xml;
@@ -42,7 +42,7 @@ protected:
 	void WriteEntity(XMLElement*, Entity*);
 	void WriteTransform(XMLElement*, Transform);
 	void WriteShape(XMLElement*&, Shape*, uint32_t, string);
-	void WriteCompound(MV_FILE*, string, XMLElement*, Shape*, int, int, int);
+	void WriteCompound(uint32_t, const Tensor3D&, MV_FILE*, string, XMLElement*, Shape*, int, int, int);
 public:
 	void WriteScene();
 	void WriteSpawnpoint();

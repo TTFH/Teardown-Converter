@@ -4,13 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <experimental/filesystem>
+#include <filesystem>
 
 #include "parser.h"
 #include "vox_writer.h"
 #include "zlib_utils.h"
 
-using namespace std::experimental::filesystem;
+using namespace std::filesystem;
 
 TDBIN::TDBIN(const char* filename) {
 	bin_file = fopen(filename, "rb");
@@ -210,15 +210,12 @@ Voxels TDBIN::ReadVoxels() {
 	if (volume > 0) {
 		int encoded_length = ReadInt();
 		assert(encoded_length % 2 == 0);
-		voxels.palette_index.resize(volume);
-		int k = 0;
+
+		voxels.palette_indexes.resize(encoded_length / 2);
 		for (int i = 0; i < encoded_length / 2; i++) {
-			int run_length = ReadByte();
+			uint8_t run_length = ReadByte();
 			uint8_t voxel_index = ReadByte();
-			for (int j = 0; j <= run_length; j++) {
-				voxels.palette_index[k] = voxel_index;
-				k++;
-			}
+			voxels.palette_indexes[i] = { run_length, voxel_index };
 		}
 	}
 	return voxels;
@@ -473,6 +470,8 @@ Wheel* TDBIN::ReadWheel() {
 	wheel->vehicle_body = ReadInt();
 	wheel->body = ReadInt();
 	wheel->shape = ReadInt();
+	for (int i = 0; i < 17; i++)
+		wheel->z_u8_17[i] = ReadByte();
 	wheel->transform = ReadTransform();
 	for (int i = 0; i < 7; i++)
 		wheel->z_f32_7[i] = ReadFloat();
@@ -673,7 +672,7 @@ void TDBIN::parse() {
 		scene.magic[i] = ReadByte();
 	for (int i = 0; i < 3; i++)
 		scene.version[i] = ReadByte();
-	assert(scene.version[0] == 1 && scene.version[1] == 2 && scene.version[2] == 0);
+	assert(scene.version[0] == 1 && scene.version[1] == 3 && scene.version[2] == 0);
 	scene.level = ReadString();
 	scene.driven_vehicle = ReadInt();
 	scene.shadowVolume = ReadVector();
@@ -731,8 +730,8 @@ void TDBIN::parse() {
 void ParseFile(ConverterParams params) {
 	if (!exists(params.map_folder)) {
 		create_directories(params.map_folder);
-		create_directories(params.map_folder + "vox");
-		create_directories(params.map_folder + "compounds");
+		if (!params.xml_only)
+			create_directories(params.map_folder + "vox");
 	}
 	TDBIN parser(params);
 	try {
