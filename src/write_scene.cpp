@@ -176,6 +176,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		xml.AddStrAttribute(entity_element, "material", MaterialKindName[palette_entry.kind], "none");
 		xml.AddColorAttribute(entity_element, "color", palette_entry.rgba, "1 1 1");
 		xml.AddFloat4Attribute(entity_element, "pbr", palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, "0 0 0 0");
+		voxels.Clear();
 		return;
 	}
 
@@ -254,7 +255,8 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 			}
 		if (!duplicated)
 			vox_file->AddShape(mvshape);
-		// TODO: else clear
+		else
+			voxels.Clear();
 
 		xml.AddStrAttribute(entity_element, "file", vox_path);
 		xml.AddStrAttribute(entity_element, "object", vox_object);
@@ -275,6 +277,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 			for (int j = 0; j < (sizey + 256 - 1) / 256; j++)
 				for (int k = 0; k < (sizez + 256 - 1) / 256; k++)
 					WriteCompound(handle, voxels, vox_file, vox_path, entity_element, shape, i, j, k);
+		voxels.Clear();
 	}
 }
 
@@ -334,8 +337,9 @@ void WriteXML::WriteCompound(uint32_t handle, const Tensor3D &voxels, MV_FILE* c
 			}
 		if (!duplicated)
 			compound_vox->AddShape(mvshape);
-		//else
-		//	printf("[INFO] Reusing compound %s from file %s\n", vox_object.c_str(), vox_file.c_str());
+		else
+			mvshape.voxels.Clear();
+
 		xml.AddFloat3Attribute(shape_xml, "pos", pos_x, pos_y, pos_z);
 		xml.AddStrAttribute(shape_xml, "file", vox_file);
 		xml.AddStrAttribute(shape_xml, "object", vox_object);

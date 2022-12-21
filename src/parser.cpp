@@ -15,7 +15,7 @@ using namespace std::filesystem;
 TDBIN::TDBIN(const char* filename) {
 	bin_file = fopen(filename, "rb");
 	if (bin_file == NULL) {
-		printf("Error: Could not open %s for reading\n", filename);
+		printf("[ERROR] Could not open %s for reading\n", filename);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -38,7 +38,7 @@ TDBIN::TDBIN(const ConverterParams& params) {
 		if (!IsFileCompressed(output)) {
 			strcpy(filename, output);
 		} else {
-			printf("Error: Failed to uncompress file\n");
+			printf("[ERROR] Failed to uncompress file\n");
 			exit(EXIT_FAILURE);
 		}
 		delete[] output;
@@ -47,7 +47,7 @@ TDBIN::TDBIN(const ConverterParams& params) {
 	printf("Parsing file...\n");
 	bin_file = fopen(filename, "rb");
 	if (bin_file == NULL) {
-		printf("Error: Could not open %s for reading\n", filename);
+		printf("[ERROR] Could not open %s for reading\n", filename);
 		exit(EXIT_FAILURE);
 	}
 	delete[] filename;
@@ -597,7 +597,7 @@ void* TDBIN::ReadEntityKind(uint8_t kind_byte) {
 		case KindScript:
 			return ReadScript();
 		default:
-			printf("Error: Invalid entity kind: %d\n", kind_byte);
+			printf("[ERROR] Invalid entity kind: %d\n", kind_byte);
 			exit(EXIT_FAILURE);
 			return NULL;
 	}

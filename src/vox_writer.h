@@ -59,7 +59,6 @@ struct MV_Material {
 		} metal;
 		struct {
 			float roughness;
-			//bool transparent;
 		} glass;
 		struct {
 			float emission;
@@ -86,12 +85,12 @@ private:
 	string filename;
 	MV_Entry palette[256];
 	uint8_t palette_map[256];
+	bool is_corrupted = false;
 	vector<MV_Material> materials;
 	long int childrenSize_ptr;
 
-	bool IsSnow(uint8_t index, uint8_t kind);
-	bool IsHole(uint8_t index, uint8_t kind);
-	bool IsIndexCorrupted(uint8_t index, uint8_t kind);
+	bool IsSnow(uint8_t index, uint8_t type);
+	bool IsHole(uint8_t index, uint8_t type);
 	bool FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max, bool halt = false);
 
 	void WriteInt(int val) {
@@ -113,6 +112,7 @@ public:
 	vector<MVShape> models;
 
 	MV_FILE(string filename);
+	~MV_FILE();
 	void AddShape(MVShape shape) {
 		models.push_back(shape);
 	}

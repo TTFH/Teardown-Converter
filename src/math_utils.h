@@ -43,7 +43,7 @@ public:
 	uint8_t*** data = NULL;
 
 	Tensor3D(int sizex, int sizey, int sizez);
-	~Tensor3D();
+	void Clear();
 
 	void FromRunLengthEncoding(RLE rle);
 	void Set(int x, int y, int z, uint8_t value);

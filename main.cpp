@@ -35,7 +35,7 @@ void SaveInfoTxt(string map_folder, string level_name, string level_desc) {
 	string info_path = map_folder + "info.txt";
 	FILE* info_file = fopen(info_path.c_str(), "w");
 	if (info_file == NULL) {
-		printf("Error: Could not create info.txt\n");
+		printf("[ERROR] Could not create info.txt\n");
 		return;
 	}
 	fprintf(info_file, "name = %s\n", level_name.c_str());
@@ -229,7 +229,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
-		printf("Error: Failed to init SDL: %s\n", SDL_GetError());
+		printf("[ERROR] Failed to init SDL: %s\n", SDL_GetError());
 		return -1;
 	}
 

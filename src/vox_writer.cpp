@@ -18,7 +18,7 @@
 
 using namespace std;
 
-const char* notes[32] = {
+const char* td_notes[32] = {
 	"snow/hole",
 	"reserved",
 	"unphysical",
@@ -114,7 +114,6 @@ void MV_FILE::WriteSIZE(MVShape shape) {
 
 void MV_FILE::WriteXYZI(MVShape shape) {
 	int voxel_count = shape.voxels.GetNonZeroCount();
-
 	WriteChunkHeader(XYZI, 4 * (1 + voxel_count), 0);
 	WriteInt(voxel_count);
 
@@ -200,25 +199,25 @@ void MV_FILE::WriteRGBA() {
 	fwrite(&palette[0], sizeof(MV_Entry), 1, vox_file);
 }
 
-static bool IsInRange(uint8_t index, uint8_t i_min, uint8_t i_max) {
-	return index >= i_min && index <= i_max;
-}
-
-bool MV_FILE::IsSnow(uint8_t index, uint8_t kind) {
-	return kind == MaterialKind::Unphysical &&
+bool MV_FILE::IsSnow(uint8_t index, uint8_t type) {
+	return type == MaterialKind::Unphysical &&
 			palette[palette_map[index]].r == 229 &&
 			palette[palette_map[index]].g == 229 &&
 			palette[palette_map[index]].b == 229;
 }
 
-bool MV_FILE::IsHole(uint8_t index, uint8_t kind) {
-	return kind == MaterialKind::Unphysical &&
+bool MV_FILE::IsHole(uint8_t index, uint8_t type) {
+	return type == MaterialKind::Unphysical &&
 			palette[palette_map[index]].r == 255 &&
 			palette[palette_map[index]].g == 0 &&
 			palette[palette_map[index]].b == 0;
 }
 
-bool MV_FILE::IsIndexCorrupted(uint8_t index, uint8_t kind) {
+static bool IsInRange(uint8_t index, uint8_t i_min, uint8_t i_max) {
+	return index >= i_min && index <= i_max;
+}
+
+static bool IsIndexCorrupted(uint8_t index, uint8_t kind) {
 	bool corrupted = false;
 	if (kind == MaterialKind::Glass)
 		corrupted = !IsInRange(index, 1, 8);
@@ -259,21 +258,23 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max, bool halt)
 		mapped_index++;
 	assert(mapped_index < 256);
 
+	// Only move if not in range, or it'll broke vehicle lights
 	if (mapped_index < i_min || mapped_index > i_max) {
 		unsigned int empty_index = i_min;
-		while (is_index_used[empty_index] && empty_index <= i_max)
+		while (empty_index <= i_max && is_index_used[empty_index])
 			empty_index++;
 
 		if (empty_index <= i_max) {
 			is_index_used[empty_index] = true;
 			is_index_used[mapped_index] = false;
+
 			uint8_t temp = palette_map[mapped_index];
 			palette_map[mapped_index] = palette_map[empty_index];
 			palette_map[empty_index] = temp;
 		} else {
-			if (!halt && FixMapping(mapped_index, 193, 224, true))
+			if (!halt && FixMapping(index, 193, 224, true))
 				return true;
-			if (!halt && FixMapping(mapped_index, 241, 253, true))
+			if (!halt && FixMapping(index, 241, 253, true))
 				return true;
 			return false;
 		}
@@ -281,8 +282,10 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max, bool halt)
 	return true;
 }
 
+static const int ATTEMPTS = 3;
+
 void MV_FILE::WriteIMAP() {
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < ATTEMPTS; i++)
 	for (vector<MV_Material>::iterator it = materials.begin(); it != materials.end(); it++) {
 		if (it->material_type == MaterialKind::Glass)
 			FixMapping(it->material_index, 1, 8);
@@ -328,11 +331,14 @@ void MV_FILE::WriteIMAP() {
 		uint8_t index = palette_reverse_map[it->material_index];
 		if (IsIndexCorrupted(index, it->material_type)) {
 			//printf("Overflow of %s at pallete: %s\n", MaterialKindName[it->material_type], filename.c_str());
-			bool is_reserved = (index >= 193 && index <= 224) || (index >= 241 && index <= 253);
+			is_corrupted = true;
+			break;
+			/*bool is_reserved = (index >= 193 && index <= 224) || (index >= 241 && index <= 253);
 			if (!is_reserved) {
 				printf("Overflow of reserved area in file: %s\n", filename.c_str());
+				is_corrupted = false; // too fucked, give up
 				break;
-			}
+			}*/
 		}
 	}
 
@@ -373,23 +379,69 @@ void MV_FILE::WriteMATL(MV_Material mat) {
 }
 
 void MV_FILE::WriteNOTE() {
-	int note_count = sizeof(notes) / sizeof(notes[0]);
-	int note_chunck_size = 4 + 4 * note_count;
-	for (int i = 0; i < note_count; i++)
-		note_chunck_size += strlen(notes[i]);
+	vector<string> notes;
+	notes.reserve(32);
+	bool repaired = true;
+	if (is_corrupted) {
+		for (int row = 1; row <= 32; row++) {
+			string note = "";
+			bool error = false;
+			bool row_corrupted = false;
+			uint8_t row_material = 255; // uninitialized
+
+			for (int col = 1; col <= 8; col++) {
+				unsigned int index = 8 * (32 - row) + col;
+				if (index < 256 && is_index_used[index]) {
+					uint8_t index_mat = 255;
+					for (vector<MV_Material>::iterator it = materials.begin(); it != materials.end(); it++)
+						if (it->material_index == palette_map[index]) {
+							index_mat = it->material_type;
+							break;
+						}
+					assert(index_mat != 255);
+
+					if (IsIndexCorrupted(index, index_mat)) {
+						row_corrupted = true;
+						if (row_material == 255)
+							row_material = index_mat;
+						if (row_material != index_mat) {
+							error = true;
+							repaired = false;
+							break;
+						}
+					}
+				}
+			}
+			if (error)
+				note = "corrupted";
+			else if (row_corrupted)
+				note = string(MatOverridePrefix) + MaterialKindName[row_material];
+			else
+				note = td_notes[row - 1];
+			notes.push_back(note);
+		}
+	} else
+		for (int i = 0; i < 32; i++)
+			notes.push_back(td_notes[i]);
+	if (!repaired)
+		printf("Corrupted row(s) in file %s\n", filename.c_str());
+
+	int note_chunck_size = 4 + 4 * 32;
+	for (int i = 0; i < 32; i++)
+		note_chunck_size += notes[i].length();
 
 	WriteChunkHeader(NOTE, note_chunck_size, 0);
-	WriteInt(note_count);
-	for (int i = 0; i < note_count; i++) {
-		WriteInt(strlen(notes[i]));
-		fwrite(notes[i], sizeof(char), strlen(notes[i]), vox_file);
+	WriteInt(32);
+	for (int i = 0; i < 32; i++) {
+		WriteInt(notes[i].length());
+		fwrite(notes[i].c_str(), sizeof(char), notes[i].length(), vox_file);
 	}
 }
 
 void MV_FILE::SaveModel(bool compress) {
 	vox_file = fopen(filename.c_str(), "wb+");
 	if (vox_file == NULL) {
-		printf("Error: Could not open %s for writing\n", filename.c_str());
+		printf("[ERROR] Could not open %s for writing\n", filename.c_str());
 		return;
 	}
 
@@ -446,6 +498,7 @@ void MV_FILE::AddMaterial(uint8_t index, uint8_t kind, float reflectivity, float
 	MV_Material mat;
 	mat.material_index = index;
 	mat.material_type = kind;
+
 	if (alpha != 1) {
 		mat.render_type = GLASS;
 		mat.properties.glass.roughness = 1.0 - shinyness;
@@ -470,4 +523,9 @@ void MV_FILE::AddMaterial(uint8_t index, uint8_t kind, float reflectivity, float
 	} else
 		mat.render_type = DIFFUSE;
 	materials.push_back(mat);
+}
+
+MV_FILE::~MV_FILE() {
+	for (vector<MVShape>::iterator it = models.begin(); it != models.end(); it++)
+		it->voxels.Clear();
 }
