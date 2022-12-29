@@ -13,6 +13,13 @@
 
 using namespace std;
 
+namespace MEM_OFFSETS {
+	uintptr_t scene = 0x432820; // 4:1920 4:1080 4:4
+	uintptr_t spray_color = 0x359590; // f:0.9 f:0.7 f:0.1 f:1.0
+	uintptr_t painter_func = 0xFEA81; // aob 0FB6B431042C0000
+	uintptr_t update_vox = 0; // ???
+}
+
 int color_offset = 0;
 bool dithering = true;
 uintptr_t moduleBase = 0;
@@ -34,7 +41,7 @@ RGBA paint(RGBA spray_color, RGBA voxel_color, uint8_t strength) {
 void updateTintTable(RGBA tint, Palette& palette) {
 	for (int i = 0; i < 256; i++) {
 		for (int strength = 0; strength < 4; strength++) {
-			int tint_index = 4 * 256 + strength * 256 + i;
+			int tint_index = 1 * 4 * 256 + strength * 256 + i;
 			int index = palette.tint_table[tint_index];
 			Material& original_color = palette.materials[i];
 			Material& tinted_color = palette.materials[index];
@@ -93,7 +100,7 @@ RGBA OpenColorPicker(float r, float g, float b) {
 }
 
 Shape* GetShape(unsigned int handle) {
-	td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + 0x438820, { 0x48, 0x158 });
+	td_vector<Shape*> shapes = *(td_vector<Shape*>*)FindDMAAddy(moduleBase + MEM_OFFSETS::scene, { 0x48, 0x158 });
 	for (unsigned int i = 0; i < shapes.getSize(); i++)
 		if (shapes[i]->self.handle == handle)
 			return shapes[i];
@@ -109,7 +116,7 @@ int GetPalette(lua_State* L) {
 		return 0;
 	}
 
-	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x438820, { 0xB8, 0x8, 0x0 });
+	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + MEM_OFFSETS::scene, { 0xB8, 0x8, 0x0 });
 	Palette selected_palette = palettes[shape->vox->palette];
 	for (int i = 0; i < 256; i++) {
 		RGBA color = selected_palette.materials[i].rgba;
@@ -129,7 +136,7 @@ int GetMaterial(lua_State* L) {
 		return 0;
 	}
 
-	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x438820, { 0xB8, 0x8, 0x0 });
+	const Palette* palettes = (Palette*)FindDMAAddy(moduleBase + MEM_OFFSETS::scene, { 0xB8, 0x8, 0x0 });
 	Material material = palettes[shape->vox->palette].materials[index];
 	LuaSetTableField(L, "indexMaterial", "type", material.kind);
 	LuaSetTableField(L, "indexMaterial", "r", material.rgba.r * 255);
@@ -175,7 +182,7 @@ int ChangeMaterial(lua_State* L) {
 	float metalness = LuaGetTableField(L, "indexMaterial", "metalness") / 100.0;
 	float emissive = LuaGetTableField(L, "indexMaterial", "emissive") / 100.0;
 
-	Palette* palettes = (Palette*)FindDMAAddy(moduleBase + 0x438820, { 0xB8, 0x8, 0x0 });
+	Palette* palettes = (Palette*)FindDMAAddy(moduleBase + MEM_OFFSETS::scene, { 0xB8, 0x8, 0x0 });
 	Material& material = palettes[shape->vox->palette].materials[index];
 	material.kind = type;
 	material.rgba = { red, green, blue, alpha };
@@ -221,11 +228,9 @@ int SetShapeVoxelAtIndex(lua_State* L) {
 	int sizey = shape->vox->size[1];
 	shape->vox->voxels[x + y * sizex + z * sizex * sizey] = index;
 
-	// mov [rsp+08], rcx; push rbp; push rbx; push rsi; push rdi;
-	// 48 89 4C 24 08 55 53 56 57	0xFB490
-	// 40 56 48 81 EC ?? ?? ?? ?? 48 8B F1	0xFCCC0
-	UpdateVox = (VoxInitializer)FindDMAAddy(moduleBase + 0xFCCC0, { });
-	UpdateVox(shape->vox);
+	UpdateVox = (VoxInitializer)FindDMAAddy(moduleBase + MEM_OFFSETS::update_vox, { });
+	if (MEM_OFFSETS::update_vox != 0 && UpdateVox != NULL)
+		UpdateVox(shape->vox);
 	return 0;
 }
 
@@ -250,7 +255,7 @@ int UpdateSpraycanColors(lua_State* L) {
 		LuaSetTableColor(L, "paint_colors", "solid", k + 1, r, g, b);
 	}
 
-	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x35F580, { });
+	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + MEM_OFFSETS::spray_color, { });
 	for (int strength = 1; strength <= 4; strength++) {
 		RGBA color = paint(*spray_color, WHITE, strength);
 		LuaSetTableColor(L, "paint_colors", "dithering", strength, color.r, color.g, color.b);
@@ -285,13 +290,13 @@ int SetRenderDistance(lua_State* L) {
 }
 
 int SetDevMenuVisibility(lua_State* L) {
-	bool& toggle = *(bool*)FindDMAAddy(moduleBase + 0x438820, { 0x90, 0x0 });
+	bool& toggle = *(bool*)FindDMAAddy(moduleBase + MEM_OFFSETS::scene, { 0x90, 0x0 });
 	toggle = lua_toboolean(L, 1);
 	return 0;
 }
 
 int GetDllVersion(lua_State* L) {
-	lua_pushstring(L, "v1.3.0_b01");
+	lua_pushstring(L, "v1.3.0_b02");
 	return 1;
 }
 
@@ -302,12 +307,12 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 	freopen_s(&stream, "CONOUT$", "w", stdout);
 #endif
 	moduleBase = (uintptr_t)GetModuleHandleA("teardown.exe");
-	painter_func = (uint8_t*)FindDMAAddy(moduleBase + 0x100801, { });
+	painter_func = (uint8_t*)FindDMAAddy(moduleBase + MEM_OFFSETS::painter_func, { });
 
 	// f:0.9 f:0.7 f:0.1 f:1.0
-	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + 0x35F580, { });
+	const RGBA* spray_color = (RGBA*)FindDMAAddy(moduleBase + MEM_OFFSETS::spray_color, { });
 	if (memcmp(spray_color, "\x66\x66\x66\x3F\x33\x33\x33\x3F\xCD\xCC\xCC\x3D\x00\x00\x80\x3F", sizeof(RGBA)) != 0) {
-		MessageBoxA(NULL, "The Colored Spraycan DLL mod is not compatible with the version of Teardown you're using, please uninstall it by deleting winmm.dll", "Unsupported version", MB_OK | MB_ICONERROR);
+		MessageBoxA(NULL, "The Colored Spraycan DLL mod is not compatible with the version of Teardown you have installed, please uninstall it by deleting the file winmm.dll in Teardown folder", "Unsupported version", MB_OK | MB_ICONERROR);
 		FreeLibraryAndExitThread(hModule, 0);
 		return 0;
 	}
@@ -315,10 +320,10 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 	while (true) {
 		if (GetAsyncKeyState(VK_F1) & 1) {
 			bool init = false;
-			// TODO: use td_vector<>
-			const unsigned int script_count = *(unsigned int*)FindDMAAddy(moduleBase + 0x438820, { 0x48, 0x1E8 });
+			//td_vector<Script*> scripts = *(td_vector<Script*>*)FindDMAAddy(moduleBase + MEM_OFFSETS::scene, { 0x48, 0x1E8 });
+			const unsigned int script_count = *(unsigned int*)FindDMAAddy(moduleBase + MEM_OFFSETS::scene, { 0x48, 0x1E8 });
 			for (unsigned int i = 0; i < script_count; i++) {
-				const Script* script = (Script*)FindDMAAddy(moduleBase + 0x438820, { 0x48, 0x1F0, 0x8 * i, 0x0 });
+				const Script* script = (Script*)FindDMAAddy(moduleBase + MEM_OFFSETS::scene, { 0x48, 0x1F0, 0x8 * i, 0x0 });
 				lua_State* L = script->state_info->state;
 				if (!init && (strstr(script->name.c_str(), "Colored Spraycan") != NULL || strstr(script->name.c_str(), "2767789311") != NULL)) {
 					init = true; // In case there are multiples copies of the mod
@@ -354,7 +359,7 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 		}
 
 		if (GetAsyncKeyState(VK_F2) & 1) {
-			td_vector<Palette> palettes = *(td_vector<Palette>*)FindDMAAddy(moduleBase + 0x438820, { 0xB8, 0x0 });
+			td_vector<Palette> palettes = *(td_vector<Palette>*)FindDMAAddy(moduleBase + MEM_OFFSETS::scene, { 0xB8, 0x0 });
 			RGBA new_color = OpenColorPicker(spray_color->r, spray_color->g, spray_color->b);
 			Patch((BYTE*)spray_color, (BYTE*)&new_color, sizeof(RGBA));
 

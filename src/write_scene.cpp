@@ -715,16 +715,16 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 					Vector joint_axis(joint->shape_axes[0]);
 					if (joint_axis == Vector(1, 0, 0))
 						relative_rot = QuatEuler(0, 90, 0);
-					else if (joint_axis == Vector(0, 1, 0))
-						relative_rot = QuatEuler(-90, 0, 0);
-					else if (joint_axis == Vector(0, 0, 1))
-						relative_rot = QuatEuler(0, 0, 0);
 					else if (joint_axis == Vector(-1, 0, 0))
 						relative_rot = QuatEuler(0, -90, 0);
+					else if (joint_axis == Vector(0, 1, 0))
+						relative_rot = QuatEuler(-90, 0, 0);
 					else if (joint_axis == Vector(0, -1, 0))
 						relative_rot = QuatEuler(90, 0, 0);
+					else if (joint_axis == Vector(0, 0, 1))
+						relative_rot = QuatEuler(0, 0, 0);
 					else if (joint_axis == Vector(0, 0, -1))
-						relative_rot = QuatEuler(180, 0, 0);
+						relative_rot = QuatEuler(0, 180, 0);
 					else {
 						double a = -asin(joint_axis.y);
 						double b = asin(joint_axis.x / cos(a));
