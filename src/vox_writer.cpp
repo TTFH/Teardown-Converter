@@ -330,15 +330,8 @@ void MV_FILE::WriteIMAP() {
 	for (vector<MV_Material>::iterator it = materials.begin(); it != materials.end(); it++) {
 		uint8_t index = palette_reverse_map[it->material_index];
 		if (IsIndexCorrupted(index, it->material_type)) {
-			//printf("Overflow of %s at pallete: %s\n", MaterialKindName[it->material_type], filename.c_str());
 			is_corrupted = true;
 			break;
-			/*bool is_reserved = (index >= 193 && index <= 224) || (index >= 241 && index <= 253);
-			if (!is_reserved) {
-				printf("Overflow of reserved area in file: %s\n", filename.c_str());
-				is_corrupted = false; // too fucked, give up
-				break;
-			}*/
 		}
 	}
 

@@ -268,7 +268,6 @@ Entity* TDBIN::ReadEntity() {
 	Entity* entity = new Entity;
 	entity->kind_byte = ReadByte();
 	entity->handle = ReadInt();
-
 	entity_mapping[entity->handle] = entity;
 
 	uint8_t tag_count = ReadByte();
@@ -372,6 +371,7 @@ Water* TDBIN::ReadWater() {
 	water->motion = ReadFloat();
 	water->foam = ReadFloat();
 	water->color = ReadColor();
+	water->visibility = ReadFloat();
 	int vertex_count = ReadInt();
 	water->water_vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++) {
@@ -672,7 +672,7 @@ void TDBIN::parse() {
 		scene.magic[i] = ReadByte();
 	for (int i = 0; i < 3; i++)
 		scene.version[i] = ReadByte();
-	assert(scene.version[0] == 1 && scene.version[1] == 3 && scene.version[2] == 0);
+	assert(scene.version[0] == 1 && scene.version[1] == 4 && scene.version[2] == 0);
 	scene.level = ReadString();
 	scene.driven_vehicle = ReadInt();
 	scene.shadowVolume = ReadVector();

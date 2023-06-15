@@ -193,7 +193,8 @@ struct Water {
 	float ripple;		// ripple
 	float motion;		// motion
 	float foam;			// foam
-	Color color;			// color
+	Color color;		// color
+	float visibility;	// visibility
 	Vec<Vertex> water_vertices;
 };
 

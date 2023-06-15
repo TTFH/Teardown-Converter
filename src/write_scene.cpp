@@ -468,13 +468,14 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			Water* water = static_cast<Water*>(entity->kind);
 			entity_element->SetName("water");
 			WriteTransform(entity_element, water->transform);
-			xml.AddStrAttribute(entity_element, "type", "polygon"); // Important
+			xml.AddStrAttribute(entity_element, "type", "polygon");
 			xml.AddFloatAttribute(entity_element, "depth", water->depth, "10");
 			xml.AddFloatAttribute(entity_element, "wave", water->wave, "0.5");
 			xml.AddFloatAttribute(entity_element, "ripple", water->ripple, "0.5");
 			xml.AddFloatAttribute(entity_element, "motion", water->motion, "0.5");
 			xml.AddFloatAttribute(entity_element, "foam", water->foam, "0.5");
 			xml.AddColorAttribute(entity_element, "color", water->color, "0.01 0.01 0.01");
+			xml.AddFloatAttribute(entity_element, "visibility", water->visibility, "3");
 
 			int vertex_count = water->water_vertices.getSize();
 			for (int i = 0; i < vertex_count; i++) {
