@@ -11,7 +11,7 @@
 #include <SDL_thread.h>
 
 #include "imgui.h"
-#include "imgui_impl_sdl.h"
+#include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl2.h"
 #include "file_dialog/ImGuiFileDialog.h"
 
@@ -358,7 +358,7 @@ int main(int argc, char* argv[]) {
 			/*ImGui::Text("Game Version:    ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
-			ImGui::Combo("##gameversion", &game_version, " 1.2.0\0 0.6.0\0 0.3.0\0");
+			ImGui::Combo("##gameversion", &game_version, " 1.4.0\0 0.6.0\0 0.3.0\0");
 			ImGui::PopItemWidth();*/
 
 			ImGui::Dummy(ImVec2(0, 10));

@@ -164,8 +164,6 @@ else
 	clear
 
 ~MV_FILE: Clear shape list
-
-Why did I thought refactoring this was a good idea?
 */
 void Tensor3D::Clear() {
 	for (int i = 0; i < sizex; i++) {
@@ -205,7 +203,7 @@ uint8_t Tensor3D::Get(int x, int y, int z) const {
 	return data[x][y][z];
 }
 
-bool Tensor3D::isFilledSingleColor() {
+bool Tensor3D::IsFilledSingleColor() {
 	uint8_t color = data[0][0][0];
 	for (int x = 0; x < sizex; x++)
 		for (int y = 0; y < sizey; y++)

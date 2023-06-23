@@ -154,13 +154,13 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	}
 
 	Palette palette = scene.palettes[shape->palette];
-	shape->old_transform = shape->transform; // Fix for screens, TODO: improve
+	shape->old_transform = shape->transform;
 	bool collide = (shape->shape_flags & 0x10) != 0;
 
 	Tensor3D voxels(sizex, sizey, sizez);
 	voxels.FromRunLengthEncoding(shape->voxels.palette_indexes);
 
-	if (voxels.isFilledSingleColor()) {
+	if (voxels.IsFilledSingleColor()) {
 		uint8_t index = voxels.Get(0, 0, 0);
 		Material palette_entry = palette.materials[index];
 
@@ -230,7 +230,6 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
 							mvshape.voxels.Set(x, y, z, 0);
 
-						// TODO: load palette separately
 						if (!vox_file->is_index_used[index]) {
 							vox_file->AddColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
 							vox_file->AddMaterial(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
