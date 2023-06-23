@@ -29,6 +29,7 @@ endif
 
 ifeq ($(OS), Windows_NT)
 	ECHO_MESSAGE = "Windows"
+	CXXFLAGS += -Wno-unused-function -Wno-implicit-fallthrough
 	CXXFLAGS += `pkg-config --cflags sdl2` -static
 	LIBS += -lgdi32 -lopengl32 -limm32 `pkg-config --static --libs sdl2` -mconsole icon.res
 endif

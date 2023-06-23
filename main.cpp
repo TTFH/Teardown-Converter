@@ -222,7 +222,7 @@ int main(int argc, char* argv[]) {
 #endif
 	if (argc > 1) {
 		if (argc == 2) {
-			ParseFile({argv[1], "converted/", "", "", "", "", false, false, false});
+			ParseFile({argv[1], "converted/", "", "", "", "", false, true, false});
 		} else
 			printf("CLI Usage: %s quicksave.bin\n", argv[0]);
 		return 0;
