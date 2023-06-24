@@ -675,11 +675,13 @@ void TDBIN::parse() {
 	assert(scene.version[0] == 1 && scene.version[1] == 4 && scene.version[2] == 0);
 	scene.level = ReadString();
 	scene.driven_vehicle = ReadInt();
-	scene.shadowVolume = ReadVector();
+	scene.shadow_volume = ReadVector();
 	scene.spawnpoint = ReadTransform();
 
-	for (int i = 0; i < 4; i++)
-		scene.z_u32_4[i] = ReadInt();
+	scene.world_body_handle = ReadInt();
+	scene.flashlight_handle = ReadInt();
+	scene.explosion_lua_handle = ReadInt();
+	scene.achievements_lua_handle = ReadInt();
 
 	PostProcessing* postpro = &scene.postpro;
 	postpro->brightness = ReadFloat();
@@ -718,12 +720,18 @@ void TDBIN::parse() {
 	for (int i = 0; i < entries; i++)
 		scene.registry[i] = ReadRegistry();
 
-	int entity_count = ReadInt();
-	scene.entities.resize(entity_count);
-	for (int i = 0; i < entity_count; i++) {
+	int top_entity_count = ReadInt();
+	scene.entities.resize(top_entity_count);
+	for (int i = 0; i < top_entity_count; i++) {
 		scene.entities[i] = ReadEntity();
 		scene.entities[i]->parent = NULL;
 	}
+	scene.entity_count = ReadInt();
+	for (int i = 0; i < 9; i++) {
+		scene.padding[i] = ReadByte();
+	}
+	if (fgetc(bin_file) != EOF)
+		throw runtime_error("File size mismatch.");
 	printf("File parsed successfully!\n");
 }
 

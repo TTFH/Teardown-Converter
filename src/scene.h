@@ -149,9 +149,14 @@ struct Scene {
 	uint8_t version[3];		// version
 	string level;
 	uint32_t driven_vehicle;// driven
-	Vector shadowVolume;	// shadowVolume
+	Vector shadow_volume;	// shadowVolume
 	Transform spawnpoint;	// spawnpoint
-	uint32_t z_u32_4[4];
+	// Pattern: 1  n  n-5  n-1
+	uint32_t world_body_handle;
+	uint32_t flashlight_handle;
+	uint32_t explosion_lua_handle;
+	uint32_t achievements_lua_handle;
+
 	PostProcessing postpro;
 	Player player;
 	Environment environment;
@@ -160,8 +165,8 @@ struct Scene {
 	Vec<Palette> palettes;
 	Vec<Registry> registry;
 	Vec<Entity*> entities;
-	//uint32_t z_u32;
-	//uint8_t z_u8_9[9];
+	uint32_t entity_count;
+	uint8_t padding[9];
 };
 
 #endif

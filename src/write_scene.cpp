@@ -18,7 +18,7 @@
 void WriteXML::WriteScene() {
 	string version = to_string(scene.version[0]) + "." + to_string(scene.version[1]) + "." + to_string(scene.version[2]);
 	xml.AddStrAttribute(xml.getScene(), "version", version);
-	xml.AddVectorAttribute(xml.getScene(), "shadowVolume", scene.shadowVolume, "100 25 100");
+	xml.AddVectorAttribute(xml.getScene(), "shadowVolume", scene.shadow_volume, "100 25 100");
 }
 
 void WriteXML::WriteTransform(XMLElement* element, Transform tr) {
@@ -376,6 +376,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			else if (entity->parent == NULL && entity->children.getSize() > 0 && entity->tags.getSize() == 0) {
 				entity_element->SetName("group"); // World Body
 				xml.AddStrAttribute(entity_element, "name", "Static");
+				//printf("World body handle: %d\n", entity->handle);
 			} else if (entity->tags.getSize() == 0)
 				entity_element = NULL; // Ignore static bodies with no tags
 		}
@@ -426,8 +427,10 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddStrFloatAttribute(entity_element, "sound",  light->sound.path, light->sound.volume);
 			xml.AddFloatAttribute(entity_element, "glare", light->glare, "0");
 
-			if (entity->parent == NULL)
+			if (entity->parent == NULL) {
 				entity_element = NULL; // Ignore player flashlight
+				//printf("Player flashlight handle: %d\n", entity->handle);
+			}
 		}
 			break;
 		case KindLocation: {
@@ -777,8 +780,10 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		if (script_file.find(prefix) == 0)
 			script_file = "LEVEL" + script_file.substr(prefix.size());
 
-		if (script_file == "fx.lua" || script_file == "explosion.lua" || script_file == "spawn.lua")
+		if (script_file == "achievements.lua" || script_file == "creativemode.lua" || script_file == "explosion.lua" || script_file == "fx.lua" || script_file == "spawn.lua") {
+			//printf("script %s handle: %d\n", script_file.c_str(), entity->handle);
 			return;
+		}
 		xml.AddElement(xml.getScene(), entity_element);
 
 		xml.AddStrAttribute(entity_element, "file", script_file);

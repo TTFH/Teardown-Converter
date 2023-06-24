@@ -23,6 +23,7 @@ LIBS = -lz -lstdc++fs
 ifeq ($(UNAME_S), Linux)
 	ECHO_MESSAGE = "Linux"
 	CXXFLAGS += -Wno-unused-parameter -Wno-unused-result -Wno-format-security
+	CXXFLAGS += -Wno-unused-function -Wno-implicit-fallthrough -Wno-unknown-pragmas
 	CXXFLAGS += `sdl2-config --cflags`
 	LIBS += -lGL -ldl `sdl2-config --libs`
 endif
