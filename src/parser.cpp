@@ -238,7 +238,7 @@ LuaValue TDBIN::ReadLuaValue(uint32_t key_type) {
 			break;
 		case Table: {
 			LuaTable table = ReadLuaTable();
-			value.Table = new LuaTable;
+			value.Table = new LuaTable();
 			for (unsigned int i = 0; i < table.size(); i++)
 				value.Table->push_back(table[i]);
 		}
@@ -265,7 +265,7 @@ LuaTable TDBIN::ReadLuaTable() {
 }
 
 Entity* TDBIN::ReadEntity() {
-	Entity* entity = new Entity;
+	Entity* entity = new Entity();
 	entity->kind_byte = ReadByte();
 	entity->handle = ReadInt();
 	entity_mapping[entity->handle] = entity;
@@ -292,44 +292,44 @@ Entity* TDBIN::ReadEntity() {
 }
 
 Body* TDBIN::ReadBody() {
-	Body* res = new Body;
-	res->entity_flags = ReadWord();
-	res->transform = ReadTransform();
-	res->velocity = ReadVector();
-	res->angular_velocity = ReadVector();
-	res->dynamic = ReadByte() != 0;
-	res->body_flags = ReadByte();
-	return res;
+	Body* body = new Body();
+	body->entity_flags = ReadWord();
+	body->transform = ReadTransform();
+	body->velocity = ReadVector();
+	body->angular_velocity = ReadVector();
+	body->dynamic = ReadByte() != 0;
+	body->body_flags = ReadByte();
+	return body;
 }
 
 Shape* TDBIN::ReadShape() {
-	Shape* res = new Shape;
-	res->flags = ReadWord();
-	res->transform = ReadTransform();
-	res->shape_flags = ReadByte();
-	for (int i = 0; i < 3; i++)
-		res->z_u8_3[i] = ReadByte();
-	res->density = ReadFloat();
-	res->strength = ReadFloat();
-	res->texture_tile = ReadWord();
-	res->blendtexture_tile = ReadWord();
-	res->texture_weight = ReadFloat();
-	res->blendtexture_weight = ReadFloat();
-	res->starting_world_position = ReadVector();
-	res->z_f32 = ReadFloat();
-	res->z1_u8 = ReadByte();
-	res->z2_u8 = ReadByte();
-	res->voxels = ReadVoxels();
-	res->palette = ReadInt();
-	res->scale = ReadFloat();
+	Shape* shape = new Shape();
+	shape->flags = ReadWord();
+	shape->transform = ReadTransform();
+	shape->shape_flags = ReadWord();
+	shape->collision_layer = ReadByte();
+	shape->collision_mask = ReadByte();
+	shape->density = ReadFloat();
+	shape->strength = ReadFloat();
+	shape->texture_tile = ReadWord();
+	shape->blendtexture_tile = ReadWord();
+	shape->texture_weight = ReadFloat();
+	shape->blendtexture_weight = ReadFloat();
+	shape->starting_world_position = ReadVector();
+	shape->z_f32 = ReadFloat();
+	shape->z1_u8 = ReadByte();
+	shape->z2_u8 = ReadByte();
+	shape->voxels = ReadVoxels();
+	shape->palette = ReadInt();
+	shape->scale = ReadFloat();
 	for (int i = 0; i < 2; i++)
-		res->z_u32_2[i] = ReadInt();
-	res->z3_u8 = ReadByte();
-	return res;
+		shape->z_u32_2[i] = ReadInt();
+	shape->z3_u8 = ReadByte();
+	return shape;
 }
 
 Light* TDBIN::ReadLight() {
-	Light* light = new Light;
+	Light* light = new Light();
 	light->is_on = ReadByte() != 0;
 	light->type = ReadByte();
 	light->transform = ReadTransform();
@@ -355,14 +355,14 @@ Light* TDBIN::ReadLight() {
 }
 
 Location* TDBIN::ReadLocation() {
-	Location* location = new Location;
+	Location* location = new Location();
 	location->flags = ReadWord();
 	location->transform = ReadTransform();
 	return location;
 }
 
 Water* TDBIN::ReadWater() {
-	Water* water = new Water;
+	Water* water = new Water();
 	water->flags = ReadWord();
 	water->transform = ReadTransform();
 	water->depth = ReadFloat();
@@ -382,7 +382,7 @@ Water* TDBIN::ReadWater() {
 }
 
 Joint* TDBIN::ReadJoint() {
-	Joint* joint = new Joint;
+	Joint* joint = new Joint();
 	joint->type = ReadInt();
 	for (int i = 0; i < 2; i++)
 		joint->shape_handles[i] = ReadInt();
@@ -411,7 +411,7 @@ Joint* TDBIN::ReadJoint() {
 }
 
 Vehicle* TDBIN::ReadVehicle() {
-	Vehicle* vehicle = new Vehicle;
+	Vehicle* vehicle = new Vehicle();
 	vehicle->flags = ReadWord();
 	vehicle->body_handle = ReadInt();
 	vehicle->transform = ReadTransform();
@@ -432,7 +432,7 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->propeller = ReadVector();
 	vehicle->difflock = ReadFloat();
 	vehicle->z2_f32 = ReadFloat();
-	vehicle->z_u32 = ReadInt();
+	vehicle->body_voxel_count = ReadInt();
 	vehicle->z1_u8 = ReadByte();
 	vehicle->z3_f32 = ReadFloat();
 
@@ -464,7 +464,7 @@ Vehicle* TDBIN::ReadVehicle() {
 }
 
 Wheel* TDBIN::ReadWheel() {
-	Wheel* wheel = new Wheel;
+	Wheel* wheel = new Wheel();
 	wheel->flags = ReadWord();
 	wheel->vehicle = ReadInt();
 	wheel->vehicle_body = ReadInt();
@@ -473,14 +473,13 @@ Wheel* TDBIN::ReadWheel() {
 	for (int i = 0; i < 17; i++)
 		wheel->z_u8_17[i] = ReadByte();
 	wheel->transform = ReadTransform();
-	for (int i = 0; i < 7; i++)
-		wheel->z_f32_7[i] = ReadFloat();
+	wheel->empty_transform = ReadTransform();
 	wheel->steer = ReadFloat();
 	wheel->drive = ReadFloat();
 	for (int i = 0; i < 2; i++)
 		wheel->travel[i] = ReadFloat();
-	for (int i = 0; i < 2; i++)
-		wheel->z1_f32_2[i] = ReadFloat();
+	wheel->radius = ReadFloat();
+	wheel->width = ReadFloat();
 	wheel->angular_speed = ReadFloat();
 	for (int i = 0; i < 2; i++)
 		wheel->z2_f32_2[i] = ReadFloat();
@@ -488,7 +487,7 @@ Wheel* TDBIN::ReadWheel() {
 }
 
 Screen* TDBIN::ReadScreen() {
-	Screen* screen = new Screen;
+	Screen* screen = new Screen();
 	screen->flags = ReadWord();
 	screen->transform = ReadTransform();
 	for (int i = 0; i < 2; i++)
@@ -508,7 +507,7 @@ Screen* TDBIN::ReadScreen() {
 }
 
 Trigger* TDBIN::ReadTrigger() {
-	Trigger* trigger = new Trigger;
+	Trigger* trigger = new Trigger();
 	trigger->flags = ReadWord();
 	trigger->transform = ReadTransform();
 	trigger->type = ReadInt();
@@ -530,7 +529,7 @@ Trigger* TDBIN::ReadTrigger() {
 };
 
 Script* TDBIN::ReadScript() {
-	Script* script = new Script;
+	Script* script = new Script();
 	script->flags = ReadWord();
 	script->file = ReadString();
 

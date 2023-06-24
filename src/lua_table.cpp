@@ -13,7 +13,7 @@ LuaTableEntry::LuaTableEntry(const LuaTableEntry& other) {
 		key.String = new char[strlen(other.key.String) + 1];
 		strcpy(key.String, other.key.String);
 	} else if (key_type == Table) {
-		key.Table = new LuaTable;
+		key.Table = new LuaTable();
 		for (unsigned int i = 0; i < other.key.Table->size(); i++)
 			key.Table->push_back((*other.key.Table)[i]);
 	}
@@ -23,7 +23,7 @@ LuaTableEntry::LuaTableEntry(const LuaTableEntry& other) {
 		value.String = new char[strlen(other.value.String) + 1];
 		strcpy(value.String, other.value.String);
 	} else if (value_type == Table) {
-		value.Table = new LuaTable;
+		value.Table = new LuaTable();
 		for (unsigned int i = 0; i < other.value.Table->size(); i++)
 			value.Table->push_back((*other.value.Table)[i]);
 	}

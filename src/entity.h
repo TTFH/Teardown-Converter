@@ -69,6 +69,11 @@ struct Registry {
 	string value;
 };
 
+struct Tag {
+	string name;
+	string value;
+};
+
 struct Color {
 	float r, g, b, a;
 };
@@ -92,11 +97,6 @@ enum EntityKind { // uint8_t
 	KindScreen,
 	KindTrigger,
 	KindScript,
-};
-
-struct Tag {
-	string name;
-	string value;
 };
 
 struct Entity {
@@ -131,8 +131,9 @@ struct Voxels {
 struct Shape {
 	BitFlags flags;
 	Transform transform;
-	uint8_t shape_flags;		// 0x10 = collide
-	uint8_t z_u8_3[3];
+	uint16_t shape_flags;		// 0x10 = collide
+	uint8_t collision_layer;
+	uint8_t collision_mask;
 	float density;				// density
 	float strength;				// strength
 	uint16_t texture_tile;		// texture
@@ -146,6 +147,7 @@ struct Shape {
 	Voxels voxels;
 	uint32_t palette;
 	float scale;				// scale = 10.0 * this
+	// 0xFFFF 0xFFFF 0xFFFF 0xFFFF 0x00
 	uint32_t z_u32_2[2];
 	uint8_t z3_u8;
 
@@ -163,7 +165,7 @@ struct Light {
 	bool is_on;
 	uint8_t type;		// type
 	Transform transform;
-	Color color;			// color = pow(this, 0.454545)
+	Color color;		// color = pow(this, 0.454545)
 	float scale;		// scale
 	float reach;		// reach
 	float size;			// size
@@ -211,7 +213,7 @@ struct Knot {
 };
 
 struct Rope {
-	Color color;			// color
+	Color color;		// color
 	float z_f32;
 	float strength;		// strength
 	float maxstretch;	// maxstretch
@@ -283,13 +285,13 @@ struct Vehicle {
 	float z1_f32;
 	Vec<uint32_t> wheel_handles;
 	VehicleProperties properties;
-	Vector camera;		// camera
-	Vector player;		// player
+	Vector camera;			// camera
+	Vector player;			// player
 	Vector exit;			// exit
 	Vector propeller;		// propeller
 	float difflock;			// difflock
 	float z2_f32;
-	uint32_t z_u32;
+	uint32_t body_voxel_count;
 	uint8_t z1_u8;
 	float z3_f32;
 	Vec<uint32_t> refs;
@@ -308,11 +310,12 @@ struct Wheel {
 	uint32_t shape;
 	uint8_t z_u8_17[17];
 	Transform transform;
-	float z_f32_7[7];		// another transform?
+	Transform empty_transform;
 	float steer;			// steer
 	float drive;			// drive
 	float travel[2];		// travel
-	float z1_f32_2[2];		// radius?, width?
+	float radius;
+	float width;
 	float angular_speed;
 	float z2_f32_2[2];
 };
