@@ -604,17 +604,23 @@ void* TDBIN::ReadEntityKind(uint8_t kind_byte) {
 }
 
 void TDBIN::ReadPlayer() {
-	scene.player.transform = ReadTransform();
-	scene.player.yaw = ReadFloat();
-	scene.player.pitch = ReadFloat();
-	scene.player.velocity = ReadVector();
-	scene.player.health = ReadFloat();
-	for (int i = 0; i < 4; i++)
-		scene.player.z_f32_4[i] = ReadFloat();
+	Player* player = &scene.player;
+	player->transform = ReadTransform();
+	player->yaw = ReadFloat();
+	player->pitch = ReadFloat();
+	player->velocity = ReadVector();
+	player->health = ReadFloat();
+
+	player->z_f32_1 = ReadFloat();
+	player->bluetide_timer = ReadFloat();
+	for (int i = 0; i < 2; i++)
+		player->z_f32_2[i] = ReadFloat();
 }
 
 void TDBIN::ReadEnvironment() {
-	Skybox* skybox = &scene.environment.skybox;
+	Environment* environment = &scene.environment;
+	Skybox* skybox = &environment->skybox;
+
 	skybox->texture = ReadString();
 	skybox->tint = ReadColor();
 	skybox->brightness = ReadFloat();
@@ -634,37 +640,37 @@ void TDBIN::ReadEnvironment() {
 	skybox->ambientexponent = ReadFloat();
 
 	for (int i = 0; i < 2; i++)
-		scene.environment.exposure[i] = ReadFloat();
-	scene.environment.brightness = ReadFloat();
+		environment->exposure[i] = ReadFloat();
+	environment->brightness = ReadFloat();
 
-	Fog* fog = &scene.environment.fog;
+	Fog* fog = &environment->fog;
 	fog->color = ReadColor();
 	fog->start = ReadFloat();
 	fog->distance = ReadFloat();
 	fog->amount = ReadFloat();
 	fog->exponent = ReadFloat();
 
-	EnvWater* water = &scene.environment.water;
+	EnvWater* water = &environment->water;
 	water->wetness = ReadFloat();
 	water->puddleamount = ReadFloat();
 	water->puddlesize = ReadFloat();
 	water->rain = ReadFloat();
 
-	scene.environment.nightlight = ReadByte() != 0;
-	scene.environment.ambience.path = ReadString();
-	scene.environment.ambience.volume = ReadFloat();
-	scene.environment.slippery = ReadFloat();
-	scene.environment.fogscale = ReadFloat();
+	environment->nightlight = ReadByte() != 0;
+	environment->ambience.path = ReadString();
+	environment->ambience.volume = ReadFloat();
+	environment->slippery = ReadFloat();
+	environment->fogscale = ReadFloat();
 
-	Snow* snow = &scene.environment.snow;
+	Snow* snow = &environment->snow;
 	snow->dir = ReadVector();
 	snow->spread = ReadFloat();
 	snow->amount = ReadFloat();
 	snow->speed = ReadFloat();
 	snow->onground = ReadByte() != 0;
 
-	scene.environment.wind = ReadVector();
-	scene.environment.waterhurt = ReadFloat();
+	environment->wind = ReadVector();
+	environment->waterhurt = ReadFloat();
 }
 
 void TDBIN::parse() {

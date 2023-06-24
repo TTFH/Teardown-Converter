@@ -32,13 +32,23 @@ extern const char* MaterialKindName[];
 
 bool operator==(uint8_t lhs, const MaterialKind& rhs);
 
+struct PostProcessing {
+	float brightness;		// brightness
+	Color colorbalance;		// colorbalance
+	float saturation;		// saturation
+	float gamma;			// gamma
+	float bloom;			// bloom
+};
+
 struct Player {
 	Transform transform;
 	float yaw;
 	float pitch;
 	Vector velocity;
 	float health;
-	float z_f32_4[4];
+	float z_f32_1;
+	float bluetide_timer;
+	float z_f32_2[2];
 };
 
 struct Sun {
@@ -58,7 +68,7 @@ struct Skybox {
 	float brightness;		// skyboxbrightness
 	float rot;				// skyboxrot in radians
 	Sun sun;
-	uint8_t z_u8;
+	uint8_t z_u8;			// 1
 	Color constant;			// constant
 	float ambient;			// ambient
 	float ambientexponent;	// ambientexponent
@@ -116,7 +126,7 @@ struct Fire {
 	Vector pos;
 	float max_time;
 	float time;
-	uint8_t z_u8_6[6];
+	uint8_t z_u8_6[6]; // 1/0 1/0 1/0 0 0 0
 };
 
 struct Material {
@@ -134,14 +144,6 @@ struct Palette {
 	uint8_t z_u8;
 	uint8_t black_tint[4 * 256];
 	uint8_t yellow_tint[4 * 256];
-};
-
-struct PostProcessing {
-	float brightness;		// brightness
-	Color colorbalance;		// colorbalance
-	float saturation;		// saturation
-	float gamma;			// gamma
-	float bloom;			// bloom
 };
 
 struct Scene {
