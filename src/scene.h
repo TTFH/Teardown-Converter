@@ -48,7 +48,8 @@ struct Player {
 	float health;
 	float z_f32_1;
 	float bluetide_timer;
-	float z_f32_2[2];
+	float z_f32_2;
+	float z_f32_3;
 };
 
 struct Sun {
@@ -91,11 +92,11 @@ struct EnvWater {
 };
 
 struct Snow {
-	Vector dir;		// snowdir x y z
-	float spread;	// snowdir spread
-	float amount;	// snowamount
+	Vector dir = {0, -1, 0};	// snowdir x y z
+	float spread = 0.2;			// snowdir spread
+	float amount;				// snowamount
 	float speed;
-	bool onground;	// snowonground
+	bool onground;				// snowonground
 };
 
 struct Environment {
@@ -115,10 +116,10 @@ struct Environment {
 
 struct Boundary {
 	Vec<Vertex> vertices;
-	float padleft;		// negative
-	float padtop;		// negative
-	float padright;
-	float padbottom;
+	float padleft = -5;		// negative
+	float padtop = -5;		// negative
+	float padright = 5;
+	float padbottom = 5;
 };
 
 struct Fire {
@@ -126,7 +127,7 @@ struct Fire {
 	Vector pos;
 	float max_time;
 	float time;
-	uint8_t z_u8_6[6]; // 1/0 1/0 1/0 0 0 0
+	uint8_t z_u8_6[6];
 };
 
 struct Material {

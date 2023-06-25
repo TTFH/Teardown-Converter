@@ -612,13 +612,15 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddStrAttribute(entity_element, "resolution", resolution, "640 480");
 
 			string script_file = screen->script;
-			string prefix = "data/level/" + params.level_id;
-			if (script_file.find(prefix) == 0)
-				script_file = "LEVEL" + script_file.substr(prefix.size());
-
-			prefix = "data/";
+			string prefix = "data/";
 			if (script_file.find(prefix) == 0)
 				script_file = script_file.substr(prefix.size());
+
+			if (!params.level_id.empty()) {
+				prefix = "data/level/" + params.level_id;
+				if (script_file.find(prefix) == 0)
+					script_file = "LEVEL" + script_file.substr(prefix.size());
+			}
 
 			xml.AddStrAttribute(entity_element, "script", script_file);
 			xml.AddBoolAttribute(entity_element, "enabled", screen->enabled, false);
@@ -776,9 +778,11 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		if (script_file.find(prefix) == 0)
 			script_file = script_file.substr(prefix.size());
 
-		prefix = "data/level/" + params.level_id;
-		if (script_file.find(prefix) == 0)
-			script_file = "LEVEL" + script_file.substr(prefix.size());
+		if (!params.level_id.empty()) {
+			prefix = "data/level/" + params.level_id;
+			if (script_file.find(prefix) == 0)
+				script_file = "LEVEL" + script_file.substr(prefix.size());
+		}
 
 		if (script_file == "achievements.lua" || script_file == "creativemode.lua" || script_file == "explosion.lua" || script_file == "fx.lua" || script_file == "spawn.lua") {
 			//printf("script %s handle: %d\n", script_file.c_str(), entity->handle);

@@ -54,11 +54,79 @@ public:
 	}
 };
 
+// -- td_converter_modern --
+#define VERSION_1_4_0 140 // Added water->visibility
+#define VERSION_1_3_0 130 // Added 17 bytes to Wheel
+#define VERSION_1_2_0 120 // No changes
+#define VERSION_1_1_0 110 // Added Achievements
+#define VERSION_1_0_0 100 // No changes
+#define VERSION_0_9_6 96 // Removed ~~Herobrine~~ Enemy [enum change, requiere recompile]
+
+// -- td_converter_classic --
+#define VERSION_0_9_5 95 // Added joint->autodisable
+#define VERSION_0_9_2 92 // Entity flags increased to 16 bits
+#define VERSION_0_9_0 90 // Added Boundary padding, Snow, water color, blend texture, joint sound, etc. Removed 1 byte from Body
+
+#define VERSION_0_8_0 80
+#define VERSION_0_7_4 74
+#define VERSION_0_7_2 72
+#define VERSION_0_7_1 71 // Experimental
+#define VERSION_0_7_0 70 // Experimental
+#define VERSION_0_6_2 62
+#define VERSION_0_6_1 61 // Experimental
+#define VERSION_0_6_0 60 // Experimental
+#define VERSION_0_5_2 52
+#define VERSION_0_4_6 46
+#define VERSION_0_4_5 45
+
+// -- td_converter_legacy --
+
+// -- td_converter_dinosaur --
+#define VERSION_0_3_0 30
+
+#define TD_VERSION VERSION_0_8_0
+
+/*
+0.7.4 -> 0.9.0 Changelog
+
+Environment @end
+	Removed 7 int
+	Removed 1 byte
+	Added Snow
+	Added wind
+	Added skybox brightness
+
+Boundary padding
+
+Player
+	Added 1 int before transform
+	Added 2 float at end // bluetide?
+
+Joint
+	Added 1 byte
+	Added 2 int
+
+Vehicle
+	Added 1 float
+	Added 1 int
+	Added 1 byte
+
+Water
+	Added color
+
+Body @end
+	Removed 1 byte // active?
+
+Shape
+	texture tile -> 16 bits
+	Added blend texture tile / weight
+*/
+
 #define SmallVec Vec
 
-extern const char* EntityKindName[];
+typedef uint16_t EntityFlags;
 
-typedef uint16_t BitFlags;
+extern const char* EntityKindName[];
 
 struct Vertex { // vertex
 	float pos[2]; // pos
@@ -91,6 +159,9 @@ enum EntityKind { // uint8_t
 	KindLight,
 	KindLocation,
 	KindWater,
+#if TD_VERSION < VERSION_0_9_6
+	KindEnemy,
+#endif
 	KindJoint,
 	KindVehicle,
 	KindWheel,
@@ -113,7 +184,7 @@ struct Entity {
 };
 
 struct Body {
-	BitFlags entity_flags;
+	EntityFlags flags;
 	Transform transform;
 	Vector velocity;
 	Vector angular_velocity;
@@ -129,7 +200,7 @@ struct Voxels {
 };
 
 struct Shape {
-	BitFlags flags;
+	EntityFlags flags;
 	Transform transform;
 	uint16_t shape_flags;		// 0x10 = collide
 	uint8_t collision_layer;
@@ -183,20 +254,20 @@ struct Light {
 };
 
 struct Location {
-	BitFlags flags;
+	EntityFlags flags;
 	Transform transform;
 };
 
 struct Water {
-	BitFlags flags;
+	EntityFlags flags;
 	Transform transform;
-	float depth;		// depth
-	float wave;			// wave
-	float ripple;		// ripple
-	float motion;		// motion
-	float foam;			// foam
-	Color color;		// color
-	float visibility;	// visibility
+	float depth;				// depth
+	float wave;					// wave
+	float ripple;				// ripple
+	float motion;				// motion
+	float foam;					// foam
+	Color color = { 0.01, 0.01, 0.01, 1 }; // color
+	float visibility = 3;		// visibility
 	Vec<Vertex> water_vertices;
 };
 
@@ -234,7 +305,7 @@ struct Joint {
 	float rotspring;			// rotspring
 	float ball_rot[4];
 	float limits[2];			// limits (in degrees for hinge, meters for prismatic)
-	float z_f32_2[2];
+	float z_f32_2[2];			// Unknown, for hinge maybe???
 	float size;					// size
 	bool sound;					// sound
 	bool autodisable;			// autodisable
@@ -277,7 +348,7 @@ struct Vital {
 };
 
 struct Vehicle {
-	BitFlags flags;
+	EntityFlags flags;
 	uint32_t body_handle;
 	Transform transform;
 	Vector velocity;
@@ -303,7 +374,7 @@ struct Vehicle {
 };
 
 struct Wheel {
-	BitFlags flags;
+	EntityFlags flags;
 	uint32_t vehicle;
 	uint32_t vehicle_body;
 	uint32_t body;
@@ -321,7 +392,7 @@ struct Wheel {
 };
 
 struct Screen {
-	BitFlags flags;
+	EntityFlags flags;
 	Transform transform;
 	float size[2];			// size
 	float bulge;			// bulge
@@ -350,7 +421,7 @@ struct TriggerSound {
 };
 
 struct Trigger {
-	BitFlags flags;
+	EntityFlags flags;
 	Transform transform;
 	uint32_t type;				// type
 	float sphere_size;			// size
@@ -387,7 +458,7 @@ struct ValueTransition {
 };
 
 struct Script {
-	BitFlags flags;
+	EntityFlags flags;
 	string file;			// file
 	Vec<Registry> params;	// param%d
 	float last_update;

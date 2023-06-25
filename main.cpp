@@ -216,13 +216,22 @@ vector<LevelInfo> LoadLevels() {
 	return levels;
 }
 
+string GetFilename(const char* path) {
+	string filename = path;
+	size_t pos = filename.find_last_of("\\/");
+	if (pos != string::npos)
+		filename = filename.substr(pos + 1);
+	filename = filename.substr(0, filename.find_last_of("."));
+	return filename;
+}
+
 int main(int argc, char* argv[]) {
 #ifdef _WIN32
 	_setmaxstdio(2048);
 #endif
 	if (argc > 1) {
 		if (argc == 2) {
-			ParseFile({argv[1], "converted/", "", "", "", "", false, false, false});
+			ParseFile({argv[1], GetFilename(argv[1]) + "/", "", "", "", "", false, false, false});
 		} else
 			printf("CLI Usage: %s quicksave.bin\n", argv[0]);
 		return 0;
@@ -283,6 +292,7 @@ int main(int argc, char* argv[]) {
 	bool xml_only = false;
 	bool use_tdcz = false;
 	int game_version = 0;
+	string version = to_string(TD_VERSION / 100) + "." + to_string((TD_VERSION / 10) % 10) + "." + to_string(TD_VERSION % 10);
 
 	ConverterParams* params = new ConverterParams();
 	SDL_Thread* parse_thread = NULL;
@@ -358,7 +368,7 @@ int main(int argc, char* argv[]) {
 			ImGui::Text("Game Version:    ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
-			ImGui::Combo("##gameversion", &game_version, " 1.4.0\0 1.3.0\0 1.2.0\0 1.1.0\0 1.0.0\0 0.9.5\0 0.9.2\0 0.9.0\0 0.8.0\0 0.7.4\0 0.7.2\0 0.6.2\0 0.5.2\0 0.4.6\0 0.4.5\0 0.3.0\0");
+			ImGui::Combo("##gameversion", &game_version, version.c_str());
 			ImGui::PopItemWidth();
 
 			ImGui::Dummy(ImVec2(0, 10));

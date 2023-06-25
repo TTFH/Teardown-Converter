@@ -29,6 +29,7 @@ private:
 	double ReadDouble();
 	string ReadString();
 
+	uint16_t ReadEntityFlags();
 	Registry ReadRegistry();
 	Color ReadColor();
 	Vector ReadVector();

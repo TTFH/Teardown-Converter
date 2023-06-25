@@ -74,6 +74,14 @@ uint16_t TDBIN::ReadWord() {
 	return word;
 }
 
+uint16_t TDBIN::ReadEntityFlags() {
+	#if TD_VERSION >= VERSION_0_9_2
+		return ReadWord();
+	#else
+		return ReadByte();
+	#endif
+}
+
 uint32_t TDBIN::ReadInt() {
 	uint32_t val = 0;
 	fread(&val, sizeof(uint32_t), 1, bin_file);
@@ -269,6 +277,7 @@ Entity* TDBIN::ReadEntity() {
 	entity->kind_byte = ReadByte();
 	entity->handle = ReadInt();
 	entity_mapping[entity->handle] = entity;
+	printf("Reading %s with handle %d\n", EntityKindName[entity->kind_byte], entity->handle);
 
 	uint8_t tag_count = ReadByte();
 	entity->tags.resize(tag_count);
@@ -293,29 +302,40 @@ Entity* TDBIN::ReadEntity() {
 
 Body* TDBIN::ReadBody() {
 	Body* body = new Body();
-	body->entity_flags = ReadWord();
+	body->flags = ReadEntityFlags();
 	body->transform = ReadTransform();
 	body->velocity = ReadVector();
 	body->angular_velocity = ReadVector();
 	body->dynamic = ReadByte() != 0;
+#if TD_VERSION < VERSION_0_9_0
+	ReadByte();
+#endif
 	body->body_flags = ReadByte();
 	return body;
 }
 
 Shape* TDBIN::ReadShape() {
 	Shape* shape = new Shape();
-	shape->flags = ReadWord();
+	shape->flags = ReadEntityFlags();
 	shape->transform = ReadTransform();
 	shape->shape_flags = ReadWord();
 	shape->collision_layer = ReadByte();
 	shape->collision_mask = ReadByte();
 	shape->density = ReadFloat();
 	shape->strength = ReadFloat();
+
+#if TD_VERSION >= VERSION_0_9_0
 	shape->texture_tile = ReadWord();
 	shape->blendtexture_tile = ReadWord();
 	shape->texture_weight = ReadFloat();
 	shape->blendtexture_weight = ReadFloat();
 	shape->starting_world_position = ReadVector();
+#else
+	shape->texture_tile = ReadInt();
+	shape->starting_world_position = ReadVector();
+	shape->texture_weight = ReadFloat();
+#endif
+
 	shape->z_f32 = ReadFloat();
 	shape->z1_u8 = ReadByte();
 	shape->z2_u8 = ReadByte();
@@ -356,22 +376,26 @@ Light* TDBIN::ReadLight() {
 
 Location* TDBIN::ReadLocation() {
 	Location* location = new Location();
-	location->flags = ReadWord();
+	location->flags = ReadEntityFlags();
 	location->transform = ReadTransform();
 	return location;
 }
 
 Water* TDBIN::ReadWater() {
 	Water* water = new Water();
-	water->flags = ReadWord();
+	water->flags = ReadEntityFlags();
 	water->transform = ReadTransform();
 	water->depth = ReadFloat();
 	water->wave = ReadFloat();
 	water->ripple = ReadFloat();
 	water->motion = ReadFloat();
 	water->foam = ReadFloat();
+#if TD_VERSION >= VERSION_0_9_0
 	water->color = ReadColor();
+#endif
+#if TD_VERSION >= VERSION_1_4_0
 	water->visibility = ReadFloat();
+#endif
 	int vertex_count = ReadInt();
 	water->water_vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++) {
@@ -401,10 +425,16 @@ Joint* TDBIN::ReadJoint() {
 	for (int i = 0; i < 2; i++)
 		joint->z_f32_2[i] = ReadFloat();
 	joint->size = ReadFloat();
+#if TD_VERSION >= VERSION_0_9_0
 	joint->sound = ReadByte() != 0;
+#endif
+#if TD_VERSION >= VERSION_0_9_5
 	joint->autodisable = ReadByte() != 0;
+#endif
+#if TD_VERSION >= VERSION_0_9_0
 	for (int i = 0; i < 2; i++)
 		joint->z_u32_2[i] = ReadInt();
+#endif
 	if (joint->type == _Rope)
 		joint->rope = ReadRope();
 	return joint;
@@ -412,7 +442,7 @@ Joint* TDBIN::ReadJoint() {
 
 Vehicle* TDBIN::ReadVehicle() {
 	Vehicle* vehicle = new Vehicle();
-	vehicle->flags = ReadWord();
+	vehicle->flags = ReadEntityFlags();
 	vehicle->body_handle = ReadInt();
 	vehicle->transform = ReadTransform();
 	vehicle->velocity = ReadVector();
@@ -456,22 +486,25 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->vitals[i].z_f32 = ReadFloat();
 		vehicle->vitals[i].shape_index = ReadInt();
 	}
-
+#if TD_VERSION >= VERSION_0_9_0
 	vehicle->z4_f32 = ReadFloat();
 	vehicle->z2_u8 = ReadByte();
 	vehicle->z5_f32 = ReadFloat();
+#endif
 	return vehicle;
 }
 
 Wheel* TDBIN::ReadWheel() {
 	Wheel* wheel = new Wheel();
-	wheel->flags = ReadWord();
+	wheel->flags = ReadEntityFlags();
 	wheel->vehicle = ReadInt();
 	wheel->vehicle_body = ReadInt();
 	wheel->body = ReadInt();
 	wheel->shape = ReadInt();
+#if TD_VERSION >= VERSION_1_3_0
 	for (int i = 0; i < 17; i++)
 		wheel->z_u8_17[i] = ReadByte();
+#endif
 	wheel->transform = ReadTransform();
 	wheel->empty_transform = ReadTransform();
 	wheel->steer = ReadFloat();
@@ -488,7 +521,7 @@ Wheel* TDBIN::ReadWheel() {
 
 Screen* TDBIN::ReadScreen() {
 	Screen* screen = new Screen();
-	screen->flags = ReadWord();
+	screen->flags = ReadEntityFlags();
 	screen->transform = ReadTransform();
 	for (int i = 0; i < 2; i++)
 		screen->size[i] = ReadFloat();
@@ -508,7 +541,7 @@ Screen* TDBIN::ReadScreen() {
 
 Trigger* TDBIN::ReadTrigger() {
 	Trigger* trigger = new Trigger();
-	trigger->flags = ReadWord();
+	trigger->flags = ReadEntityFlags();
 	trigger->transform = ReadTransform();
 	trigger->type = ReadInt();
 	trigger->sphere_size = ReadFloat();
@@ -530,7 +563,7 @@ Trigger* TDBIN::ReadTrigger() {
 
 Script* TDBIN::ReadScript() {
 	Script* script = new Script();
-	script->flags = ReadWord();
+	script->flags = ReadEntityFlags();
 	script->file = ReadString();
 
 	int entries = ReadInt();
@@ -612,8 +645,8 @@ void TDBIN::ReadPlayer() {
 
 	player->z_f32_1 = ReadFloat();
 	player->bluetide_timer = ReadFloat();
-	for (int i = 0; i < 2; i++)
-		player->z_f32_2[i] = ReadFloat();
+	player->z_f32_2 = ReadFloat();
+	player->z_f32_3 = ReadFloat();
 }
 
 void TDBIN::ReadEnvironment() {
@@ -661,6 +694,7 @@ void TDBIN::ReadEnvironment() {
 	environment->slippery = ReadFloat();
 	environment->fogscale = ReadFloat();
 
+#if TD_VERSION >= VERSION_0_9_0
 	Snow* snow = &environment->snow;
 	snow->dir = ReadVector();
 	snow->spread = ReadFloat();
@@ -670,6 +704,12 @@ void TDBIN::ReadEnvironment() {
 
 	environment->wind = ReadVector();
 	environment->waterhurt = ReadFloat();
+#else
+	// 0.8.0, etc.
+	for (int i = 0; i < 8; i++)
+		ReadInt();
+	ReadByte();
+#endif
 }
 
 void TDBIN::parse() {
@@ -677,7 +717,12 @@ void TDBIN::parse() {
 		scene.magic[i] = ReadByte();
 	for (int i = 0; i < 3; i++)
 		scene.version[i] = ReadByte();
-	assert(scene.version[0] == 1 && scene.version[1] == 4 && scene.version[2] == 0);
+
+	if (scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2] != TD_VERSION) {
+		printf("[ERROR] Wrong version: %d.%d.%d, expected %d\n", scene.version[0], scene.version[1], scene.version[2], TD_VERSION);
+		exit(EXIT_FAILURE);
+	}
+
 	scene.level = ReadString();
 	scene.driven_vehicle = ReadInt();
 	scene.shadow_volume = ReadVector();
@@ -686,7 +731,9 @@ void TDBIN::parse() {
 	scene.world_body_handle = ReadInt();
 	scene.flashlight_handle = ReadInt();
 	scene.explosion_lua_handle = ReadInt();
+#if TD_VERSION >= VERSION_1_1_0
 	scene.achievements_lua_handle = ReadInt();
+#endif
 
 	PostProcessing* postpro = &scene.postpro;
 	postpro->brightness = ReadFloat();
@@ -705,10 +752,12 @@ void TDBIN::parse() {
 		boundary->vertices[i].pos[0] = ReadFloat();
 		boundary->vertices[i].pos[1] = ReadFloat();
 	}
+#if TD_VERSION >= VERSION_0_9_0
 	boundary->padleft = ReadFloat();
 	boundary->padtop = ReadFloat();
 	boundary->padright = ReadFloat();
 	boundary->padbottom = ReadFloat();
+#endif
 
 	int fire_count = ReadInt();
 	scene.fires.resize(fire_count);
