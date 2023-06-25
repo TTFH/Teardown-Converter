@@ -58,69 +58,32 @@ public:
 #define VERSION_1_4_0 140 // Added water->visibility
 #define VERSION_1_3_0 130 // Added 17 bytes to Wheel
 #define VERSION_1_2_0 120 // No changes
-#define VERSION_1_1_0 110 // Added Achievements
+#define VERSION_1_1_0 110 // Added handle to achievements.lua
 #define VERSION_1_0_0 100 // No changes
-#define VERSION_0_9_6 96 // Removed ~~Herobrine~~ Enemy [enum change, requiere recompile]
+#define VERSION_0_9_6 96 // Removed ~~Herobrine~~ Enemy spiders
 
 // -- td_converter_classic --
 #define VERSION_0_9_5 95 // Added joint->autodisable
 #define VERSION_0_9_2 92 // Entity flags increased to 16 bits
-#define VERSION_0_9_0 90 // Added Boundary padding, Snow, water color, blend texture, joint sound, etc. Removed 1 byte from Body
+#define VERSION_0_9_0 90 // Added Boundary padding, water color, blend texture, joint sound, etc.
+#define VERSION_0_8_0 80 // Added skybox->brightness, postprocessing->bloom
+#define VERSION_0_7_4 74 // Added Script var transitions for SetValue()
+#define VERSION_0_7_2 72 // No changes
+#define VERSION_0_7_1 71 // Added stuff to env, probably snow related
+#define VERSION_0_7_0 70 // Added Capsule light, vehicle->exhausts[].strength
 
-#define VERSION_0_8_0 80
-#define VERSION_0_7_4 74
-#define VERSION_0_7_2 72
-#define VERSION_0_7_1 71 // Experimental
-#define VERSION_0_7_0 70 // Experimental
+// -- td_converter_legacy --
 #define VERSION_0_6_2 62
-#define VERSION_0_6_1 61 // Experimental
-#define VERSION_0_6_0 60 // Experimental
+#define VERSION_0_6_1 61
 #define VERSION_0_5_2 52
 #define VERSION_0_4_6 46
 #define VERSION_0_4_5 45
 
-// -- td_converter_legacy --
-
 // -- td_converter_dinosaur --
 #define VERSION_0_3_0 30
 
-#define TD_VERSION VERSION_0_8_0
+#define TD_VERSION VERSION_0_6_2
 
-/*
-0.7.4 -> 0.9.0 Changelog
-
-Environment @end
-	Removed 7 int
-	Removed 1 byte
-	Added Snow
-	Added wind
-	Added skybox brightness
-
-Boundary padding
-
-Player
-	Added 1 int before transform
-	Added 2 float at end // bluetide?
-
-Joint
-	Added 1 byte
-	Added 2 int
-
-Vehicle
-	Added 1 float
-	Added 1 int
-	Added 1 byte
-
-Water
-	Added color
-
-Body @end
-	Removed 1 byte // active?
-
-Shape
-	texture tile -> 16 bits
-	Added blend texture tile / weight
-*/
 
 #define SmallVec Vec
 
@@ -436,14 +399,15 @@ enum ScriptSoundKind { // uint32_t
 	Loop,
 	Unknown,
 };
-
+/*
 enum TransitionKind { // uint8_t
 	Cosine,
 	EaseIn,
 	EaseOut,
-	Bounce
+	Bounce,
+	Linear
 };
-
+*/
 struct ScriptSound {
 	uint32_t kind;
 	string name;

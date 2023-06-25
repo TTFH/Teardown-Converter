@@ -288,7 +288,6 @@ Entity* TDBIN::ReadEntity() {
 	entity->kind = ReadEntityKind(entity->kind_byte);
 
 	int childrens = ReadInt();
-	//printf("%s with handle %d has %d childrens\n", EntityKindName[entity->kind_byte], entity->handle, childrens);
 	entity->children.resize(childrens);
 	for (int i = 0; i < childrens; i++) {
 		entity->children[i] = ReadEntity();
@@ -486,8 +485,8 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->vitals[i].z_f32 = ReadFloat();
 		vehicle->vitals[i].shape_index = ReadInt();
 	}
-#if TD_VERSION >= VERSION_0_9_0
 	vehicle->z4_f32 = ReadFloat();
+#if TD_VERSION >= VERSION_0_9_0
 	vehicle->z2_u8 = ReadByte();
 	vehicle->z5_f32 = ReadFloat();
 #endif
@@ -590,6 +589,7 @@ Script* TDBIN::ReadScript() {
 		script->sounds[i].name = ReadString();
 	}
 
+#if TD_VERSION >= VERSION_0_7_4
 	int transition_count = ReadInt();
 	script->transitions.resize(transition_count);
 	for (int i = 0; i < transition_count; i++) {
@@ -600,7 +600,7 @@ Script* TDBIN::ReadScript() {
 		for (int j = 0; j < 4; j++)
 			script->transitions[i].z_u8_4[j] = ReadByte();
 	}
-
+#endif
 	return script;
 }
 
@@ -645,8 +645,10 @@ void TDBIN::ReadPlayer() {
 
 	player->z_f32_1 = ReadFloat();
 	player->bluetide_timer = ReadFloat();
+#if TD_VERSION >= VERSION_0_9_0
 	player->z_f32_2 = ReadFloat();
 	player->z_f32_3 = ReadFloat();
+#endif
 }
 
 void TDBIN::ReadEnvironment() {
@@ -655,7 +657,9 @@ void TDBIN::ReadEnvironment() {
 
 	skybox->texture = ReadString();
 	skybox->tint = ReadColor();
+#if TD_VERSION >= VERSION_0_8_0
 	skybox->brightness = ReadFloat();
+#endif
 	skybox->rot = ReadFloat();
 	for (int i = 0; i < 3; i++)
 		skybox->sun.tint_brightness[i] = ReadFloat();
@@ -704,8 +708,8 @@ void TDBIN::ReadEnvironment() {
 
 	environment->wind = ReadVector();
 	environment->waterhurt = ReadFloat();
-#else
-	// 0.8.0, etc.
+#elif TD_VERSION >= VERSION_0_7_1
+	// 0.7.1 -> 0.8.0
 	for (int i = 0; i < 8; i++)
 		ReadInt();
 	ReadByte();
@@ -740,7 +744,9 @@ void TDBIN::parse() {
 	postpro->colorbalance = ReadColor();
 	postpro->saturation = ReadFloat();
 	postpro->gamma = ReadFloat();
+#if TD_VERSION >= VERSION_0_8_0
 	postpro->bloom = ReadFloat();
+#endif
 
 	ReadPlayer();
 	ReadEnvironment();

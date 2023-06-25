@@ -37,7 +37,7 @@ struct PostProcessing {
 	Color colorbalance;		// colorbalance
 	float saturation;		// saturation
 	float gamma;			// gamma
-	float bloom;			// bloom
+	float bloom = 1;		// bloom
 };
 
 struct Player {
@@ -66,7 +66,7 @@ struct Sun {
 struct Skybox {
 	string texture;			// skybox
 	Color tint;				// skyboxtint
-	float brightness;		// skyboxbrightness
+	float brightness = 1;	// skyboxbrightness
 	float rot;				// skyboxrot in radians
 	Sun sun;
 	uint8_t z_u8;			// 1
@@ -96,7 +96,7 @@ struct Snow {
 	float spread = 0.2;			// snowdir spread
 	float amount;				// snowamount
 	float speed;
-	bool onground;				// snowonground
+	bool onground = false;		// snowonground
 };
 
 struct Environment {
