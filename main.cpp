@@ -210,9 +210,8 @@ vector<LevelInfo> LoadLevels() {
 	info = { "", "quicksave", "Last Saved Level", "" };
 	levels.push_back(info);
 	info = { "lee", "test", "Performance Test", "" };
-	//levels.push_back(info);
+	levels.push_back(info);
 
-	printf("%d levels loaded\n", (int)levels.size() - 1);
 	return levels;
 }
 
@@ -292,7 +291,6 @@ int main(int argc, char* argv[]) {
 	bool xml_only = false;
 	bool use_tdcz = false;
 	int game_version = 0;
-	string version = to_string(TD_VERSION / 100) + "." + to_string((TD_VERSION / 10) % 10) + "." + to_string(TD_VERSION % 10);
 
 	ConverterParams* params = new ConverterParams();
 	SDL_Thread* parse_thread = NULL;
@@ -368,7 +366,7 @@ int main(int argc, char* argv[]) {
 			ImGui::Text("Game Version:    ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
-			ImGui::Combo("##gameversion", &game_version, version.c_str());
+			ImGui::Combo("##gameversion", &game_version, " 1.4.0\0 1.3.0\0 1.2.0\0 1.1.0\0 1.0.0\0 0.9.6\0 0.9.5\0 0.9.2\0 0.9.0\0 0.8.0\0 0.7.4\0 0.7.2\0 0.7.1\0 0.7.0\0 0.6.2\0 0.6.1\0 0.5.2\0 0.5.1\0 0.4.6\0 0.4.5\0 0.3.0\0");
 			ImGui::PopItemWidth();
 
 			ImGui::Dummy(ImVec2(0, 10));

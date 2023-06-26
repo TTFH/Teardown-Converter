@@ -9,11 +9,21 @@
 
 #include "entity.h"
 #include "math_utils.h"
-#include "parser.h"
+#include "write_scene.h"
 #include "scene.h"
 #include "vox_writer.h"
 #include "xml_writer.h"
 #include "../lib/tinyxml2.h"
+
+WriteXML::WriteXML(ConverterParams params) : params(params) {
+	init(params.bin_path.c_str());
+}
+
+WriteXML::~WriteXML() {
+	for (map<uint32_t, MV_FILE*>::iterator it = vox_files.begin(); it != vox_files.end(); it++)
+		delete it->second;
+	vox_files.clear();
+}
 
 void WriteXML::WriteScene() {
 	string version = to_string(scene.version[0]) + "." + to_string(scene.version[1]) + "." + to_string(scene.version[2]);
@@ -153,14 +163,9 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		return;
 	}
 
-	Palette palette = scene.palettes[shape->palette];
 	shape->old_transform = shape->transform;
-
-#if TD_VERSION >= VERSION_0_9_0
-	bool collide = (shape->shape_flags & 0x10) != 0;
-#else
-	bool collide = true;
-#endif
+	Palette palette = scene.palettes[shape->palette];
+	bool collide = tdbin_version >= VERSION_0_9_0 && (shape->shape_flags & 0x10) != 0;
 
 	Tensor3D voxels(sizex, sizey, sizez);
 	voxels.FromRunLengthEncoding(shape->voxels.palette_indexes);

@@ -7,9 +7,7 @@ const char* EntityKindName[] = {
 	"Light",
 	"Location",
 	"Water",
-#if TD_VERSION < VERSION_0_9_6
 	"Enemy",
-#endif
 	"Joint",
 	"Vehicle",
 	"Wheel",

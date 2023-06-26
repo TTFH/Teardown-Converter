@@ -7,22 +7,13 @@
 #include <filesystem>
 
 #include "parser.h"
+#include "write_scene.h"
 #include "vox_writer.h"
 #include "zlib_utils.h"
 
 using namespace std::filesystem;
 
-TDBIN::TDBIN(const char* filename) {
-	bin_file = fopen(filename, "rb");
-	if (bin_file == NULL) {
-		printf("[ERROR] Could not open %s for reading\n", filename);
-		exit(EXIT_FAILURE);
-	}
-}
-
-TDBIN::TDBIN(const ConverterParams& params) {
-	this->params = params;
-	const char* input = params.bin_path.c_str();
+void TDBIN::init(const char* input) {
 	char* filename = new char[strlen(input) + 3];
 	strcpy(filename, input);
 	if (IsFileCompressed(input)) {
@@ -33,14 +24,8 @@ TDBIN::TDBIN(const ConverterParams& params) {
 		if (pos != NULL)
 			*pos = '\0';
 		strcat(output, ".tdbin");
-
 		UncompressFile(input, output);
-		if (!IsFileCompressed(output)) {
-			strcpy(filename, output);
-		} else {
-			printf("[ERROR] Failed to uncompress file\n");
-			exit(EXIT_FAILURE);
-		}
+		strcpy(filename, output);
 		delete[] output;
 	}
 
@@ -57,9 +42,6 @@ TDBIN::~TDBIN() {
 	fclose(bin_file);
 	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
 		delete scene.entities[i];
-	for (map<uint32_t, MV_FILE*>::iterator it = vox_files.begin(); it != vox_files.end(); it++)
-		delete it->second;
-	vox_files.clear();
 }
 
 uint8_t TDBIN::ReadByte() {
@@ -75,11 +57,10 @@ uint16_t TDBIN::ReadWord() {
 }
 
 uint16_t TDBIN::ReadEntityFlags() {
-	#if TD_VERSION >= VERSION_0_9_2
+	if (tdbin_version >= VERSION_0_9_2)
 		return ReadWord();
-	#else
+	else
 		return ReadByte();
-	#endif
 }
 
 uint32_t TDBIN::ReadInt() {
@@ -275,6 +256,9 @@ LuaTable TDBIN::ReadLuaTable() {
 Entity* TDBIN::ReadEntity() {
 	Entity* entity = new Entity();
 	entity->kind_byte = ReadByte();
+	if (tdbin_version >= VERSION_0_9_6 && entity->kind_byte > KindWater)
+		entity->kind_byte++; // Skip Enemy
+
 	entity->handle = ReadInt();
 	entity_mapping[entity->handle] = entity;
 	printf("Reading %s with handle %d\n", EntityKindName[entity->kind_byte], entity->handle);
@@ -306,9 +290,8 @@ Body* TDBIN::ReadBody() {
 	body->velocity = ReadVector();
 	body->angular_velocity = ReadVector();
 	body->dynamic = ReadByte() != 0;
-#if TD_VERSION < VERSION_0_9_0
-	ReadByte();
-#endif
+	if (tdbin_version < VERSION_0_9_0)
+		ReadByte();
 	body->body_flags = ReadByte();
 	return body;
 }
@@ -323,17 +306,17 @@ Shape* TDBIN::ReadShape() {
 	shape->density = ReadFloat();
 	shape->strength = ReadFloat();
 
-#if TD_VERSION >= VERSION_0_9_0
-	shape->texture_tile = ReadWord();
-	shape->blendtexture_tile = ReadWord();
-	shape->texture_weight = ReadFloat();
-	shape->blendtexture_weight = ReadFloat();
-	shape->starting_world_position = ReadVector();
-#else
-	shape->texture_tile = ReadInt();
-	shape->starting_world_position = ReadVector();
-	shape->texture_weight = ReadFloat();
-#endif
+	if (tdbin_version >= VERSION_0_9_0) {
+		shape->texture_tile = ReadWord();
+		shape->blendtexture_tile = ReadWord();
+		shape->texture_weight = ReadFloat();
+		shape->blendtexture_weight = ReadFloat();
+		shape->starting_world_position = ReadVector();
+	} else {
+		shape->texture_tile = ReadInt();
+		shape->starting_world_position = ReadVector();
+		shape->texture_weight = ReadFloat();
+	}
 
 	shape->z_f32 = ReadFloat();
 	shape->z1_u8 = ReadByte();
@@ -389,12 +372,10 @@ Water* TDBIN::ReadWater() {
 	water->ripple = ReadFloat();
 	water->motion = ReadFloat();
 	water->foam = ReadFloat();
-#if TD_VERSION >= VERSION_0_9_0
-	water->color = ReadColor();
-#endif
-#if TD_VERSION >= VERSION_1_4_0
-	water->visibility = ReadFloat();
-#endif
+	if (tdbin_version >= VERSION_0_9_0)
+		water->color = ReadColor();
+	if (tdbin_version >= VERSION_1_4_0)
+		water->visibility = ReadFloat();
 	int vertex_count = ReadInt();
 	water->water_vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++) {
@@ -424,16 +405,13 @@ Joint* TDBIN::ReadJoint() {
 	for (int i = 0; i < 2; i++)
 		joint->z_f32_2[i] = ReadFloat();
 	joint->size = ReadFloat();
-#if TD_VERSION >= VERSION_0_9_0
-	joint->sound = ReadByte() != 0;
-#endif
-#if TD_VERSION >= VERSION_0_9_5
-	joint->autodisable = ReadByte() != 0;
-#endif
-#if TD_VERSION >= VERSION_0_9_0
-	for (int i = 0; i < 2; i++)
-		joint->z_u32_2[i] = ReadInt();
-#endif
+	if (tdbin_version >= VERSION_0_9_0)
+		joint->sound = ReadByte() != 0;
+	if (tdbin_version >= VERSION_0_9_5)
+		joint->autodisable = ReadByte() != 0;
+	if (tdbin_version >= VERSION_0_9_0)
+		for (int i = 0; i < 2; i++)
+			joint->z_u32_2[i] = ReadInt();
 	if (joint->type == _Rope)
 		joint->rope = ReadRope();
 	return joint;
@@ -486,10 +464,10 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->vitals[i].shape_index = ReadInt();
 	}
 	vehicle->z4_f32 = ReadFloat();
-#if TD_VERSION >= VERSION_0_9_0
-	vehicle->z2_u8 = ReadByte();
-	vehicle->z5_f32 = ReadFloat();
-#endif
+	if (tdbin_version >= VERSION_0_9_0) {
+		vehicle->z2_u8 = ReadByte();
+		vehicle->z5_f32 = ReadFloat();
+	}
 	return vehicle;
 }
 
@@ -500,10 +478,9 @@ Wheel* TDBIN::ReadWheel() {
 	wheel->vehicle_body = ReadInt();
 	wheel->body = ReadInt();
 	wheel->shape = ReadInt();
-#if TD_VERSION >= VERSION_1_3_0
-	for (int i = 0; i < 17; i++)
-		wheel->z_u8_17[i] = ReadByte();
-#endif
+	if (tdbin_version >= VERSION_1_3_0)
+		for (int i = 0; i < 17; i++)
+			wheel->z_u8_17[i] = ReadByte();
 	wheel->transform = ReadTransform();
 	wheel->empty_transform = ReadTransform();
 	wheel->steer = ReadFloat();
@@ -589,18 +566,18 @@ Script* TDBIN::ReadScript() {
 		script->sounds[i].name = ReadString();
 	}
 
-#if TD_VERSION >= VERSION_0_7_4
-	int transition_count = ReadInt();
-	script->transitions.resize(transition_count);
-	for (int i = 0; i < transition_count; i++) {
-		script->transitions[i].variable = ReadString();
-		script->transitions[i].kind = ReadByte();
-		script->transitions[i].transition_time = ReadFloat();
-		script->transitions[i].time = ReadDouble();
-		for (int j = 0; j < 4; j++)
-			script->transitions[i].z_u8_4[j] = ReadByte();
+	if (tdbin_version >= VERSION_0_7_4) {
+		int transition_count = ReadInt();
+		script->transitions.resize(transition_count);
+		for (int i = 0; i < transition_count; i++) {
+			script->transitions[i].variable = ReadString();
+			script->transitions[i].kind = ReadByte();
+			script->transitions[i].transition_time = ReadFloat();
+			script->transitions[i].time = ReadDouble();
+			for (int j = 0; j < 4; j++)
+				script->transitions[i].z_u8_4[j] = ReadByte();
+		}
 	}
-#endif
 	return script;
 }
 
@@ -645,10 +622,10 @@ void TDBIN::ReadPlayer() {
 
 	player->z_f32_1 = ReadFloat();
 	player->bluetide_timer = ReadFloat();
-#if TD_VERSION >= VERSION_0_9_0
-	player->z_f32_2 = ReadFloat();
-	player->z_f32_3 = ReadFloat();
-#endif
+	if (tdbin_version >= VERSION_0_9_0) {
+		player->z_f32_2 = ReadFloat();
+		player->z_f32_3 = ReadFloat();
+	}
 }
 
 void TDBIN::ReadEnvironment() {
@@ -657,9 +634,8 @@ void TDBIN::ReadEnvironment() {
 
 	skybox->texture = ReadString();
 	skybox->tint = ReadColor();
-#if TD_VERSION >= VERSION_0_8_0
-	skybox->brightness = ReadFloat();
-#endif
+	if (tdbin_version >= VERSION_0_8_0)
+		skybox->brightness = ReadFloat();
 	skybox->rot = ReadFloat();
 	for (int i = 0; i < 3; i++)
 		skybox->sun.tint_brightness[i] = ReadFloat();
@@ -698,22 +674,22 @@ void TDBIN::ReadEnvironment() {
 	environment->slippery = ReadFloat();
 	environment->fogscale = ReadFloat();
 
-#if TD_VERSION >= VERSION_0_9_0
-	Snow* snow = &environment->snow;
-	snow->dir = ReadVector();
-	snow->spread = ReadFloat();
-	snow->amount = ReadFloat();
-	snow->speed = ReadFloat();
-	snow->onground = ReadByte() != 0;
+	if (tdbin_version >= VERSION_0_9_0) {
+		Snow* snow = &environment->snow;
+		snow->dir = ReadVector();
+		snow->spread = ReadFloat();
+		snow->amount = ReadFloat();
+		snow->speed = ReadFloat();
+		snow->onground = ReadByte() != 0;
 
-	environment->wind = ReadVector();
-	environment->waterhurt = ReadFloat();
-#elif TD_VERSION >= VERSION_0_7_1
-	// 0.7.1 -> 0.8.0
-	for (int i = 0; i < 8; i++)
-		ReadInt();
-	ReadByte();
-#endif
+		environment->wind = ReadVector();
+		environment->waterhurt = ReadFloat();
+	} else if (tdbin_version >= VERSION_0_7_1) {
+		// 0.7.1 -> 0.8.0
+		for (int i = 0; i < 8; i++)
+			ReadInt();
+		ReadByte();
+	}
 }
 
 void TDBIN::parse() {
@@ -721,11 +697,7 @@ void TDBIN::parse() {
 		scene.magic[i] = ReadByte();
 	for (int i = 0; i < 3; i++)
 		scene.version[i] = ReadByte();
-
-	if (scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2] != TD_VERSION) {
-		printf("[ERROR] Wrong version: %d.%d.%d, expected %d\n", scene.version[0], scene.version[1], scene.version[2], TD_VERSION);
-		exit(EXIT_FAILURE);
-	}
+	tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
 
 	scene.level = ReadString();
 	scene.driven_vehicle = ReadInt();
@@ -735,18 +707,16 @@ void TDBIN::parse() {
 	scene.world_body_handle = ReadInt();
 	scene.flashlight_handle = ReadInt();
 	scene.explosion_lua_handle = ReadInt();
-#if TD_VERSION >= VERSION_1_1_0
-	scene.achievements_lua_handle = ReadInt();
-#endif
+	if (tdbin_version >= VERSION_1_1_0)
+		scene.achievements_lua_handle = ReadInt();
 
 	PostProcessing* postpro = &scene.postpro;
 	postpro->brightness = ReadFloat();
 	postpro->colorbalance = ReadColor();
 	postpro->saturation = ReadFloat();
 	postpro->gamma = ReadFloat();
-#if TD_VERSION >= VERSION_0_8_0
-	postpro->bloom = ReadFloat();
-#endif
+	if (tdbin_version >= VERSION_0_8_0)
+		postpro->bloom = ReadFloat();
 
 	ReadPlayer();
 	ReadEnvironment();
@@ -758,12 +728,12 @@ void TDBIN::parse() {
 		boundary->vertices[i].pos[0] = ReadFloat();
 		boundary->vertices[i].pos[1] = ReadFloat();
 	}
-#if TD_VERSION >= VERSION_0_9_0
-	boundary->padleft = ReadFloat();
-	boundary->padtop = ReadFloat();
-	boundary->padright = ReadFloat();
-	boundary->padbottom = ReadFloat();
-#endif
+	if (tdbin_version >= VERSION_0_9_0) {
+		boundary->padleft = ReadFloat();
+		boundary->padtop = ReadFloat();
+		boundary->padright = ReadFloat();
+		boundary->padbottom = ReadFloat();
+	}
 
 	int fire_count = ReadInt();
 	scene.fires.resize(fire_count);
@@ -801,7 +771,7 @@ void ParseFile(ConverterParams params) {
 		if (!params.xml_only)
 			create_directories(params.map_folder + "vox");
 	}
-	TDBIN parser(params);
+	WriteXML parser(params);
 	try {
 		parser.parse();
 	} catch(const std::bad_alloc& e) {

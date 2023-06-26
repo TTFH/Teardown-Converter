@@ -5,20 +5,38 @@
 #include <stdio.h>
 #include <iosfwd>
 #include <string>
+#include <map>
 
 #include "entity.h"
 #include "lua_table.h"
 #include "math_utils.h"
 #include "scene.h"
-#include "write_scene.h"
 
 using namespace std;
 
 extern float progress;
 
+struct ConverterParams {
+	string bin_path;
+	string map_folder;
+	string game_folder;
+
+	string level_id;
+	string level_name;
+	string level_desc;
+
+	bool remove_snow;
+	bool xml_only;
+	bool compress_vox;
+};
+
 void ParseFile(ConverterParams params);
 
-class TDBIN : public WriteXML {
+class TDBIN {
+protected:
+	Scene scene;
+	int tdbin_version;
+	map<uint32_t, Entity*> entity_mapping;
 private:
 	FILE* bin_file;
 
@@ -62,8 +80,7 @@ private:
 	void ReadEnvironment();
 	void* ReadEntityKind(uint8_t);
 public:
-	TDBIN(const char* filename);
-	TDBIN(const ConverterParams& params);
+	void init(const char* input);
 	~TDBIN();
 	void parse();
 };
