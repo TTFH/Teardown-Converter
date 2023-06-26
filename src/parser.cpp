@@ -326,7 +326,8 @@ Shape* TDBIN::ReadShape() {
 	shape->scale = ReadFloat();
 	for (int i = 0; i < 2; i++)
 		shape->z_u32_2[i] = ReadInt();
-	shape->z3_u8 = ReadByte();
+	if (tdbin_version >= VERSION_0_7_0)
+		shape->z3_u8 = ReadByte();
 	return shape;
 }
 
@@ -334,6 +335,9 @@ Light* TDBIN::ReadLight() {
 	Light* light = new Light();
 	light->is_on = ReadByte() != 0;
 	light->type = ReadByte();
+	if (tdbin_version < VERSION_0_7_0 && light->type > Sphere)
+		light->type++; // Skip Capsule
+
 	light->transform = ReadTransform();
 	light->color = ReadColor();
 	light->scale = ReadFloat();
@@ -346,7 +350,8 @@ Light* TDBIN::ReadLight() {
 	light->fogscale = ReadFloat();
 	for (int i = 0; i < 2; i++)
 		light->area_size[i] = ReadFloat();
-	light->capsule_size = ReadFloat();
+	if (tdbin_version >= VERSION_0_7_0)
+		light->capsule_size = ReadFloat();
 	for (int i = 0; i < 13; i++)
 		light->z_u8_13[i] = ReadByte();
 	light->z_f32 = ReadFloat();
@@ -452,7 +457,8 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->exhausts.resize(exhaust_count);
 	for (int i = 0; i < exhaust_count; i++) {
 		vehicle->exhausts[i].transform = ReadTransform();
-		vehicle->exhausts[i].strength = ReadFloat();
+		if (tdbin_version >= VERSION_0_7_0)
+			vehicle->exhausts[i].strength = ReadFloat();
 	}
 
 	int vital_count = ReadInt();
@@ -647,9 +653,11 @@ void TDBIN::ReadEnvironment() {
 	skybox->sun.fogScale = ReadFloat();
 	skybox->sun.glare = ReadFloat();
 	skybox->z_u8 = ReadByte();
-	skybox->constant = ReadColor();
+	if (tdbin_version >= VERSION_0_7_0)
+		skybox->constant = ReadColor();
 	skybox->ambient = ReadFloat();
-	skybox->ambientexponent = ReadFloat();
+	if (tdbin_version >= VERSION_0_7_0)
+		skybox->ambientexponent = ReadFloat();
 
 	for (int i = 0; i < 2; i++)
 		environment->exposure[i] = ReadFloat();
@@ -671,8 +679,10 @@ void TDBIN::ReadEnvironment() {
 	environment->nightlight = ReadByte() != 0;
 	environment->ambience.path = ReadString();
 	environment->ambience.volume = ReadFloat();
-	environment->slippery = ReadFloat();
-	environment->fogscale = ReadFloat();
+	if (tdbin_version >= VERSION_0_5_5)
+		environment->slippery = ReadFloat();
+	if (tdbin_version >= VERSION_0_7_0)
+		environment->fogscale = ReadFloat();
 
 	if (tdbin_version >= VERSION_0_9_0) {
 		Snow* snow = &environment->snow;
@@ -699,24 +709,28 @@ void TDBIN::parse() {
 		scene.version[i] = ReadByte();
 	tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
 
-	scene.level = ReadString();
+	if (tdbin_version >= VERSION_0_5_1)
+		scene.level = ReadString();
 	scene.driven_vehicle = ReadInt();
 	scene.shadow_volume = ReadVector();
 	scene.spawnpoint = ReadTransform();
 
 	scene.world_body_handle = ReadInt();
 	scene.flashlight_handle = ReadInt();
-	scene.explosion_lua_handle = ReadInt();
+	if (tdbin_version >= VERSION_0_7_0)
+		scene.explosion_lua_handle = ReadInt();
 	if (tdbin_version >= VERSION_1_1_0)
 		scene.achievements_lua_handle = ReadInt();
 
-	PostProcessing* postpro = &scene.postpro;
-	postpro->brightness = ReadFloat();
-	postpro->colorbalance = ReadColor();
-	postpro->saturation = ReadFloat();
-	postpro->gamma = ReadFloat();
-	if (tdbin_version >= VERSION_0_8_0)
-		postpro->bloom = ReadFloat();
+	if (tdbin_version >= VERSION_0_7_0) {
+		PostProcessing* postpro = &scene.postpro;
+		postpro->brightness = ReadFloat();
+		postpro->colorbalance = ReadColor();
+		postpro->saturation = ReadFloat();
+		postpro->gamma = ReadFloat();
+		if (tdbin_version >= VERSION_0_8_0)
+			postpro->bloom = ReadFloat();
+	}
 
 	ReadPlayer();
 	ReadEnvironment();

@@ -67,11 +67,12 @@ public:
 #define VERSION_0_7_4 74 // Added Script var transitions for SetValue()
 #define VERSION_0_7_2 72 // No changes
 #define VERSION_0_7_1 71 // Added stuff to env, probably snow related
-#define VERSION_0_7_0 70 // Added Capsule light, vehicle->exhausts[].strength
-#define VERSION_0_6_2 62
-#define VERSION_0_6_1 61
-#define VERSION_0_5_2 52
-#define VERSION_0_5_1 51
+#define VERSION_0_7_0 70 // Added PostProcessing, Capsule light, vehicle->exhausts[].strength, more stuff to env, explosion.lua
+#define VERSION_0_6_2 62 // No changes
+#define VERSION_0_6_1 61 // No changes
+#define VERSION_0_5_5 55 // Added env->slippery
+#define VERSION_0_5_2 52 // No changes
+#define VERSION_0_5_1 51 // Added level name, ...
 #define VERSION_0_4_6 46
 #define VERSION_0_4_5 45
 #define VERSION_0_3_0 30

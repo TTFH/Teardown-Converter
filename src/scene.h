@@ -33,11 +33,11 @@ extern const char* MaterialKindName[];
 bool operator==(uint8_t lhs, const MaterialKind& rhs);
 
 struct PostProcessing {
-	float brightness;		// brightness
-	Color colorbalance;		// colorbalance
-	float saturation;		// saturation
-	float gamma;			// gamma
-	float bloom = 1;		// bloom
+	float brightness = 1;				// brightness
+	Color colorbalance = {1, 1, 1, 1};	// colorbalance
+	float saturation = 1;				// saturation
+	float gamma = 1;					// gamma
+	float bloom = 1;					// bloom
 };
 
 struct Player {
@@ -69,14 +69,14 @@ struct Skybox {
 	float brightness = 1;	// skyboxbrightness
 	float rot;				// skyboxrot in radians
 	Sun sun;
-	uint8_t z_u8;			// 1
-	Color constant;			// constant
-	float ambient;			// ambient
-	float ambientexponent;	// ambientexponent
+	uint8_t z_u8;
+	Color constant = {0.003, 0.003, 0.003, 1};	// constant
+	float ambient;								// ambient
+	float ambientexponent = 1.3;				// ambientexponent
 };
 
 struct Fog {
-	Color color;			// fogColor
+	Color color;		// fogColor
 	// fogParams:
 	float start;
 	float distance;		// end = start + distance
