@@ -64,7 +64,7 @@ public:
 #define VERSION_0_9_2 92 // Entity flags increased to 16 bits
 #define VERSION_0_9_0 90 // Added Boundary padding, Water color, blend texture, joint sound, etc.
 #define VERSION_0_8_0 80 // Added skybox->brightness, postprocessing->bloom
-#define VERSION_0_7_4 74 // Added Script var transitions for SetValue()
+#define VERSION_0_7_4 74 // Added var transitions to Script for SetValue()
 #define VERSION_0_7_2 72 // No changes
 #define VERSION_0_7_1 71 // Added stuff to env, probably snow related
 #define VERSION_0_7_0 70 // Added PostProcessing, Capsule light, vehicle->exhausts[].strength, more stuff to env, explosion.lua
@@ -72,10 +72,11 @@ public:
 #define VERSION_0_6_1 61 // No changes
 #define VERSION_0_5_5 55 // Added env->slippery
 #define VERSION_0_5_2 52 // No changes
-#define VERSION_0_5_1 51 // Added level name, ...
-#define VERSION_0_4_6 46
-#define VERSION_0_4_5 45
-#define VERSION_0_3_0 30
+#define VERSION_0_5_1 51 // Added level name, flashlight and world body handles
+#define VERSION_0_5_0 50 // Added light->scale, removed list from Script (order of childrens?)
+#define VERSION_0_4_6 46 // No changes
+#define VERSION_0_4_5 45 // Added magic, version, 4 float before ambience sound, etc, Etc, ETC...
+#define VERSION_0_3_0 30 // Perf test
 
 #define SmallVec Vec
 
@@ -190,7 +191,7 @@ struct Light {
 	uint8_t type;		// type
 	Transform transform;
 	Color color;		// color = pow(this, 0.454545)
-	float scale;		// scale
+	float scale = 1;	// scale
 	float reach;		// reach
 	float size;			// size
 	float unshadowed;	// unshadowed
@@ -417,7 +418,7 @@ struct Script {
 	Vec<Registry> params;	// param%d
 	float last_update;
 	float time;
-	uint8_t z_u8_4[4];
+	uint32_t z_u32;
 	LuaTable table;
 	Vec<uint32_t> entity_handles;
 	Vec<ScriptSound> sounds;

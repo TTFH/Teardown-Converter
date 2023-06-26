@@ -261,7 +261,7 @@ Entity* TDBIN::ReadEntity() {
 
 	entity->handle = ReadInt();
 	entity_mapping[entity->handle] = entity;
-	printf("Reading %s with handle %d\n", EntityKindName[entity->kind_byte], entity->handle);
+	//printf("Reading %s with handle %d\n", EntityKindName[entity->kind_byte], entity->handle);
 
 	uint8_t tag_count = ReadByte();
 	entity->tags.resize(tag_count);
@@ -279,7 +279,10 @@ Entity* TDBIN::ReadEntity() {
 	}
 
 	entity->beef_beef = ReadInt();
-	assert(entity->beef_beef == 0xBEEFBEEF);
+	if (entity->beef_beef != 0xBEEFBEEF) {
+		printf("[ERROR] Invalid Cow: %08X\n", entity->beef_beef);
+		exit(EXIT_FAILURE);
+	}
 	return entity;
 }
 
@@ -340,7 +343,8 @@ Light* TDBIN::ReadLight() {
 
 	light->transform = ReadTransform();
 	light->color = ReadColor();
-	light->scale = ReadFloat();
+	if (tdbin_version >= VERSION_0_5_0)
+		light->scale = ReadFloat();
 	light->reach = ReadFloat();
 	light->size = ReadFloat();
 	light->unshadowed = ReadFloat();
@@ -555,10 +559,15 @@ Script* TDBIN::ReadScript() {
 
 	script->last_update = ReadFloat();
 	script->time = ReadFloat();
-	for (int i = 0; i < 4; i++)
-		script->z_u8_4[i] = ReadByte();
+	script->z_u32 = ReadInt();
 
 	script->table = ReadLuaTable();
+
+	if (tdbin_version < VERSION_0_5_0) {
+		int unk_count = ReadInt();
+		for (int i = 0; i < unk_count; i++)
+			ReadInt();
+	}
 
 	int entities = ReadInt();
 	script->entity_handles.resize(entities);
@@ -715,8 +724,10 @@ void TDBIN::parse() {
 	scene.shadow_volume = ReadVector();
 	scene.spawnpoint = ReadTransform();
 
-	scene.world_body_handle = ReadInt();
-	scene.flashlight_handle = ReadInt();
+	if (tdbin_version >= VERSION_0_5_1) {
+		scene.world_body_handle = ReadInt();
+		scene.flashlight_handle = ReadInt();
+	}
 	if (tdbin_version >= VERSION_0_7_0)
 		scene.explosion_lua_handle = ReadInt();
 	if (tdbin_version >= VERSION_1_1_0)
@@ -770,9 +781,11 @@ void TDBIN::parse() {
 		scene.entities[i] = ReadEntity();
 		scene.entities[i]->parent = NULL;
 	}
-	scene.entity_count = ReadInt();
-	for (int i = 0; i < 9; i++) {
-		scene.padding[i] = ReadByte();
+	if (tdbin_version >= VERSION_0_5_0) {
+		scene.entity_count = ReadInt();
+		for (int i = 0; i < (tdbin_version >= VERSION_0_7_2 ? 9 : 4); i++) {
+			scene.padding[i] = ReadByte();
+		}
 	}
 	if (fgetc(bin_file) != EOF)
 		throw runtime_error("File size mismatch.");
