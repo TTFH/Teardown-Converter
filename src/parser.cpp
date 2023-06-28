@@ -449,8 +449,10 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->difflock = ReadFloat();
 	vehicle->z2_f32 = ReadFloat();
 	vehicle->body_voxel_count = ReadInt();
-	vehicle->z1_u8 = ReadByte();
-	vehicle->z3_f32 = ReadFloat();
+	if (tdbin_version != VERSION_0_3_0) {
+		vehicle->z1_u8 = ReadByte();
+		vehicle->z3_f32 = ReadFloat();
+	}
 
 	int ref_count = ReadInt();
 	vehicle->refs.resize(ref_count);
@@ -657,11 +659,14 @@ void TDBIN::ReadEnvironment() {
 	skybox->sun.colorTint = ReadColor();
 	skybox->sun.dir = ReadVector();
 	skybox->sun.brightness = ReadFloat();
+	if (tdbin_version == VERSION_0_3_0)
+		ReadByte();
 	skybox->sun.spread = ReadFloat();
 	skybox->sun.length = ReadFloat();
 	skybox->sun.fogScale = ReadFloat();
 	skybox->sun.glare = ReadFloat();
-	skybox->z_u8 = ReadByte();
+	if (tdbin_version != VERSION_0_3_0)
+		skybox->z_u8 = ReadByte();
 	if (tdbin_version >= VERSION_0_7_0)
 		skybox->constant = ReadColor();
 	skybox->ambient = ReadFloat();
@@ -673,7 +678,8 @@ void TDBIN::ReadEnvironment() {
 	environment->brightness = ReadFloat();
 
 	Fog* fog = &environment->fog;
-	fog->color = ReadColor();
+	if (tdbin_version != VERSION_0_3_0)
+		fog->color = ReadColor();
 	fog->start = ReadFloat();
 	fog->distance = ReadFloat();
 	fog->amount = ReadFloat();
@@ -712,18 +718,31 @@ void TDBIN::ReadEnvironment() {
 }
 
 void TDBIN::parse() {
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < 4; i++) // Read only 4 bytes
 		scene.magic[i] = ReadByte();
-	for (int i = 0; i < 3; i++)
-		scene.version[i] = ReadByte();
-	tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
 
-	if (tdbin_version >= VERSION_0_5_1)
-		scene.level = ReadString();
-	scene.driven_vehicle = ReadInt();
+	if (scene.magic[0] != 'T' || scene.magic[1] != 'D' || scene.magic[2] != 'B' || scene.magic[3] != 'I') {
+		printf("Warning! File may be corrupt or may not be a Teardown map.\n");
+		tdbin_version = VERSION_0_3_0;
+	}
+
+	if (tdbin_version != VERSION_0_3_0) {
+		scene.magic[4] = ReadByte();
+		if (scene.magic[4] != 'N') {
+			printf("[ERROR] File is corrupted or may not be a Teardown map.\n");
+			exit(EXIT_FAILURE);
+		}
+		for (int i = 0; i < 3; i++)
+			scene.version[i] = ReadByte();
+		tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
+
+		if (tdbin_version >= VERSION_0_5_1)
+			scene.level = ReadString();
+		scene.driven_vehicle = ReadInt();
+	}
+
 	scene.shadow_volume = ReadVector();
 	scene.spawnpoint = ReadTransform();
-
 	if (tdbin_version >= VERSION_0_5_1) {
 		scene.world_body_handle = ReadInt();
 		scene.flashlight_handle = ReadInt();

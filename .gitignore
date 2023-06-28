@@ -3,9 +3,5 @@ obj/*.o
 release/config.xml
 release/teardown-converter
 release/teardown-converter.exe
-
-release/converted/
-release/*.tdbin
 release/*.bin
-release/*.vox
-release/*.xml
+release/*.tdbin

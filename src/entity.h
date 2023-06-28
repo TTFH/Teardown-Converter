@@ -75,7 +75,7 @@ public:
 #define VERSION_0_5_1 51 // Added level name, flashlight and world body handles
 #define VERSION_0_5_0 50 // Added light->scale, removed list from Script (order of childrens?)
 #define VERSION_0_4_6 46 // No changes
-#define VERSION_0_4_5 45 // Added magic, version, 4 float before ambience sound, etc, Etc, ETC...
+#define VERSION_0_4_5 45 // Added magic, version, fog->color
 #define VERSION_0_3_0 30 // Perf test
 
 #define SmallVec Vec
@@ -291,7 +291,7 @@ struct VehicleProperties {
 
 struct Exhaust {
 	Transform transform;
-	float strength;
+	float strength = 1;
 };
 
 struct Vital {

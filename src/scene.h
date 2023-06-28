@@ -59,7 +59,7 @@ struct Sun {
 	float brightness;	// sunBrightness
 	float spread;		// sunSpread
 	float length;		// sunLength
-	float fogScale;		// sunFogScale
+	float fogScale = 1;	// sunFogScale
 	float glare;		// sunGlare
 };
 
@@ -76,7 +76,7 @@ struct Skybox {
 };
 
 struct Fog {
-	Color color;		// fogColor
+	Color color = {1, 1, 1, 1};	// fogColor
 	// fogParams:
 	float start;
 	float distance;		// end = start + distance
@@ -94,7 +94,7 @@ struct EnvWater {
 struct Snow {
 	Vector dir = {0, -1, 0};	// snowdir x y z
 	float spread = 0.2;			// snowdir spread
-	float amount;				// snowamount
+	float amount = 0;			// snowamount
 	float speed;
 	bool onground = false;		// snowonground
 };
@@ -107,11 +107,11 @@ struct Environment {
 	EnvWater water;
 	bool nightlight;	// nightlight
 	Sound ambience;		// ambience
-	float slippery;		// slippery
+	float slippery = 0;	// slippery
 	float fogscale;		// fogscale
 	Snow snow;
 	Vector wind;		// wind
-	float waterhurt;	// waterhurt
+	float waterhurt = 0;// waterhurt
 };
 
 struct Boundary {
@@ -148,12 +148,12 @@ struct Palette {
 };
 
 struct Scene {
-	char magic[5];			// TDBIN
-	uint8_t version[3];		// version
+	char magic[5];					// TDBIN
+	uint8_t version[3] = {0, 3, 0};	// version
 	string level;
-	uint32_t driven_vehicle;// driven
-	Vector shadow_volume;	// shadowVolume
-	Transform spawnpoint;	// spawnpoint
+	uint32_t driven_vehicle = 0;	// driven
+	Vector shadow_volume;			// shadowVolume
+	Transform spawnpoint;			// spawnpoint
 	// Pattern: 1  n  n-5  n-1
 	uint32_t world_body_handle;
 	uint32_t flashlight_handle;
