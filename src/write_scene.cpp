@@ -1,18 +1,16 @@
-#include <assert.h>
 #include <math.h>
+#include <assert.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <list>
 #include <map>
 #include <string>
 #include <vector>
 
+#include "scene.h"
 #include "entity.h"
 #include "math_utils.h"
-#include "write_scene.h"
-#include "scene.h"
 #include "vox_writer.h"
 #include "xml_writer.h"
+#include "write_scene.h"
 #include "../lib/tinyxml2.h"
 
 WriteXML::WriteXML(ConverterParams params) : params(params) {
@@ -70,7 +68,8 @@ void WriteXML::WriteEnvironment() {
 	xml.AddFloat4Attribute(environment, "fogParams", fog->start, fog->start + fog->distance, fog->amount, fog->exponent, "40 100 0.9 4");
 	xml.AddFloatAttribute(environment, "sunBrightness", skybox->sun.brightness, "0");
 	xml.AddColorAttribute(environment, "sunColorTint", skybox->sun.colorTint, "1 1 1");
-	xml.AddVectorAttribute(environment, "sunDir", skybox->sun.dir);
+	//xml.AddVectorAttribute(environment, "sunDir", skybox->sun.dir);
+	xml.AddStrAttribute(environment, "sunDir", "auto");
 	xml.AddFloatAttribute(environment, "sunSpread", skybox->sun.spread, "0");
 	xml.AddFloatAttribute(environment, "sunLength", skybox->sun.length, "32");
 	xml.AddFloatAttribute(environment, "sunFogScale", skybox->sun.fogScale, "1");
@@ -134,14 +133,14 @@ void WriteXML::SaveVoxFiles() {
 	printf("Saving vox files...\n");
 	for (map<uint32_t, MV_FILE*>::iterator it = vox_files.begin(); it != vox_files.end(); it++)
 		it->second->SaveModel(params.compress_vox);
-	for (list<MV_FILE*>::iterator it = compound_files.begin(); it != compound_files.end(); it++)
+	for (vector<MV_FILE*>::iterator it = compound_files.begin(); it != compound_files.end(); it++)
 		(*it)->SaveModel(params.compress_vox);
 }
 
 void WriteXML::WriteEntities() {
 	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
 		WriteEntity(xml.getScene(), scene.entities[i]);
-	
+
 	if (scene.driven_vehicle != 0) {
 		XMLElement* xml_vehicle = xml.getNode(scene.driven_vehicle);
 		if (xml_vehicle != NULL)
@@ -240,10 +239,8 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
 							mvshape.voxels.Set(x, y, z, 0);
 
-						if (!vox_file->is_index_used[index]) {
-							vox_file->AddColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
-							vox_file->AddMaterial(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
-						}
+						vox_file->SetColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
+						vox_file->SetMaterial(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
 					}
 				}
 
@@ -252,16 +249,11 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 				mvshape.voxels.Set(0, 0, 0, 255);
 			if (mvshape.voxels.Get(sizex - 1, sizey - 1, sizez - 1) == 0)
 				mvshape.voxels.Set(sizex - 1, sizey - 1, sizez - 1, 255);
-			vox_file->AddColor(255, 255, 0, 0);
-			vox_file->AddMaterial(255, 14, 0.1, 1.0, 0.0, 0.0, 1.0);
+			vox_file->SetColor(255, 255, 0, 0);
+			vox_file->SetMaterial(255, 14, 0.1, 1.0, 0.0, 0.0, 1.0);
 		}
 
-		bool duplicated = false;
-		for (vector<MVShape>::iterator it = vox_file->models.begin(); it != vox_file->models.end() && !duplicated; it++)
-			if (*it == mvshape) {
-				duplicated = true;
-				vox_object = it->name;
-			}
+		bool duplicated = vox_file->GetShapeName(mvshape, vox_object);
 		if (!duplicated)
 			vox_file->AddShape(mvshape);
 		else
@@ -314,8 +306,8 @@ void WriteXML::WriteCompound(uint32_t handle, const Tensor3D &voxels, MV_FILE* c
 	MVShape mvshape = { vox_object, 0, 0, part_sizez / 2, Tensor3D(part_sizex, part_sizey, part_sizez) };
 	mvshape.voxels.Set(0, 0, 0, 255);
 	mvshape.voxels.Set(part_sizex - 1, part_sizey - 1, part_sizez - 1, 255);
-	compound_vox->AddColor(255, 255, 0, 0);
-	compound_vox->AddMaterial(255, 14, 0.1, 1.0, 0.0, 0.0, 1.0);
+	compound_vox->SetColor(255, 255, 0, 0);
+	compound_vox->SetMaterial(255, 14, 0.1, 1.0, 0.0, 0.0, 1.0);
 
 	bool empty = true;
 	for (int z = offsetz; z < part_sizez + offsetz; z++)
@@ -330,20 +322,13 @@ void WriteXML::WriteCompound(uint32_t handle, const Tensor3D &voxels, MV_FILE* c
 					else
 						mvshape.voxels.Set(x - offsetx, y - offsety, z - offsetz, index);
 
-					if (!compound_vox->is_index_used[index]) {
-						compound_vox->AddColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
-						compound_vox->AddMaterial(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
-					}
+					compound_vox->SetColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
+					compound_vox->SetMaterial(index, palette_entry.kind, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
 					empty = false;
 				}
 			}
 	if (!empty) {
-		bool duplicated = false;
-		for (vector<MVShape>::iterator it = compound_vox->models.begin(); it != compound_vox->models.end() && !duplicated; it++)
-			if (*it == mvshape) {
-				duplicated = true;
-				vox_object = it->name;
-			}
+		bool duplicated = compound_vox->GetShapeName(mvshape, vox_object);
 		if (!duplicated)
 			compound_vox->AddShape(mvshape);
 		else
@@ -360,11 +345,11 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 	XMLElement* entity_element = xml.CreateElement("unknown");
 
 	string tags = "";
-	for (unsigned int i = 0; i < entity->tags.getSize(); i++) {
+	for (int i = entity->tags.getSize() - 1; i >= 0; i--) {
 		tags += entity->tags[i].name;
 		if (entity->tags[i].value.length() > 0)
 			tags += "=" + entity->tags[i].value;
-		if (i != entity->tags.getSize() - 1)
+		if (i != 0)
 			tags += " ";
 	}
 	xml.AddStrAttribute(entity_element, "tags", tags);
@@ -546,7 +531,10 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 			int exhausts_count = vehicle->exhausts.getSize();
 			for (int i = 0; i < exhausts_count; i++) {
-				string exhaust_tag = "exhaust=" + FloatToString(vehicle->exhausts[i].strength);
+				string exhaust_tag = "exhaust";
+				if (vehicle->exhausts[i].strength != 0)
+					exhaust_tag += "=" + FloatToString(vehicle->exhausts[i].strength);
+
 				XMLElement* exhaust = xml.CreateElement("location");
 				xml.AddElement(entity_element, exhaust);
 				xml.AddStrAttribute(exhaust, "tags", exhaust_tag);
@@ -713,8 +701,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				if (i != entity->tags.getSize() - 1)
 					tags += " ";
 			}
-			if (tags.length() > 0)
-				xml.AddStrAttribute(entity_element, "tags", tags);
+			xml.AddStrAttribute(entity_element, "tags", tags);
 
 			uint32_t shape_handle = joint->shape_handles[0];
 			XMLElement* shape_parent = xml.getNode(shape_handle);
@@ -755,7 +742,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				Transform joint_tr = TransformToLocalTransform(shape_tr, Transform(relative_pos, relative_rot));
 				WriteTransform(entity_element, joint_tr);
 			}
-			
+
 			if (joint->type == Hinge)
 				xml.AddAttribute(entity_element, "type", "hinge");
 			else if (joint->type == Prismatic)
@@ -766,12 +753,12 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				xml.AddFloatAttribute(entity_element, "rotstrength", joint->rotstrength, "0");
 				xml.AddFloatAttribute(entity_element, "rotspring", joint->rotspring, "0.5");
 			}
+			xml.AddBoolAttribute(entity_element, "collide", joint->collide, false);
 			if (joint->type == Hinge) {
 				if (joint->limits[0] != 0.0 || joint->limits[1] != 0.0)
 					xml.AddFloat2Attribute(entity_element, "limits", deg(joint->limits[0]), deg(joint->limits[1]));
 			} else if (joint->type == Prismatic)
 				xml.AddFloatNAttribute(entity_element, "limits", joint->limits, 2, "0 0");
-			xml.AddBoolAttribute(entity_element, "collide", joint->collide, false);
 			xml.AddBoolAttribute(entity_element, "sound", joint->sound, false);
 			if (joint->type == Prismatic)
 				xml.AddBoolAttribute(entity_element, "autodisable", joint->autodisable, false);
@@ -808,8 +795,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			string param = script->params[i].key;
 			if (script->params[i].value.length() > 0)
 				param += "=" + script->params[i].value;
-			if (param.length() > 0)
-				xml.AddStrAttribute(entity_element, param_index.c_str(), param);
+			xml.AddStrAttribute(entity_element, param_index.c_str(), param);
 		}
 
 		for (unsigned int j = 0; j < script->entity_handles.getSize(); j++) {
@@ -826,6 +812,6 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		}
 	}
 
-	for (unsigned int i = 0; i < entity->children.getSize(); i++)
+	for (int i = entity->children.getSize() - 1; i >= 0; i--)
 		WriteEntity2ndPass(entity->children[i]);
 }

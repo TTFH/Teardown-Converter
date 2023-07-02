@@ -2,9 +2,9 @@
 #define WRITE_SCENE_H
 
 #include <stdint.h>
-#include <list>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "parser.h"
 #include "xml_writer.h"
@@ -18,7 +18,7 @@ class WriteXML : public TDBIN {
 private:
 	XML_Writer xml;
 	ConverterParams params;
-	list<MV_FILE*> compound_files;
+	vector<MV_FILE*> compound_files;
 	map<uint32_t, MV_FILE*> vox_files;
 
 	void WriteEntity2ndPass(Entity*);

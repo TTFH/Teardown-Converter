@@ -2,7 +2,6 @@
 #define LUATABLE_H
 
 #include <stdint.h>
-#include <iosfwd>
 #include <vector>
 
 using namespace std;
@@ -13,7 +12,7 @@ enum LuaType { // uint32_t
 	Number = 3,
 	String = 4,
 	Table = 5,
-	Reference = 0xFFFFFFFB
+	Reference = 0xFFFFFFFB // -5
 };
 
 struct LuaTableEntry;

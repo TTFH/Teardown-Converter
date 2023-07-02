@@ -4,11 +4,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <map>
-#include <iosfwd>
 #include <string>
 #include <vector>
-
-#include "scene.h"
 
 using namespace std;
 
@@ -85,7 +82,9 @@ private:
 	string filename;
 	MV_Entry palette[256];
 	uint8_t palette_map[256];
+	bool is_index_used[256];
 	bool is_corrupted = false;
+	vector<MVShape> models;
 	vector<MV_Material> materials;
 	long int childrenSize_ptr;
 
@@ -108,17 +107,13 @@ private:
 	void WriteMATL(MV_Material mat);
 	void WriteNOTE();
 public:
-	bool is_index_used[256];
-	vector<MVShape> models;
-
 	MV_FILE(string filename);
 	~MV_FILE();
-	void AddShape(MVShape shape) {
-		models.push_back(shape);
-	}
 	void SaveModel(bool compress);
-	void AddColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
-	void AddMaterial(uint8_t index, uint8_t kind, float reflectivity, float shinyness, float metalness, float emissive, float alpha);
+	void AddShape(MVShape shape);
+	bool GetShapeName(const MVShape& shape, string& name);
+	void SetColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
+	void SetMaterial(uint8_t index, uint8_t kind, float reflectivity, float shinyness, float metalness, float emissive, float alpha);
 };
 
 #endif

@@ -1,14 +1,10 @@
-#include <assert.h>
-#include <stdint.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <filesystem>
 
 #include "parser.h"
 #include "write_scene.h"
-#include "vox_writer.h"
 #include "zlib_utils.h"
 
 using namespace std::filesystem;
@@ -198,8 +194,6 @@ Voxels TDBIN::ReadVoxels() {
 	int volume = voxels.size[0] * voxels.size[1] * voxels.size[2];
 	if (volume > 0) {
 		int encoded_length = ReadInt();
-		assert(encoded_length % 2 == 0);
-
 		voxels.palette_indexes.resize(encoded_length / 2);
 		for (int i = 0; i < encoded_length / 2; i++) {
 			uint8_t run_length = ReadByte();

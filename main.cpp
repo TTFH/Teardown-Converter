@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
-#include <vector>
 #include <chrono>
 #include <string>
 #include <thread>
+#include <vector>
 #include <filesystem>
 
 #include <SDL.h>
@@ -16,13 +16,14 @@
 #include "file_dialog/ImGuiFileDialog.h"
 
 #include "lib/tinyxml2.h"
+
 #include "src/parser.h"
 
 using namespace std;
 using namespace tinyxml2;
 namespace fs = std::filesystem;
 
-float progress = 0;
+volatile float progress = 0;
 
 struct LevelInfo {
 	string level_id;

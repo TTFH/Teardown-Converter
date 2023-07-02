@@ -1,15 +1,13 @@
-#include <assert.h>
 #include <math.h>
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <map>
+#include <vector>
+#include <string>
+#include <sstream>
 #include <iomanip>
 #include <iostream>
-#include <map>
-#include <sstream>
-#include <string>
-#include <vector>
 
 #include "scene.h"
 #include "vox_writer.h"
@@ -281,10 +279,11 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max, bool halt)
 	return true;
 }
 
-static const int ATTEMPTS = 3;
+static const int FIX_ATTEMPTS = 3;
 
 void MV_FILE::WriteIMAP() {
-	for (int i = 0; i < ATTEMPTS; i++)
+	// Try to set every material to its correct index
+	for (int i = 0; i < FIX_ATTEMPTS; i++)
 	for (vector<MV_Material>::iterator it = materials.begin(); it != materials.end(); it++) {
 		if (it->material_type == MaterialKind::Glass)
 			FixMapping(it->material_index, 1, 8);
@@ -322,6 +321,7 @@ void MV_FILE::WriteIMAP() {
 			FixMapping(it->material_index, 225, 240);
 	}
 
+	// Check for material overflow
 	uint8_t palette_reverse_map[256];
 	for (int i = 0; i < 256; i++)
 		palette_reverse_map[palette_map[i]] = i;
@@ -334,6 +334,7 @@ void MV_FILE::WriteIMAP() {
 		}
 	}
 
+	// If nothing changed, don't write IMAP
 	bool is_mapped = false;
 	for (int i = 0; i < 256; i++)
 		if (palette_map[i] != i)
@@ -384,19 +385,19 @@ void MV_FILE::WriteNOTE() {
 			for (int col = 1; col <= 8; col++) {
 				unsigned int index = 8 * (32 - row) + col;
 				if (index < 256 && is_index_used[index]) {
-					uint8_t index_mat = 255;
+					uint8_t material = 255; // uninitialized
 					for (vector<MV_Material>::iterator it = materials.begin(); it != materials.end(); it++)
 						if (it->material_index == palette_map[index]) {
-							index_mat = it->material_type;
+							material = it->material_type;
 							break;
 						}
-					assert(index_mat != 255);
+					assert(material != 255);
 
-					if (IsIndexCorrupted(index, index_mat)) {
+					if (IsIndexCorrupted(index, material)) {
 						row_corrupted = true;
 						if (row_material == 255)
-							row_material = index_mat;
-						if (row_material != index_mat) {
+							row_material = material; // Set material for row
+						if (row_material != material) {
 							error = true;
 							repaired = false;
 							break;
@@ -404,11 +405,11 @@ void MV_FILE::WriteNOTE() {
 					}
 				}
 			}
-			if (error)
+			if (error) // Row has multiple materials
 				note = "corrupted";
-			else if (row_corrupted)
+			else if (row_corrupted) // Row has a single material, but it's in the wrong place because overflow
 				note = string(MatOverridePrefix) + MaterialKindName[row_material];
-			else
+			else // Row is fine
 				note = td_notes[row - 1];
 			notes.push_back(note);
 		}
@@ -459,7 +460,22 @@ void MV_FILE::SaveModel(bool compress) {
 	fclose(vox_file);
 }
 
-void MV_FILE::AddColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
+void MV_FILE::AddShape(MVShape shape) {
+	models.push_back(shape);
+}
+
+bool MV_FILE::GetShapeName(const MVShape& shape, string& name) {
+	bool found = false;
+	for (vector<MVShape>::iterator it = models.begin(); it != models.end() && !found; it++)
+		if (*it == shape) {
+			found = true;
+			name = it->name;
+		}
+	return found;
+}
+
+void MV_FILE::SetColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
+	if (is_index_used[index]) return;
 	palette[index] = { r, g, b, 255};
 	is_index_used[index] = true;
 }
@@ -486,7 +502,8 @@ metalness = 0.0
 emissive = _emit * 10 ^ _flux
 alpha = 1.0
 */
-void MV_FILE::AddMaterial(uint8_t index, uint8_t kind, float reflectivity, float shinyness, float metalness, float emissive, float alpha) {
+void MV_FILE::SetMaterial(uint8_t index, uint8_t kind, float reflectivity, float shinyness, float metalness, float emissive, float alpha) {
+	if (is_index_used[index]) return;
 	MV_Material mat;
 	mat.material_index = index;
 	mat.material_type = kind;

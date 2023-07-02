@@ -1,11 +1,10 @@
 #include <math.h>
 #include <stdint.h>
-#include <stdio.h>
+#include <map>
+#include <string>
+#include <sstream>
 #include <iomanip>
 #include <iostream>
-#include <map>
-#include <sstream>
-#include <string>
 
 #include "entity.h"
 #include "xml_writer.h"

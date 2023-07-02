@@ -3,18 +3,14 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <iosfwd>
 #include <string>
 #include <map>
 
-#include "entity.h"
-#include "lua_table.h"
-#include "math_utils.h"
 #include "scene.h"
 
 using namespace std;
 
-extern float progress;
+extern volatile float progress;
 
 struct ConverterParams {
 	string bin_path;

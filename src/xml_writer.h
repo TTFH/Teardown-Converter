@@ -2,7 +2,6 @@
 #define XML_WRITER_H
 
 #include <stdint.h>
-#include <iosfwd>
 #include <map>
 #include <string>
 #include "../lib/tinyxml2.h"
