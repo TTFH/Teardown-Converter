@@ -106,7 +106,7 @@ struct Environment {
 	bool nightlight;	// nightlight
 	Sound ambience;		// ambience
 	float slippery = 0;	// slippery
-	float fogscale;		// fogscale
+	float fogscale = 1;	// fogscale
 	Snow snow;
 	Vector wind;		// wind
 	float waterhurt = 0;// waterhurt

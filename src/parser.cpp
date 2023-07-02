@@ -176,7 +176,7 @@ VehicleProperties TDBIN::ReadVehicleProperties() {
 	properties.strength = ReadFloat();
 	properties.friction = ReadFloat();
 	properties.z2_f32 = ReadFloat();
-	properties.z_u8 = ReadByte();
+	properties.handbrake = ReadByte() != 0;
 	properties.antispin = ReadFloat();
 	properties.steerassist = ReadFloat();
 	properties.z3_f32 = ReadFloat();
@@ -315,7 +315,7 @@ Shape* TDBIN::ReadShape() {
 		shape->texture_weight = ReadFloat();
 	}
 
-	shape->z_f32 = ReadFloat();
+	shape->emissive_scale = ReadFloat();
 	shape->z1_u8 = ReadByte();
 	shape->z2_u8 = ReadByte();
 	shape->voxels = ReadVoxels();
@@ -441,11 +441,11 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->exit = ReadVector();
 	vehicle->propeller = ReadVector();
 	vehicle->difflock = ReadFloat();
-	vehicle->z2_f32 = ReadFloat();
-	vehicle->body_voxel_count = ReadInt();
+	vehicle->boat_sink = ReadFloat();
+	vehicle->main_voxel_count = ReadInt();
 	if (tdbin_version != VERSION_0_3_0) {
 		vehicle->z1_u8 = ReadByte();
-		vehicle->z3_f32 = ReadFloat();
+		vehicle->drivable = ReadFloat();
 	}
 
 	int ref_count = ReadInt();
@@ -467,12 +467,12 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->vitals[i].body_handle = ReadInt();
 		vehicle->vitals[i].pos = ReadVector();
 		vehicle->vitals[i].z_f32 = ReadFloat();
-		vehicle->vitals[i].shape_index = ReadInt();
+		vehicle->vitals[i].shape_handle = ReadInt();
 	}
 	vehicle->z4_f32 = ReadFloat();
 	if (tdbin_version >= VERSION_0_9_0) {
 		vehicle->z2_u8 = ReadByte();
-		vehicle->z5_f32 = ReadFloat();
+		vehicle->brokenthreshold = ReadFloat();
 	}
 	return vehicle;
 }
@@ -706,7 +706,7 @@ void TDBIN::ReadEnvironment() {
 	} else if (tdbin_version >= VERSION_0_7_1) {
 		// 0.7.1 -> 0.8.0
 		for (int i = 0; i < 8; i++)
-			ReadInt();
+			ReadFloat();
 		ReadByte();
 	}
 }
@@ -794,14 +794,14 @@ void TDBIN::parse() {
 		scene.entities[i] = ReadEntity();
 		scene.entities[i]->parent = NULL;
 	}
-	if (tdbin_version >= VERSION_0_5_0) {
+	/*if (tdbin_version >= VERSION_0_5_0) {
 		scene.entity_count = ReadInt();
-		for (int i = 0; i < (tdbin_version >= VERSION_0_7_2 ? 9 : 4); i++) {
+		for (int i = 0; i < (tdbin_version >= VERSION_0_7_0 ? 9 : 4); i++) {
 			scene.padding[i] = ReadByte();
 		}
 	}
 	if (fgetc(bin_file) != EOF)
-		throw runtime_error("File size mismatch.");
+		throw runtime_error("File size mismatch.");*/
 	printf("File parsed successfully!\n");
 }
 

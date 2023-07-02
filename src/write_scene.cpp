@@ -364,7 +364,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				Vehicle* parent_vehicle = (Vehicle*)body_parent->kind;
 				body->transform = TransformToLocalTransform(parent_vehicle->transform, body->transform);
 			}
-			WriteTransform(entity_element, body->transform); 
+			WriteTransform(entity_element, body->transform);
 
 			if (body->dynamic == true)
 				xml.AddBoolAttribute(entity_element, "dynamic", body->dynamic);

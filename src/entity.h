@@ -165,7 +165,7 @@ struct Shape {
 	float texture_weight;		// texture
 	float blendtexture_weight;	// blendtexture
 	Vector starting_world_position;
-	float z_f32;
+	float emissive_scale;
 	uint8_t z1_u8;
 	uint8_t z2_u8;
 	Voxels voxels;
@@ -273,17 +273,17 @@ struct VehicleSound {
 
 struct VehicleProperties {
 	float topspeed;		// topspeed = 3.6 * this
-	float z1_f32;
+	float z1_f32;		// mostly 8.3334 ???
 	float spring;		// spring
 	float damping;		// damping
 	float acceleration;	// acceleration
 	float strength;		// strength
 	float friction;		// friction
-	float z2_f32;
-	uint8_t z_u8;
+	float z2_f32;		// 30° ???
+	bool handbrake;
 	float antispin;		// antispin
 	float steerassist;	// steerassist
-	float z3_f32;
+	float z3_f32;		// 1.5 ???
 	float antiroll;		// antiroll
 	VehicleSound sound;	// sound
 };
@@ -296,8 +296,8 @@ struct Exhaust {
 struct Vital {
 	uint32_t body_handle;
 	Vector pos;
-	float z_f32;
-	uint32_t shape_index;
+	float z_f32;		// 0.5 ???
+	uint32_t shape_handle;
 };
 
 struct Vehicle {
@@ -314,16 +314,16 @@ struct Vehicle {
 	Vector exit;			// exit
 	Vector propeller;		// propeller
 	float difflock;			// difflock
-	float z2_f32;
-	uint32_t body_voxel_count;
+	float boat_sink;
+	uint32_t main_voxel_count;
 	uint8_t z1_u8;
-	float z3_f32;
+	float drivable;			// 0 if nodrive
 	Vec<uint32_t> refs;
 	Vec<Exhaust> exhausts;	// exhaust
 	Vec<Vital> vitals;		// vital
 	float z4_f32;
 	uint8_t z2_u8;
-	float z5_f32;
+	float brokenthreshold;
 };
 
 struct Wheel {
