@@ -200,7 +200,8 @@ struct Light {
 	float fogscale;		// fogscale
 	float area_size[2];	// size = 2.0 * this
 	float capsule_size;	// size.x = 2.0 * this
-	uint8_t z_u8_13[13];
+	Vector position;
+	uint8_t index;
 	float z_f32;
 	Sound sound;		// sound
 	float glare;		// glare

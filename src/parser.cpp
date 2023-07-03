@@ -350,8 +350,8 @@ Light* TDBIN::ReadLight() {
 		light->area_size[i] = ReadFloat();
 	if (tdbin_version >= VERSION_0_7_0)
 		light->capsule_size = ReadFloat();
-	for (int i = 0; i < 13; i++)
-		light->z_u8_13[i] = ReadByte();
+	light->position = ReadVector();
+	light->index = ReadByte();
 	light->z_f32 = ReadFloat();
 	light->sound.path = ReadString();
 	light->sound.volume = ReadFloat();
@@ -715,10 +715,8 @@ void TDBIN::parse() {
 	for (int i = 0; i < 4; i++) // Read only 4 bytes
 		scene.magic[i] = ReadByte();
 
-	if (scene.magic[0] != 'T' || scene.magic[1] != 'D' || scene.magic[2] != 'B' || scene.magic[3] != 'I') {
-		printf("Warning! File may be corrupt or may not be a Teardown map.\n");
+	if (scene.magic[0] != 'T' || scene.magic[1] != 'D' || scene.magic[2] != 'B' || scene.magic[3] != 'I')
 		tdbin_version = VERSION_0_3_0;
-	}
 
 	if (tdbin_version != VERSION_0_3_0) {
 		scene.magic[4] = ReadByte();
