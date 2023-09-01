@@ -171,11 +171,11 @@ struct Shape {
 	Voxels voxels;
 	uint32_t palette;
 	float scale;				// scale = 10.0 * this
-	// 0xFFFF 0xFFFF 0xFFFF 0xFFFF 0x00
+	// 0xFFFFFFFF 0xFFFFFFFF 0x00
 	uint32_t z_u32_2[2];
 	uint8_t z3_u8;
 
-	Transform old_transform;	// used for screens
+	Transform old_transform;
 };
 
 enum LightType { // uint8_t
@@ -280,7 +280,7 @@ struct VehicleProperties {
 	float acceleration;	// acceleration
 	float strength;		// strength
 	float friction;		// friction
-	float z2_f32;		// 30° ???
+	float max_steering_angle; // in rad, always 30°
 	bool handbrake;
 	float antispin;		// antispin
 	float steerassist;	// steerassist
@@ -333,7 +333,8 @@ struct Wheel {
 	uint32_t vehicle_body;
 	uint32_t body;
 	uint32_t shape;
-	uint8_t z_u8_17[17];
+	uint32_t z1_f32_4[4];
+	uint8_t z_u8;
 	Transform transform;
 	Transform empty_transform;
 	float steer;			// steer

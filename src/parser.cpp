@@ -175,7 +175,7 @@ VehicleProperties TDBIN::ReadVehicleProperties() {
 	properties.acceleration = ReadFloat();
 	properties.strength = ReadFloat();
 	properties.friction = ReadFloat();
-	properties.z2_f32 = ReadFloat();
+	properties.max_steering_angle = ReadFloat();
 	properties.handbrake = ReadByte() != 0;
 	properties.antispin = ReadFloat();
 	properties.steerassist = ReadFloat();
@@ -484,9 +484,11 @@ Wheel* TDBIN::ReadWheel() {
 	wheel->vehicle_body = ReadInt();
 	wheel->body = ReadInt();
 	wheel->shape = ReadInt();
-	if (tdbin_version >= VERSION_1_3_0)
-		for (int i = 0; i < 17; i++)
-			wheel->z_u8_17[i] = ReadByte();
+	if (tdbin_version >= VERSION_1_3_0) {
+		for (int i = 0; i < 4; i++)
+			wheel->z1_f32_4[i] = ReadInt();
+		wheel->z_u8 = ReadByte();
+	}
 	wheel->transform = ReadTransform();
 	wheel->empty_transform = ReadTransform();
 	wheel->steer = ReadFloat();

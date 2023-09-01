@@ -477,7 +477,6 @@ bool MV_FILE::GetShapeName(const MVShape& shape, string& name) {
 void MV_FILE::SetColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
 	if (is_index_used[index]) return;
 	palette[index] = { r, g, b, 255};
-	is_index_used[index] = true;
 }
 
 /*
@@ -532,6 +531,8 @@ void MV_FILE::SetMaterial(uint8_t index, uint8_t kind, float reflectivity, float
 	} else
 		mat.render_type = DIFFUSE;
 	materials.push_back(mat);
+
+	is_index_used[index] = true;
 }
 
 MV_FILE::~MV_FILE() {
