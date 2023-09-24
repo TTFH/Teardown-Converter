@@ -22,8 +22,8 @@ struct ConverterParams {
 	string level_desc;
 
 	bool remove_snow;
-	bool xml_only;
 	bool compress_vox;
+	bool legacy_format;
 };
 
 void ParseFile(ConverterParams params);

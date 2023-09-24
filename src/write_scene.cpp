@@ -125,7 +125,7 @@ void WriteXML::WritePostProcessing() {
 }
 
 void WriteXML::SaveXML() {
-	string main_xml_path = params.map_folder + "main.xml";
+	string main_xml_path = params.map_folder + (params.legacy_format ? "custom.xml" : "main.xml");
 	xml.SaveFile(main_xml_path.c_str());
 }
 
@@ -205,8 +205,10 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	xml.AddBoolAttribute(entity_element, "collide", collide, true);
 
 	if (volume > 0 && sizex <= 256 && sizey <= 256 && sizez <= 256) {
-		string vox_filename = params.map_folder + "vox/palette" + to_string(shape->palette) + ".vox";
-		string vox_path = "MOD/vox/palette" + to_string(shape->palette) + ".vox";
+		string vox_folder = params.legacy_format ? "custom/" : "vox/";
+		string vox_filename = params.map_folder + vox_folder + "palette" + to_string(shape->palette) + ".vox";
+		string path_prefix = params.legacy_format ? "LEVEL/" : "MOD/vox/";
+		string vox_path = path_prefix + "palette" + to_string(shape->palette) + ".vox";
 		string vox_object = "shape" + to_string(handle);
 
 		MV_FILE* vox_file;
@@ -263,8 +265,10 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		xml.AddStrAttribute(entity_element, "object", vox_object);
 		xml.AddFloatAttribute(entity_element, "scale", 10.0 * shape->scale, "1");
 	} else {
-		string vox_filename = params.map_folder + "vox/palette" + to_string(shape->palette) + ".vox";
-		string vox_path = "MOD/vox/palette" + to_string(shape->palette) + ".vox";
+		string vox_folder = params.legacy_format ? "custom/" : "vox/";
+		string vox_filename = params.map_folder + vox_folder + "palette" + to_string(shape->palette) + ".vox";
+		string path_prefix = params.legacy_format ? "LEVEL/" : "MOD/vox/";
+		string vox_path = path_prefix + "palette" + to_string(shape->palette) + ".vox";
 
 		MV_FILE* vox_file;
 		if (vox_files.find(shape->palette) == vox_files.end()) {
@@ -366,13 +370,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			}
 			WriteTransform(entity_element, body->transform);
 
-			if (body->dynamic == true)
+			if (body->dynamic)
 				xml.AddBoolAttribute(entity_element, "dynamic", body->dynamic);
-			else if (entity->parent == NULL && entity->children.getSize() > 0 && entity->tags.getSize() == 0) {
-				entity_element->SetName("group"); // World Body
+			else if (!params.legacy_format && entity->parent == NULL && entity->children.getSize() > 0 && entity->tags.getSize() == 0) {
+				entity_element->SetName("group");
 				xml.AddStrAttribute(entity_element, "name", "Static");
-				//printf("World body handle: %d\n", entity->handle);
-			} else if (entity->tags.getSize() == 0)
+			} else if (!params.legacy_format && entity->tags.getSize() == 0)
 				entity_element = NULL; // Ignore static bodies with no tags
 		}
 			break;

@@ -147,9 +147,11 @@ struct Entity {
     char value;
 };
 
-static const int NUM_ENTITIES = 3;
+static const int NUM_ENTITIES = 5;
 static const Entity entities[NUM_ENTITIES] = {
+    { "quot", 4,	DOUBLE_QUOTE },
     { "amp", 3,		'&'  },
+    { "apos", 4,	SINGLE_QUOTE },
     { "lt",	2, 		'<'	 },
     { "gt",	2,		'>'	 }
 };
@@ -2736,15 +2738,9 @@ void XMLPrinter::PushAttribute( const char* name, const char* value )
     TIXMLASSERT( _elementJustOpened );
     Putc ( ' ' );
     Write( name );
-	if (strchr(value, DOUBLE_QUOTE) == NULL) {
-		Write( "=\"" );
-		PrintString( value, false );
-		Putc ( '\"' );
-	} else {
-		Write( "=\'" );
-		PrintString( value, false );
-		Putc ( '\'' );
-	}
+    Write( "=\"" );
+    PrintString( value, false );
+    Putc ( '\"' );
 }
 
 

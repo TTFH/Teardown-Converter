@@ -808,8 +808,7 @@ void TDBIN::parse() {
 void ParseFile(ConverterParams params) {
 	if (!exists(params.map_folder)) {
 		create_directories(params.map_folder);
-		if (!params.xml_only)
-			create_directories(params.map_folder + "vox");
+		create_directories(params.map_folder + (params.legacy_format ? "custom" : "vox"));
 	}
 	WriteXML parser(params);
 	try {
@@ -826,8 +825,7 @@ void ParseFile(ConverterParams params) {
 	parser.WritePostProcessing();
 	parser.WriteEntities();
 	parser.SaveXML();
-	if (!params.xml_only)
-		parser.SaveVoxFiles();
+	parser.SaveVoxFiles();
 	printf("Map successfully converted!\n");
 	progress = 1;
 }

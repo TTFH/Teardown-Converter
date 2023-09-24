@@ -50,7 +50,7 @@ int DecompileMap(void* param) {
 	ConverterParams* data = (ConverterParams*)param;
 
 	fs::create_directories(data->map_folder);
-	fs::create_directories(data->map_folder + "vox");
+	fs::create_directories(data->map_folder + (data->legacy_format ? "custom" : "vox"));
 	SaveInfoTxt(data->map_folder, data->level_name, data->level_desc);
 
 	string preview_image = "preview\\" + data->level_id + ".jpg";
@@ -272,6 +272,8 @@ int main(int argc, char* argv[]) {
 	char quicksave_folder[256] = "C:\\Users\\User\\AppData\\Local\\Teardown";
 	char mods_folder[256] = "C:\\Users\\User\\Documents\\Teardown\\mods";
 	char game_folder[256] = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown";
+	//const char* quicksave_folder_legacy = "C:\\Users\\user\\Documents\\Teardown";
+	//const char* mods_folder_legacy = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown\\create";
 #else
 	char quicksave_folder[256] = "quicksave_folder";
 	char mods_folder[256] = "mods_folder";
@@ -288,8 +290,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	bool disable_convert = false;
+	bool save_as_legacy = false;
 	bool remove_snow = false;
-	bool xml_only = false;
 	bool use_tdcz = false;
 	int game_version = 0;
 
@@ -397,8 +399,8 @@ int main(int argc, char* argv[]) {
 			ImGui::Dummy(ImVec2(0, 10));
 
 			ImGui::Checkbox("Remove Snow", &remove_snow);
-			ImGui::Checkbox("Generate XML only", &xml_only);
 			ImGui::Checkbox("Compress Vox Files", &use_tdcz);
+			ImGui::Checkbox("Legacy format", &save_as_legacy);
 			ImGui::Dummy(ImVec2(0, 5));
 
 			if (disable_convert) {
@@ -454,8 +456,8 @@ int main(int argc, char* argv[]) {
 				params->level_name = selected_level_it->title;
 				params->level_desc = selected_level_it->description;
 				params->remove_snow = remove_snow;
-				params->xml_only = xml_only;
 				params->compress_vox = use_tdcz;
+				params->legacy_format = save_as_legacy;
 
 				parse_thread = SDL_CreateThread(DecompileMap, "decompile_thread", (void*)params);
 				progress_thread = SDL_CreateThread(FakeProgressBar, "progress_thread", NULL);

@@ -155,22 +155,22 @@ struct Voxels {
 struct Shape {
 	EntityFlags flags;
 	Transform transform;
-	uint16_t shape_flags;		// 0x10 = collide
+	uint16_t shape_flags;			// 0x10 = collide
 	uint8_t collision_layer;
 	uint8_t collision_mask;
-	float density;				// density
-	float strength;				// strength
-	uint16_t texture_tile;		// texture
-	uint16_t blendtexture_tile;	// blendtexture
-	float texture_weight;		// texture
-	float blendtexture_weight;	// blendtexture
+	float density;					// density
+	float strength;					// strength
+	uint16_t texture_tile;			// texture
+	uint16_t blendtexture_tile = 1;	// blendtexture
+	float texture_weight;			// texture
+	float blendtexture_weight = 0;	// blendtexture
 	Vector starting_world_position;
 	float emissive_scale;
 	uint8_t z1_u8;
 	uint8_t z2_u8;
 	Voxels voxels;
 	uint32_t palette;
-	float scale;				// scale = 10.0 * this
+	float scale;					// scale = 10.0 * this
 	// 0xFFFFFFFF 0xFFFFFFFF 0x00
 	uint32_t z_u32_2[2];
 	uint8_t z3_u8;
