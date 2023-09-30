@@ -46,21 +46,34 @@ void SaveInfoTxt(string map_folder, string level_name, string level_desc) {
 	fclose(info_file);
 }
 
+void copy_file(string origin, string destination) {
+	if (fs::exists(origin) && !fs::exists(destination))
+		fs::copy(origin, destination);
+}
+
+void copy_folder(string origin, string destination) {
+	if (fs::exists(origin) && !fs::exists(destination))
+		fs::copy(origin, destination, fs::copy_options::recursive);
+}
+
 int DecompileMap(void* param) {
 	ConverterParams* data = (ConverterParams*)param;
 
 	fs::create_directories(data->map_folder);
-	fs::create_directories(data->map_folder + (data->legacy_format ? "custom" : "vox"));
-	SaveInfoTxt(data->map_folder, data->level_name, data->level_desc);
-
-	string preview_image = "preview\\" + data->level_id + ".jpg";
-	if (fs::exists(preview_image) && !fs::exists(data->map_folder + "preview.jpg"))
-		fs::copy(preview_image, data->map_folder + "preview.jpg");
+	if (!data->legacy_format) {
+		string preview_image = "preview\\" + data->level_id + ".png";
+		copy_file(preview_image, data->map_folder + "preview.png");
+		SaveInfoTxt(data->map_folder, data->level_name, data->level_desc);
+	}
 
 	string script_folder = data->game_folder + "data\\level\\" + data->level_id + "\\script";
-	if (fs::exists(script_folder) && !fs::exists(data->map_folder + "main\\script")) {
+	if (data->legacy_format) {
+		fs::create_directories(data->map_folder + "custom");
+		copy_folder(script_folder, data->map_folder + "custom\\script");
+	} else {
+		fs::create_directories(data->map_folder + "vox");
 		fs::create_directories(data->map_folder + "main");
-		fs::copy(script_folder, data->map_folder + "main\\script", fs::copy_options::recursive);
+		copy_folder(script_folder, data->map_folder + "main\\script");
 	}
 
 	ParseFile(*data);
@@ -399,8 +412,8 @@ int main(int argc, char* argv[]) {
 			ImGui::Dummy(ImVec2(0, 10));
 
 			ImGui::Checkbox("Remove Snow", &remove_snow);
-			ImGui::Checkbox("Compress Vox Files", &use_tdcz);
 			ImGui::Checkbox("Legacy format", &save_as_legacy);
+			ImGui::Checkbox("Compress Vox Files", &use_tdcz);
 			ImGui::Dummy(ImVec2(0, 5));
 
 			if (disable_convert) {
@@ -447,7 +460,9 @@ int main(int argc, char* argv[]) {
 					params->bin_path += ".bin";
 
 				params->map_folder = mods_folder;
-				params->map_folder += "\\" + selected_level_it->filename + "\\";
+				params->map_folder += "\\";
+				if (!save_as_legacy)
+					params->map_folder += selected_level_it->filename + "\\";
 
 				params->game_folder = game_folder;
 				params->game_folder += "\\";

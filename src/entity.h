@@ -161,9 +161,9 @@ struct Shape {
 	float density;					// density
 	float strength;					// strength
 	uint16_t texture_tile;			// texture
-	uint16_t blendtexture_tile = 1;	// blendtexture
+	uint16_t blendtexture_tile = 0;	// blendtexture
 	float texture_weight;			// texture
-	float blendtexture_weight = 0;	// blendtexture
+	float blendtexture_weight = 1;	// blendtexture
 	Vector starting_world_position;
 	float emissive_scale;
 	uint8_t z1_u8;

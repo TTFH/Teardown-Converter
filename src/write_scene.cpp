@@ -369,14 +369,18 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				body->transform = TransformToLocalTransform(parent_vehicle->transform, body->transform);
 			}
 			WriteTransform(entity_element, body->transform);
+			xml.AddBoolAttribute(entity_element, "dynamic", body->dynamic, false);
 
-			if (body->dynamic)
-				xml.AddBoolAttribute(entity_element, "dynamic", body->dynamic);
-			else if (!params.legacy_format && entity->parent == NULL && entity->children.getSize() > 0 && entity->tags.getSize() == 0) {
+			if (!params.legacy_format && entity->parent == NULL && !body->dynamic && entity->tags.getSize() == 0) {
 				entity_element->SetName("group");
 				xml.AddStrAttribute(entity_element, "name", "Static");
-			} else if (!params.legacy_format && entity->tags.getSize() == 0)
-				entity_element = NULL; // Ignore static bodies with no tags
+			}
+
+			if (entity->parent != NULL && !body->dynamic && entity->tags.getSize() == 0)
+				entity_element = NULL; // Ignore wheel body
+
+			if (entity->children.getSize() == 0 && entity->tags.getSize() == 0)
+				entity_element = NULL; // Ignore empty bodies with no tags
 		}
 			break;
 		case KindShape: {
@@ -425,10 +429,8 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddStrFloatAttribute(entity_element, "sound",  light->sound.path, light->sound.volume);
 			xml.AddFloatAttribute(entity_element, "glare", light->glare, "0");
 
-			if (entity->parent == NULL) {
+			if (entity->parent == NULL)
 				entity_element = NULL; // Ignore player flashlight
-				//printf("Player flashlight handle: %d\n", entity->handle);
-			}
 		}
 			break;
 		case KindLocation: {
@@ -535,7 +537,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			int exhausts_count = vehicle->exhausts.getSize();
 			for (int i = 0; i < exhausts_count; i++) {
 				string exhaust_tag = "exhaust";
-				if (vehicle->exhausts[i].strength != 0)
+				if (vehicle->exhausts[i].strength != 1.0f)
 					exhaust_tag += "=" + FloatToString(vehicle->exhausts[i].strength);
 
 				XMLElement* exhaust = xml.CreateElement("location");
@@ -613,15 +615,14 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddStrAttribute(entity_element, "resolution", resolution, "640 480");
 
 			string script_file = screen->script;
-			string prefix = "data/";
-			if (script_file.find(prefix) == 0)
-				script_file = script_file.substr(prefix.size());
-
 			if (!params.level_id.empty()) {
-				prefix = "data/level/" + params.level_id;
+				string prefix = "data/level/" + params.level_id;
 				if (script_file.find(prefix) == 0)
 					script_file = "LEVEL" + script_file.substr(prefix.size());
 			}
+			string prefix = "data/";
+			if (script_file.find(prefix) == 0)
+				script_file = script_file.substr(prefix.size());
 
 			xml.AddStrAttribute(entity_element, "script", script_file);
 			xml.AddBoolAttribute(entity_element, "enabled", screen->enabled, false);
@@ -784,10 +785,8 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				script_file = "LEVEL" + script_file.substr(prefix.size());
 		}
 
-		if (script_file == "achievements.lua" || script_file == "creativemode.lua" || script_file == "explosion.lua" || script_file == "fx.lua" || script_file == "spawn.lua") {
-			//printf("script %s handle: %d\n", script_file.c_str(), entity->handle);
+		if (script_file == "achievements.lua" || script_file == "creativemode.lua" || script_file == "explosion.lua" || script_file == "fx.lua" || script_file == "spawn.lua")
 			return;
-		}
 		xml.AddElement(xml.getScene(), entity_element);
 
 		xml.AddStrAttribute(entity_element, "file", script_file);
