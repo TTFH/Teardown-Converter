@@ -244,7 +244,10 @@ int main(int argc, char* argv[]) {
 #endif
 	if (argc > 1) {
 		if (argc == 2) {
-			ParseFile({argv[1], GetFilename(argv[1]) + "/", "", "", "", "", false, false, false});
+			ConverterParams params;
+			params.bin_path = argv[1];
+			params.map_folder = GetFilename(argv[1]) + "/";
+			ParseFile(params);
 		} else
 			printf("CLI Usage: %s quicksave.bin\n", argv[0]);
 		return 0;
@@ -261,7 +264,7 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 	int window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
-	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 570, window_flags);
+	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 580, window_flags);
 	SDL_GLContext gl_context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, gl_context);
 	SDL_GL_SetSwapInterval(1);
@@ -280,7 +283,7 @@ int main(int argc, char* argv[]) {
 	ImGuiWindowFlags dialog_flags = 0;
 	dialog_flags |= ImGuiWindowFlags_NoResize;
 
-	// Needs to be char[] for InputText to work
+	// Needs to be char[] for InputText() to work
 #ifdef _WIN32
 	char quicksave_folder[256] = "C:\\Users\\User\\AppData\\Local\\Teardown";
 	char mods_folder[256] = "C:\\Users\\User\\Documents\\Teardown\\mods";
@@ -305,8 +308,9 @@ int main(int argc, char* argv[]) {
 	bool disable_convert = false;
 	bool save_as_legacy = false;
 	bool remove_snow = false;
+	bool no_voxbox = false;
 	bool use_tdcz = false;
-	int game_version = 0;
+	int game_version = 0; // unused
 
 	ConverterParams* params = new ConverterParams();
 	SDL_Thread* parse_thread = NULL;
@@ -341,8 +345,8 @@ int main(int argc, char* argv[]) {
 			ImGui::SameLine();
 
 			if (ImGui::Button("Select Folder##1"))
-				ImGuiFileDialog::Instance()->OpenDialog("DirDialogQS", "Select Quicksave folder", nullptr, ".");
-			if (ImGuiFileDialog::Instance()->Display("DirDialogQS")) {
+				ImGuiFileDialog::Instance()->OpenDialog("DirDialogQF", "Select Quicksave folder", nullptr, ".");
+			if (ImGuiFileDialog::Instance()->Display("DirDialogQF")) {
 				if (ImGuiFileDialog::Instance()->IsOk())
 					strcpy(quicksave_folder, ImGuiFileDialog::Instance()->GetCurrentPath().c_str());
 				ImGuiFileDialog::Instance()->Close();
@@ -371,8 +375,8 @@ int main(int argc, char* argv[]) {
 			ImGui::SameLine();
 
 			if (ImGui::Button("Select Folder##3"))
-				ImGuiFileDialog::Instance()->OpenDialog("DirDialogGP", "Select Game folder", nullptr, ".");
-			if (ImGuiFileDialog::Instance()->Display("DirDialogGP")) {
+				ImGuiFileDialog::Instance()->OpenDialog("DirDialogGF", "Select Game folder", nullptr, ".");
+			if (ImGuiFileDialog::Instance()->Display("DirDialogGF")) {
 				if (ImGuiFileDialog::Instance()->IsOk())
 					strcpy(game_folder, ImGuiFileDialog::Instance()->GetCurrentPath().c_str());
 				ImGuiFileDialog::Instance()->Close();
@@ -411,9 +415,10 @@ int main(int argc, char* argv[]) {
 			ImGui::Text(selected_level_it->title.c_str());
 			ImGui::Dummy(ImVec2(0, 10));
 
-			ImGui::Checkbox("Remove Snow", &remove_snow);
+			ImGui::Checkbox("Remove snow", &remove_snow);
 			ImGui::Checkbox("Legacy format", &save_as_legacy);
-			ImGui::Checkbox("Compress Vox Files", &use_tdcz);
+			ImGui::Checkbox("Do not use voxboxes", &no_voxbox);
+			ImGui::Checkbox("Compress .vox files (slow)", &use_tdcz);
 			ImGui::Dummy(ImVec2(0, 5));
 
 			if (disable_convert) {
@@ -470,6 +475,8 @@ int main(int argc, char* argv[]) {
 				params->level_id = selected_level_it->level_id;
 				params->level_name = selected_level_it->title;
 				params->level_desc = selected_level_it->description;
+
+				params->use_voxbox = !no_voxbox;
 				params->remove_snow = remove_snow;
 				params->compress_vox = use_tdcz;
 				params->legacy_format = save_as_legacy;

@@ -225,6 +225,10 @@ struct Water {
 	Vec<Vertex> water_vertices;
 };
 
+enum Enemy {
+	// ???
+};
+
 enum JointType { // uint32_t
 	Ball = 1,
 	Hinge,

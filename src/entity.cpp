@@ -35,6 +35,9 @@ Entity::~Entity() {
 		case KindWater:
 			delete static_cast<Water*>(kind);
 			break;
+		case KindEnemy:
+			delete static_cast<Enemy*>(kind);
+			break;
 		case KindJoint:
 			delete static_cast<Joint*>(kind);
 			break;

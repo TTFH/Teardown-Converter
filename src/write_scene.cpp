@@ -169,7 +169,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	Tensor3D voxels(sizex, sizey, sizez);
 	voxels.FromRunLengthEncoding(shape->voxels.palette_indexes);
 
-	if (voxels.IsFilledSingleColor()) {
+	if (params.use_voxbox && voxels.IsFilledSingleColor()) {
 		uint8_t index = voxels.Get(0, 0, 0);
 		Material palette_entry = palette.materials[index];
 
@@ -485,6 +485,11 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				xml.AddElement(entity_element, vertex);
 				xml.AddFloatNAttribute(vertex, "pos", water->water_vertices[i].pos, 2);
 			}
+		}
+			break;
+		case KindEnemy: {
+			//Enemy* enemy = static_cast<Enemy*>(entity->kind);
+			entity_element->SetName("enemy");
 		}
 			break;
 		case KindJoint: {

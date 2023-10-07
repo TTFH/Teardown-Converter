@@ -250,7 +250,7 @@ LuaTable TDBIN::ReadLuaTable() {
 Entity* TDBIN::ReadEntity() {
 	Entity* entity = new Entity();
 	entity->kind_byte = ReadByte();
-	if (tdbin_version >= VERSION_0_9_6 && entity->kind_byte > KindWater)
+	if (tdbin_version >= VERSION_0_9_6 && entity->kind_byte >= KindEnemy)
 		entity->kind_byte++; // Skip Enemy
 
 	entity->handle = ReadInt();
@@ -386,6 +386,11 @@ Water* TDBIN::ReadWater() {
 		water->water_vertices[i].pos[1] = ReadFloat();
 	}
 	return water;
+}
+
+Enemy* TDBIN::ReadEnemy() {
+	Enemy* enemy = new Enemy();
+	return enemy;
 }
 
 Joint* TDBIN::ReadJoint() {
@@ -606,6 +611,8 @@ void* TDBIN::ReadEntityKind(uint8_t kind_byte) {
 			return ReadLocation();
 		case KindWater:
 			return ReadWater();
+		case KindEnemy:
+			return ReadEnemy();
 		case KindJoint:
 			return ReadJoint();
 		case KindVehicle:

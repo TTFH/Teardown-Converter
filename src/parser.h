@@ -13,17 +13,18 @@ using namespace std;
 extern volatile float progress;
 
 struct ConverterParams {
-	string bin_path;
-	string map_folder;
-	string game_folder;
+	string bin_path = "";
+	string map_folder = "";
+	string game_folder = "";
 
-	string level_id;
-	string level_name;
-	string level_desc;
+	string level_id = "";
+	string level_name = "";
+	string level_desc = "";
 
-	bool remove_snow;
-	bool compress_vox;
-	bool legacy_format;
+	bool use_voxbox = false;
+	bool remove_snow = false;
+	bool compress_vox = false;
+	bool legacy_format = false;
 };
 
 void ParseFile(ConverterParams params);
@@ -65,6 +66,7 @@ private:
 	Light* ReadLight();
 	Location* ReadLocation();
 	Water* ReadWater();
+	Enemy* ReadEnemy();
 	Joint* ReadJoint();
 	Vehicle* ReadVehicle();
 	Wheel* ReadWheel();
