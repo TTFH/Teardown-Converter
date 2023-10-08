@@ -13,6 +13,21 @@
 #include "write_scene.h"
 #include "../lib/tinyxml2.h"
 
+void SaveOBJ(const char* path, const Vec<MeshVertex>& vertices, const Vec<uint32_t>& indices) {
+	FILE* output = fopen(path, "w");
+	for (unsigned int i = 0; i < vertices.getSize(); i++)
+		fprintf(output, "v %f %f %f\n", vertices[i].position.x, vertices[i].position.y, vertices[i].position.z);
+	for (unsigned int i = 0; i < vertices.getSize(); i++)
+		fprintf(output, "vn %f %f %f\n", vertices[i].normal.x, vertices[i].normal.y, vertices[i].normal.z);
+	for (unsigned int i = 0; i < indices.getSize(); i += 3) {
+        fprintf(output, "f %d//%d %d//%d %d//%d\n",
+            indices[i] + 1, indices[i] + 1,
+            indices[i + 1] + 1, indices[i + 1] + 1,
+            indices[i + 2] + 1, indices[i + 2] + 1);
+    }
+	fclose(output);
+}
+
 WriteXML::WriteXML(ConverterParams params) : params(params) {
 	init(params.bin_path.c_str());
 }
@@ -153,6 +168,17 @@ void WriteXML::WriteEntities() {
 }
 
 void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t handle, string description) {
+	if (shape->shape_type == ShapeEnemy) {
+		string mesh_name = "shape" + to_string(handle) + ".obj";
+		SaveOBJ(mesh_name.c_str(), shape->vertices, shape->indices);
+	}
+
+	if (shape->palette >= scene.palettes.getSize()) {
+		printf("[Warning] Shape %d has invalid palette index %d\n", handle, shape->palette);
+		entity_element = NULL;
+		return;
+	}
+
 	int sizex = shape->voxels.size[0];
 	int sizey = shape->voxels.size[1];
 	int sizez = shape->voxels.size[2];
@@ -488,7 +514,8 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindEnemy: {
-			//Enemy* enemy = static_cast<Enemy*>(entity->kind);
+			Enemy* enemy = static_cast<Enemy*>(entity->kind);
+			SaveOBJ("enemy.obj", enemy->vertices, enemy->indices);
 			entity_element->SetName("enemy");
 		}
 			break;

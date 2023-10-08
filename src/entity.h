@@ -106,6 +106,11 @@ struct Sound {
 	float volume;
 };
 
+struct MeshVertex {
+	Vector position;
+	Vector normal;
+};
+
 // ------------------------------------
 
 enum EntityKind { // uint8_t
@@ -152,6 +157,11 @@ struct Voxels {
 	RLE palette_indexes;
 };
 
+enum ShapeType {
+	ShapeNormal = 1,
+	ShapeEnemy,
+};
+
 struct Shape {
 	EntityFlags flags;
 	Transform transform;
@@ -167,13 +177,15 @@ struct Shape {
 	Vector starting_world_position;
 	float emissive_scale;
 	uint8_t z1_u8;
-	uint8_t z2_u8;
+	uint8_t shape_type;
 	Voxels voxels;
 	uint32_t palette;
 	float scale;					// scale = 10.0 * this
 	// 0xFFFFFFFF 0xFFFFFFFF 0x00
 	uint32_t z_u32_2[2];
 	uint8_t z3_u8;
+	Vec<MeshVertex> vertices;
+	Vec<uint32_t> indices;
 
 	Transform old_transform;
 };
@@ -225,8 +237,23 @@ struct Water {
 	Vec<Vertex> water_vertices;
 };
 
-enum Enemy {
-	// ???
+struct Enemy {
+	uint8_t flags;
+	uint32_t z_u32_2[2];
+	uint8_t z1_u8_4[4];
+	float z_f32_13[13];
+	uint8_t z1_u8_3[3];
+	uint32_t z2_u32_2[2];
+	float z1_f32_4[4];
+	float z2_f32_4[4];
+	uint8_t z2_u8_4[4];
+	float z3_f32_4[4];
+	float z4_f32_4[4];
+	uint8_t z2_u8_3[3];
+	float z5_f32_4[4];
+	float z6_f32_4[4];
+	Vec<MeshVertex> vertices;
+	Vec<uint32_t> indices;
 };
 
 enum JointType { // uint32_t

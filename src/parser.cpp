@@ -317,14 +317,35 @@ Shape* TDBIN::ReadShape() {
 
 	shape->emissive_scale = ReadFloat();
 	shape->z1_u8 = ReadByte();
-	shape->z2_u8 = ReadByte();
+	shape->shape_type = ReadByte();
 	shape->voxels = ReadVoxels();
+
+	if (shape->shape_type == ShapeEnemy) {
+		ReadByte();
+		ReadFloat();
+	}
+
 	shape->palette = ReadInt();
 	shape->scale = ReadFloat();
 	for (int i = 0; i < 2; i++)
 		shape->z_u32_2[i] = ReadInt();
 	if (tdbin_version >= VERSION_0_7_0)
 		shape->z3_u8 = ReadByte();
+
+	if (shape->shape_type == ShapeEnemy) {
+		int vertex_count = ReadInt();
+		shape->vertices.resize(vertex_count);
+		for (int i = 0; i < vertex_count; i++) {
+			shape->vertices[i].position = ReadVector();
+			shape->vertices[i].normal = ReadVector();
+		}
+
+		int index_count = ReadInt();
+		shape->indices.resize(index_count);
+		for (int i = 0; i < index_count; i++)
+			shape->indices[i] = ReadInt();
+	}
+
 	return shape;
 }
 
@@ -390,6 +411,47 @@ Water* TDBIN::ReadWater() {
 
 Enemy* TDBIN::ReadEnemy() {
 	Enemy* enemy = new Enemy();
+
+	enemy->flags = ReadByte();
+	for (int i = 0; i < 2; i++)
+		enemy->z_u32_2[i] = ReadInt();
+	for (int i = 0; i < 4; i++)
+		enemy->z1_u8_4[i] = ReadByte();
+	for (int i = 0; i < 13; i++)
+		enemy->z_f32_13[i] = ReadFloat();
+	for (int i = 0; i < 3; i++)
+		enemy->z1_u8_3[i] = ReadByte();
+	for (int i = 0; i < 2; i++)
+		enemy->z2_u32_2[i] = ReadInt();
+	for (int i = 0; i < 4; i++)
+		enemy->z1_f32_4[i] = ReadFloat();
+	for (int i = 0; i < 4; i++)
+		enemy->z2_f32_4[i] = ReadFloat();
+	for (int i = 0; i < 4; i++)
+		enemy->z2_u8_4[i] = ReadByte();
+	for (int i = 0; i < 4; i++)
+		enemy->z3_f32_4[i] = ReadFloat();
+	for (int i = 0; i < 4; i++)
+		enemy->z4_f32_4[i] = ReadFloat();
+	for (int i = 0; i < 3; i++)
+		enemy->z2_u8_3[i] = ReadByte();
+	for (int i = 0; i < 4; i++)
+		enemy->z5_f32_4[i] = ReadFloat();
+	for (int i = 0; i < 4; i++)
+		enemy->z6_f32_4[i] = ReadFloat();
+
+	int vertex_count = ReadInt();
+	enemy->vertices.resize(vertex_count);
+	for (int i = 0; i < vertex_count; i++) {
+		enemy->vertices[i].position = ReadVector();
+		enemy->vertices[i].normal = ReadVector();
+	}
+
+	int index_count = ReadInt();
+	enemy->indices.resize(index_count);
+	for (int i = 0; i < index_count; i++)
+		enemy->indices[i] = ReadInt();
+
 	return enemy;
 }
 

@@ -21,7 +21,7 @@ struct ConverterParams {
 	string level_name = "";
 	string level_desc = "";
 
-	bool use_voxbox = false;
+	bool use_voxbox = true;
 	bool remove_snow = false;
 	bool compress_vox = false;
 	bool legacy_format = false;
