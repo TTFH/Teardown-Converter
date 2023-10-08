@@ -168,16 +168,6 @@ void WriteXML::WriteEntities() {
 }
 
 void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t handle, string description) {
-	if (shape->shape_type == ShapeEnemy) {
-		string mesh_name = "shape" + to_string(handle) + ".obj";
-		SaveOBJ(mesh_name.c_str(), shape->vertices, shape->indices);
-
-		entity_element->SetName("mesh");
-		xml.AddStrAttribute(entity_element, "file", mesh_name);
-		WriteTransform(entity_element, shape->transform);
-		return;
-	}
-
 	int sizex = shape->voxels.size[0];
 	int sizey = shape->voxels.size[1];
 	int sizez = shape->voxels.size[2];
@@ -514,9 +504,19 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			break;
 		case KindEnemy: {
 			Enemy* enemy = static_cast<Enemy*>(entity->kind);
-			entity_element->SetName("enemy");
-			WriteTransform(entity_element, enemy->transform);
-			SaveOBJ("enemy.obj", enemy->vertices, enemy->indices);
+			entity_element->SetName("mesh");
+			WriteTransform(entity_element, enemy->data.transform);
+			xml.AddStrAttribute(entity_element, "file", "enemy.obj");
+			SaveOBJ("enemy.obj", enemy->shape.vertices, enemy->shape.indices);
+
+			for (int i = 0; i < 27; i++) {
+				string mesh_name = "shape" + to_string(enemy->child_shapes[i].data.handle) + ".obj";
+				XMLElement* mesh = xml.CreateElement("mesh");
+				WriteTransform(mesh, enemy->child_shapes[i].data.transform);
+				xml.AddStrAttribute(mesh, "file", mesh_name);
+				xml.AddElement(entity_element, mesh);
+				SaveOBJ(mesh_name.c_str(), enemy->child_shapes[i].vertices, enemy->child_shapes[i].indices);
+			}
 		}
 			break;
 		case KindJoint: {

@@ -157,11 +157,6 @@ struct Voxels {
 	RLE palette_indexes;
 };
 
-enum ShapeType { // uint8_t
-	ShapeNormal = 1,
-	ShapeEnemy,
-};
-
 struct Shape {
 	EntityFlags flags;
 	Transform transform;
@@ -174,7 +169,7 @@ struct Shape {
 	uint16_t blendtexture_tile = 0;	// blendtexture
 	float texture_weight;			// texture
 	float blendtexture_weight = 1;	// blendtexture
-	Vector starting_world_position;
+	Vector texture_offset;
 	float emissive_scale;
 	uint8_t z1_u8;
 	uint8_t shape_type;
@@ -184,8 +179,6 @@ struct Shape {
 	// 0xFFFFFFFF 0xFFFFFFFF 0x00
 	uint32_t z_u32_2[2];
 	uint8_t z3_u8;
-	Vec<MeshVertex> vertices;
-	Vec<uint32_t> indices;
 
 	Transform old_transform;
 };
@@ -237,24 +230,32 @@ struct Water {
 	Vec<Vertex> water_vertices;
 };
 
-struct Enemy {
-	uint8_t flags;
-	uint32_t z_u32_2[2];
-	uint8_t z1_u8_4[4];
+struct MeshShapeShared {
+	uint8_t z_u8; // if child
+	uint32_t handle;
+	uint8_t z_u8_3[3];
 	Transform transform;
-	float z_f32_6[6];
-	uint8_t z1_u8_3[3];
-	uint32_t z2_u32_2[2];
-	float z1_f32_4[4];
-	float z2_f32_4[4];
-	uint8_t z2_u8_4[4];
-	float z3_f32_4[4];
-	float z4_f32_4[4];
-	uint8_t z2_u8_3[3];
-	float z5_f32_4[4];
-	float z6_f32_4[4];
+	float z_f32_8[8];
+};
+
+struct MeshShape {
+	MeshShapeShared data;
+	float z_f32;
+	uint8_t z_u8_3[3];
+	float z_f32_8[8];
 	Vec<MeshVertex> vertices;
 	Vec<uint32_t> indices;
+	uint32_t z_u32;
+	uint32_t beef_beef;
+};
+
+struct Enemy {
+	uint8_t z_u8;
+	uint32_t z_u32;
+	MeshShapeShared data;
+	MeshShape shape;
+	MeshShape child_shapes[27];
+	uint32_t beef_beef;
 };
 
 enum JointType { // uint32_t

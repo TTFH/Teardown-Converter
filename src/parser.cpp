@@ -250,6 +250,7 @@ LuaTable TDBIN::ReadLuaTable() {
 Entity* TDBIN::ReadEntity() {
 	Entity* entity = new Entity();
 	entity->kind_byte = ReadByte();
+
 	if (tdbin_version >= VERSION_0_9_6 && entity->kind_byte >= KindEnemy)
 		entity->kind_byte++; // Skip Enemy
 
@@ -265,11 +266,13 @@ Entity* TDBIN::ReadEntity() {
 	entity->desc = ReadString();
 	entity->kind = ReadEntityKind(entity->kind_byte);
 
-	int childrens = ReadInt();
-	entity->children.resize(childrens);
-	for (int i = 0; i < childrens; i++) {
-		entity->children[i] = ReadEntity();
-		entity->children[i]->parent = entity;
+	if (entity->kind_byte != KindEnemy) {
+		int childrens = ReadInt();
+		entity->children.resize(childrens);
+		for (int i = 0; i < childrens; i++) {
+			entity->children[i] = ReadEntity();
+			entity->children[i]->parent = entity;
+		}
 	}
 
 	entity->beef_beef = ReadInt();
@@ -308,50 +311,24 @@ Shape* TDBIN::ReadShape() {
 		shape->blendtexture_tile = ReadWord();
 		shape->texture_weight = ReadFloat();
 		shape->blendtexture_weight = ReadFloat();
-		shape->starting_world_position = ReadVector();
+		shape->texture_offset = ReadVector();
 	} else {
 		shape->texture_tile = ReadInt();
-		shape->starting_world_position = ReadVector();
+		shape->texture_offset = ReadVector();
 		shape->texture_weight = ReadFloat();
 	}
 
 	shape->emissive_scale = ReadFloat();
 	shape->z1_u8 = ReadByte();
 	shape->shape_type = ReadByte();
-
-	if (shape->shape_type == ShapeEnemy) {
-		for (int i = 0; i < 3; i++)
-			shape->voxels.size[i] = 0;
-		shape->palette = 0;
-		shape->scale = 0.1;
-
-		ReadByte();
-		for (int i = 0; i < 6; i++)
-			ReadFloat();
-	} else {
-		shape->voxels = ReadVoxels();
-		shape->palette = ReadInt();
-		shape->scale = ReadFloat();
-	}
+	shape->voxels = ReadVoxels();
+	shape->palette = ReadInt();
+	shape->scale = ReadFloat();
 
 	for (int i = 0; i < 2; i++)
 		shape->z_u32_2[i] = ReadInt();
 	if (tdbin_version >= VERSION_0_7_0)
 		shape->z3_u8 = ReadByte();
-
-	if (shape->shape_type == ShapeEnemy) {
-		int vertex_count = ReadInt();
-		shape->vertices.resize(vertex_count);
-		for (int i = 0; i < vertex_count; i++) {
-			shape->vertices[i].position = ReadVector();
-			shape->vertices[i].normal = ReadVector();
-		}
-
-		int index_count = ReadInt();
-		shape->indices.resize(index_count);
-		for (int i = 0; i < index_count; i++)
-			shape->indices[i] = ReadInt();
-	}
 
 	return shape;
 }
@@ -418,48 +395,77 @@ Water* TDBIN::ReadWater() {
 
 Enemy* TDBIN::ReadEnemy() {
 	Enemy* enemy = new Enemy();
+	enemy->z_u8 = ReadByte();
+	enemy->z_u32 = ReadInt();
 
-	enemy->flags = ReadByte();
-	for (int i = 0; i < 2; i++)
-		enemy->z_u32_2[i] = ReadInt();
-	for (int i = 0; i < 4; i++)
-		enemy->z1_u8_4[i] = ReadByte();
-	enemy->transform = ReadTransform();
-	for (int i = 0; i < 6; i++)
-		enemy->z_f32_6[i] = ReadFloat();
+	enemy->data.z_u8 = ReadByte();
+	enemy->data.handle = ReadInt();
 	for (int i = 0; i < 3; i++)
-		enemy->z1_u8_3[i] = ReadByte();
-	for (int i = 0; i < 2; i++)
-		enemy->z2_u32_2[i] = ReadInt();
-	for (int i = 0; i < 4; i++)
-		enemy->z1_f32_4[i] = ReadFloat();
-	for (int i = 0; i < 4; i++)
-		enemy->z2_f32_4[i] = ReadFloat();
-	for (int i = 0; i < 4; i++)
-		enemy->z2_u8_4[i] = ReadByte();
-	for (int i = 0; i < 4; i++)
-		enemy->z3_f32_4[i] = ReadFloat();
-	for (int i = 0; i < 4; i++)
-		enemy->z4_f32_4[i] = ReadFloat();
+		enemy->data.z_u8_3[i] = ReadByte();
+	enemy->data.transform = ReadTransform();
+	for (int i = 0; i < 8; i++)
+		enemy->data.z_f32_8[i] = ReadFloat();
+
+	enemy->shape.data.handle = ReadInt();
 	for (int i = 0; i < 3; i++)
-		enemy->z2_u8_3[i] = ReadByte();
-	for (int i = 0; i < 4; i++)
-		enemy->z5_f32_4[i] = ReadFloat();
-	for (int i = 0; i < 4; i++)
-		enemy->z6_f32_4[i] = ReadFloat();
+		enemy->shape.data.z_u8_3[i] = ReadByte();
+	enemy->shape.data.transform = ReadTransform();
+	for (int i = 0; i < 8; i++)
+		enemy->shape.data.z_f32_8[i] = ReadFloat();
+
+	enemy->shape.z_f32 = ReadFloat();
+	for (int i = 0; i < 3; i++)
+		enemy->shape.z_u8_3[i] = ReadByte();
+	for (int i = 0; i < 8; i++)
+		enemy->shape.z_f32_8[i] = ReadFloat();
 
 	int vertex_count = ReadInt();
-	enemy->vertices.resize(vertex_count);
+	enemy->shape.vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++) {
-		enemy->vertices[i].position = ReadVector();
-		enemy->vertices[i].normal = ReadVector();
+		enemy->shape.vertices[i].position = ReadVector();
+		enemy->shape.vertices[i].normal = ReadVector();
 	}
 
 	int index_count = ReadInt();
-	enemy->indices.resize(index_count);
+	enemy->shape.indices.resize(index_count);
 	for (int i = 0; i < index_count; i++)
-		enemy->indices[i] = ReadInt();
+		enemy->shape.indices[i] = ReadInt();
 
+	enemy->shape.z_u32 = ReadInt();
+	enemy->shape.beef_beef = ReadInt();
+
+	for (int i = 0; i < 27; i++) {
+		enemy->child_shapes[i].data.z_u8 = ReadByte();
+		enemy->child_shapes[i].data.handle = ReadInt();
+		for (int j = 0; j < 3; j++)
+			enemy->child_shapes[i].data.z_u8_3[j] = ReadByte();
+		enemy->child_shapes[i].data.transform = ReadTransform();
+		for (int j = 0; j < 8; j++)
+			enemy->child_shapes[i].data.z_f32_8[j] = ReadFloat();
+
+		enemy->child_shapes[i].z_f32 = ReadFloat();
+		for (int j = 0; j < 3; j++)
+			enemy->child_shapes[i].z_u8_3[j] = ReadByte();
+		for (int j = 0; j < 8; j++)
+			enemy->child_shapes[i].z_f32_8[j] = ReadFloat();
+
+		vertex_count = ReadInt();
+		enemy->child_shapes[i].vertices.resize(vertex_count);
+		for (int j = 0; j < vertex_count; j++) {
+			enemy->child_shapes[i].vertices[j].position = ReadVector();
+			enemy->child_shapes[i].vertices[j].normal = ReadVector();
+		}
+
+		index_count = ReadInt();
+		enemy->child_shapes[i].indices.resize(index_count);
+		for (int j = 0; j < index_count; j++)
+			enemy->child_shapes[i].indices[j] = ReadInt();
+
+		enemy->child_shapes[i].z_u32 = ReadInt();
+		enemy->child_shapes[i].beef_beef = ReadInt();
+	}
+
+	enemy->beef_beef = ReadInt();
 	return enemy;
 }
 
