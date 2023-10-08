@@ -171,11 +171,10 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	if (shape->shape_type == ShapeEnemy) {
 		string mesh_name = "shape" + to_string(handle) + ".obj";
 		SaveOBJ(mesh_name.c_str(), shape->vertices, shape->indices);
-	}
 
-	if (shape->palette >= scene.palettes.getSize()) {
-		printf("[Warning] Shape %d has invalid palette index %d\n", handle, shape->palette);
-		entity_element = NULL;
+		entity_element->SetName("mesh");
+		xml.AddStrAttribute(entity_element, "file", mesh_name);
+		WriteTransform(entity_element, shape->transform);
 		return;
 	}
 
@@ -515,8 +514,9 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			break;
 		case KindEnemy: {
 			Enemy* enemy = static_cast<Enemy*>(entity->kind);
-			SaveOBJ("enemy.obj", enemy->vertices, enemy->indices);
 			entity_element->SetName("enemy");
+			WriteTransform(entity_element, enemy->transform);
+			SaveOBJ("enemy.obj", enemy->vertices, enemy->indices);
 		}
 			break;
 		case KindJoint: {

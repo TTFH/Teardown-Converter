@@ -318,15 +318,22 @@ Shape* TDBIN::ReadShape() {
 	shape->emissive_scale = ReadFloat();
 	shape->z1_u8 = ReadByte();
 	shape->shape_type = ReadByte();
-	shape->voxels = ReadVoxels();
 
 	if (shape->shape_type == ShapeEnemy) {
+		for (int i = 0; i < 3; i++)
+			shape->voxels.size[i] = 0;
+		shape->palette = 0;
+		shape->scale = 0.1;
+
 		ReadByte();
-		ReadFloat();
+		for (int i = 0; i < 6; i++)
+			ReadFloat();
+	} else {
+		shape->voxels = ReadVoxels();
+		shape->palette = ReadInt();
+		shape->scale = ReadFloat();
 	}
 
-	shape->palette = ReadInt();
-	shape->scale = ReadFloat();
 	for (int i = 0; i < 2; i++)
 		shape->z_u32_2[i] = ReadInt();
 	if (tdbin_version >= VERSION_0_7_0)
@@ -417,8 +424,9 @@ Enemy* TDBIN::ReadEnemy() {
 		enemy->z_u32_2[i] = ReadInt();
 	for (int i = 0; i < 4; i++)
 		enemy->z1_u8_4[i] = ReadByte();
-	for (int i = 0; i < 13; i++)
-		enemy->z_f32_13[i] = ReadFloat();
+	enemy->transform = ReadTransform();
+	for (int i = 0; i < 6; i++)
+		enemy->z_f32_6[i] = ReadFloat();
 	for (int i = 0; i < 3; i++)
 		enemy->z1_u8_3[i] = ReadByte();
 	for (int i = 0; i < 2; i++)

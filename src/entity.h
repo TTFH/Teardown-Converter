@@ -157,7 +157,7 @@ struct Voxels {
 	RLE palette_indexes;
 };
 
-enum ShapeType {
+enum ShapeType { // uint8_t
 	ShapeNormal = 1,
 	ShapeEnemy,
 };
@@ -241,7 +241,8 @@ struct Enemy {
 	uint8_t flags;
 	uint32_t z_u32_2[2];
 	uint8_t z1_u8_4[4];
-	float z_f32_13[13];
+	Transform transform;
+	float z_f32_6[6];
 	uint8_t z1_u8_3[3];
 	uint32_t z2_u32_2[2];
 	float z1_f32_4[4];
