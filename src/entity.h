@@ -194,7 +194,7 @@ struct Light {
 	bool is_on;
 	uint8_t type;		// type
 	Transform transform;
-	Color color;		// color = pow(this, 0.454545)
+	Color color;		// color = pow(this, 1 / 2.2)
 	float scale = 1;	// scale
 	float reach;		// reach
 	float size;			// size
@@ -230,7 +230,7 @@ struct Water {
 	Vec<Vertex> water_vertices;
 };
 
-struct MeshShapeShared {
+struct MeshShapeCommon {
 	uint8_t z_u8; // if child
 	uint32_t handle;
 	uint8_t z_u8_3[3];
@@ -239,10 +239,11 @@ struct MeshShapeShared {
 };
 
 struct MeshShape {
-	MeshShapeShared data;
+	MeshShapeCommon data;
 	float z_f32;
 	uint8_t z_u8_3[3];
-	float z_f32_8[8];
+	Color color;
+	float z_f32_4[4];
 	Vec<MeshVertex> vertices;
 	Vec<uint32_t> indices;
 	uint32_t z_u32;
@@ -252,7 +253,7 @@ struct MeshShape {
 struct Enemy {
 	uint8_t z_u8;
 	uint32_t z_u32;
-	MeshShapeShared data;
+	MeshShapeCommon data;
 	MeshShape shape;
 	MeshShape child_shapes[27];
 	uint32_t beef_beef;

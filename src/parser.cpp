@@ -416,8 +416,9 @@ Enemy* TDBIN::ReadEnemy() {
 	enemy->shape.z_f32 = ReadFloat();
 	for (int i = 0; i < 3; i++)
 		enemy->shape.z_u8_3[i] = ReadByte();
-	for (int i = 0; i < 8; i++)
-		enemy->shape.z_f32_8[i] = ReadFloat();
+	enemy->shape.color = ReadColor();
+	for (int i = 0; i < 4; i++)
+		enemy->shape.z_f32_4[i] = ReadFloat();
 
 	int vertex_count = ReadInt();
 	enemy->shape.vertices.resize(vertex_count);
@@ -446,8 +447,9 @@ Enemy* TDBIN::ReadEnemy() {
 		enemy->child_shapes[i].z_f32 = ReadFloat();
 		for (int j = 0; j < 3; j++)
 			enemy->child_shapes[i].z_u8_3[j] = ReadByte();
-		for (int j = 0; j < 8; j++)
-			enemy->child_shapes[i].z_f32_8[j] = ReadFloat();
+		enemy->child_shapes[i].color = ReadColor();
+		for (int j = 0; j < 4; j++)
+			enemy->child_shapes[i].z_f32_4[j] = ReadFloat();
 
 		vertex_count = ReadInt();
 		enemy->child_shapes[i].vertices.resize(vertex_count);

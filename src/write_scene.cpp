@@ -422,7 +422,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			else if (light->type == Area)
 				xml.AddAttribute(entity_element, "type", "area");
 
-			xml.AddFloat4Attribute(entity_element, "color", pow(light->color.r, 0.454545), pow(light->color.g, 0.454545), pow(light->color.b, 0.454545), light->color.a, "1 1 1 1");
+			xml.AddFloat4Attribute(entity_element, "color", pow(light->color.r, 1 / 2.2f), pow(light->color.g, 1 / 2.2f), pow(light->color.b, 1 / 2.2f), light->color.a, "1 1 1 1");
 			xml.AddFloatAttribute(entity_element, "scale", light->scale, "1");
 
 			if (light->type == Cone) {
@@ -506,15 +506,27 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			Enemy* enemy = static_cast<Enemy*>(entity->kind);
 			entity_element->SetName("mesh");
 			WriteTransform(entity_element, enemy->data.transform);
-			xml.AddStrAttribute(entity_element, "file", "enemy.obj");
-			SaveOBJ("enemy.obj", enemy->shape.vertices, enemy->shape.indices);
+			string mesh_name = "mesh" + to_string(enemy->data.handle) + ".obj";
+			xml.AddStrAttribute(entity_element, "file", mesh_name);
+			SaveOBJ(mesh_name.c_str(), enemy->shape.vertices, enemy->shape.indices);
+
+			XMLElement* head = xml.CreateElement("group");
+			WriteTransform(head, enemy->shape.data.transform);
+			xml.AddElement(entity_element, head);
 
 			for (int i = 0; i < 27; i++) {
-				string mesh_name = "shape" + to_string(enemy->child_shapes[i].data.handle) + ".obj";
+				mesh_name = "mesh" + to_string(enemy->child_shapes[i].data.handle) + ".obj";
 				XMLElement* mesh = xml.CreateElement("mesh");
 				WriteTransform(mesh, enemy->child_shapes[i].data.transform);
 				xml.AddStrAttribute(mesh, "file", mesh_name);
-				xml.AddElement(entity_element, mesh);
+				xml.AddFloat3Attribute(mesh, "color",
+					pow(enemy->child_shapes[i].color.r, 1 / 2.2f),
+					pow(enemy->child_shapes[i].color.g, 1 / 2.2f),
+					pow(enemy->child_shapes[i].color.b, 1 / 2.2f));
+				if (i < 3)
+					xml.AddElement(head, mesh);
+				else
+					xml.AddElement(entity_element, mesh);
 				SaveOBJ(mesh_name.c_str(), enemy->child_shapes[i].vertices, enemy->child_shapes[i].indices);
 			}
 		}
