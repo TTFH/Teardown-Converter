@@ -453,6 +453,15 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			entity_element->SetName("location");
 
 			Entity* location_parent = entity->parent;
+			while (location_parent != NULL && location_parent->kind_byte != KindVehicle)
+				location_parent = location_parent->parent;
+			if (location_parent != NULL) {
+				// Location is inside a vehicle
+				entity_element = NULL;
+				break;
+			}
+
+			location_parent = entity->parent;
 			if (location_parent != NULL && location_parent->kind_byte == KindShape) {
 				// The location is inside a static shape
 				Shape* parent_shape = (Shape*)location_parent->kind;

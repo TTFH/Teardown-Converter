@@ -53,6 +53,7 @@ public:
 	}
 };
 
+#define VERSION_1_5_0 150 // Added scene path, list of enabled mods, extra paint color
 #define VERSION_1_4_0 140 // Added water->visibility
 #define VERSION_1_3_0 130 // Added 17 bytes to Wheel
 #define VERSION_1_2_0 120 // No changes

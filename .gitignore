@@ -1,4 +1,5 @@
 .vscode/
+*.zip
 obj/*.o
 release/config.xml
 release/teardown-converter

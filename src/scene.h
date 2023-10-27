@@ -143,12 +143,18 @@ struct Palette {
 	uint8_t z_u8;
 	uint8_t black_tint[4 * 256];
 	uint8_t yellow_tint[4 * 256];
+	uint8_t other_tint[4 * 256];
 };
 
 struct Scene {
 	char magic[5];					// TDBIN
 	uint8_t version[3] = {0, 3, 0};	// version
-	string level;
+	string level_id;
+	string level_path;
+	string level_mode;
+	string level_location;
+	uint32_t z_u32;
+	Vec<Registry> enabled_mods;
 	uint32_t driven_vehicle = 0;	// driven
 	Vector shadow_volume;			// shadowVolume
 	Transform spawnpoint;			// spawnpoint

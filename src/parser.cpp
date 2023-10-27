@@ -127,6 +127,10 @@ Palette TDBIN::ReadPalette() {
 	Palette p;
 	for (int i = 0; i < 256; i++) {
 		p.materials[i].kind = ReadByte();
+		if (p.materials[i].kind > (uint8_t)MaterialKind::Unphysical) {
+			printf("[ERROR] Invalid Material %d at index %d\n", p.materials[i].kind, i);
+			exit(EXIT_FAILURE);
+		}
 		p.materials[i].rgba = ReadColor();
 		p.materials[i].reflectivity = ReadFloat();
 		p.materials[i].shinyness = ReadFloat();
@@ -137,6 +141,8 @@ Palette TDBIN::ReadPalette() {
 	p.z_u8 = ReadByte();
 	fread(&p.black_tint, sizeof(uint8_t), 4 * 256, bin_file);
 	fread(&p.yellow_tint, sizeof(uint8_t), 4 * 256, bin_file);
+	if (tdbin_version >= VERSION_1_5_0)
+		fread(&p.other_tint, sizeof(uint8_t), 4 * 256, bin_file);
 	return p;
 }
 
@@ -816,7 +822,18 @@ void TDBIN::parse() {
 		tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
 
 		if (tdbin_version >= VERSION_0_5_1)
-			scene.level = ReadString();
+			scene.level_id = ReadString();
+		if (tdbin_version >= VERSION_1_5_0) {
+			scene.level_path = ReadString();
+			scene.level_mode = ReadString();
+			scene.level_location = ReadString();
+			scene.z_u32 = ReadInt();
+
+			int entries = ReadInt();
+			scene.enabled_mods.resize(entries);
+			for (int i = 0; i < entries; i++)
+				scene.enabled_mods[i] = ReadRegistry();
+		}
 		scene.driven_vehicle = ReadInt();
 	}
 
