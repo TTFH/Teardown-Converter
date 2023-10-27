@@ -61,19 +61,18 @@ int DecompileMap(void* param) {
 
 	fs::create_directories(data->map_folder);
 	if (!data->legacy_format) {
-		string preview_image = "preview\\" + data->level_id + ".png";
+		string preview_image = "preview/" + data->level_id + ".png";
 		copy_file(preview_image, data->map_folder + "preview.png");
 		SaveInfoTxt(data->map_folder, data->level_name, data->level_desc);
 	}
 
-	string script_folder = data->game_folder + "data\\level\\" + data->level_id + "\\script";
 	if (data->legacy_format) {
 		fs::create_directories(data->map_folder + "custom");
-		copy_folder(script_folder, data->map_folder + "custom\\script");
+		copy_folder(data->script_folder, data->map_folder + "custom/script");
 	} else {
 		fs::create_directories(data->map_folder + "vox");
 		fs::create_directories(data->map_folder + "main");
-		copy_folder(script_folder, data->map_folder + "main\\script");
+		copy_folder(data->script_folder, data->map_folder + "main/script");
 	}
 
 	ParseFile(*data);
@@ -90,142 +89,188 @@ int FakeProgressBar(void* param) {
 	return 0;
 }
 
-vector<LevelInfo> LoadLevels() {
+vector<LevelInfo> LoadLevels(string filter) {
 	vector<LevelInfo> levels;
-	const char* sandbox[][4] = {
-		{"lee", "lee_sandbox", "Lee Chemicals Sandbox", "Operated by the Lee family for three generations. Lawrence Lee Junior showed a promising start, but developed a weakness for fast cash. He is now a well known name in the criminal underworld."},
-		{"marina", "marina_sandbox", "West Point Marina Sandbox", "The oldest marina in Löckelle municipality. It features an industrial part and a separate section for leisure activities."},
-		{"mansion", "mansion_sandbox", "Villa Gordon Sandbox", "The home of mall manager and racing enthusiast Gordon Woo, his daughter Freya and fiancee Enid Coumans. An exclusive mansion with a private race track in the backyard."},
-		{"caveisland", "caveisland_sandbox", "Hollowrock Island Sandbox", "Formerly an old fishing hamlet, a few years ago Hollowrock Island was transformed into an energy drink research facility."},
-		{"mall", "mall_sandbox", "The Evertides Mall Sandbox", "An upscale shopping center by the waterfront managed by Gordon Woo. Also in the area is Löckelle municipality folk museum."},
-		{"frustrum", "frustrum_sandbox", "Frustrum Sandbox", "Tiny village of Frustrum along the Löckelle river, featuring an upscale hotel, a nightclub and a gas station."},
-		{"hub_carib", "hub_carib_sandbox", "Muratori Beach Sandbox", "A tropical beach in the beautiful Muratori Islands. Go for a swim in the ocean or just relax on the beach."},
-		{"carib", "carib_sandbox", "Isla Estocastica Sandbox", "A tucked away tropical island in the Muratoris where the secret BlueTide ingredient is being synthesised and shipped to Löckelle."},
-		{"factory", "factory_sandbox", "Quilez Security Sandbox", "A high-tech manufacturing and research facility built on the steep cliffs of the north shore. Quilez Security has been a long time market leader in wired alarm boxes, but is pivoting into autonomous security robots."},
-		{"cullington", "cullington_sandbox", "Cullington Sandbox", "Cliffside home town of Tracy and Löckelle Teardown Services HQ"},
-	};
-	int sandbox_count = sizeof(sandbox) / sizeof(sandbox[0]);
+	if (filter == "Sandbox") {
+		const char* sandbox[][4] = {
+			{"lee", "lee_sandbox", "Lee Chemicals Sandbox", "Operated by the Lee family for three generations. Lawrence Lee Junior showed a promising start, but developed a weakness for fast cash. He is now a well known name in the criminal underworld."},
+			{"marina", "marina_sandbox", "West Point Marina Sandbox", "The oldest marina in Löckelle municipality. It features an industrial part and a separate section for leisure activities."},
+			{"mansion", "mansion_sandbox", "Villa Gordon Sandbox", "The home of mall manager and racing enthusiast Gordon Woo, his daughter Freya and fiancee Enid Coumans. An exclusive mansion with a private race track in the backyard."},
+			{"caveisland", "caveisland_sandbox", "Hollowrock Island Sandbox", "Formerly an old fishing hamlet, a few years ago Hollowrock Island was transformed into an energy drink research facility."},
+			{"mall", "mall_sandbox", "The Evertides Mall Sandbox", "An upscale shopping center by the waterfront managed by Gordon Woo. Also in the area is Löckelle municipality folk museum."},
+			{"frustrum", "frustrum_sandbox", "Frustrum Sandbox", "Tiny village of Frustrum along the Löckelle river, featuring an upscale hotel, a nightclub and a gas station."},
+			{"hub_carib", "hub_carib_sandbox", "Muratori Beach Sandbox", "A tropical beach in the beautiful Muratori Islands. Go for a swim in the ocean or just relax on the beach."},
+			{"carib", "carib_sandbox", "Isla Estocastica Sandbox", "A tucked away tropical island in the Muratoris where the secret BlueTide ingredient is being synthesised and shipped to Löckelle."},
+			{"factory", "factory_sandbox", "Quilez Security Sandbox", "A high-tech manufacturing and research facility built on the steep cliffs of the north shore. Quilez Security has been a long time market leader in wired alarm boxes, but is pivoting into autonomous security robots."},
+			{"cullington", "cullington_sandbox", "Cullington Sandbox", "Cliffside home town of Tracy and Löckelle Teardown Services HQ"},
+		};
+		int sandbox_count = sizeof(sandbox) / sizeof(sandbox[0]);
 
-	for (int i = 0; i < sandbox_count; i++) {
-		LevelInfo info = { sandbox[i][0], sandbox[i][1], sandbox[i][2], sandbox[i][3] };
+		for (int i = 0; i < sandbox_count; i++) {
+			LevelInfo info = { sandbox[i][0], sandbox[i][1], sandbox[i][2], sandbox[i][3] };
+			levels.push_back(info);
+		}
+	} else if (filter == "Challenges") {
+		const char* gamemodes[][3] = {
+			{"fetch", "Fetch", "Pick up as many targets as possible and get to your escape vehicle before the time runs out."},
+			{"hunted", "Hunted", "Pick up as many targets as possible from randomized positions. Avoid the guard helicopter."},
+			{"mayhem", "Mayhem", "Destroy as much as possible in 60 seconds. Be careful during preparation because the timer starts when 1000 voxels have been destroyed."},
+		};
+		int gamemodes_count = sizeof(gamemodes) / sizeof(gamemodes[0]);
+
+		const char* maps[][2] {
+			{"lee", "Lee Chemicals"},
+			{"marina", "West Point Marina"},
+			{"mansion", "Villa Gordon"},
+			{"caveisland", "Hollowrock Island"},
+			{"mall", "The Evertides Mall"},
+			{"frustrum", "Frustrum"},
+			{"carib", "Isla Estocastica"},
+			{"factory", "Quilez Security"},
+		};
+		int maps_count = sizeof(maps) / sizeof(maps[0]);
+
+		for (int j = 0; j < maps_count; j++)
+			for (int i = 0; i < gamemodes_count; i++) {
+				LevelInfo info = { maps[j][0], "ch_" + string(maps[j][0]) + "_" + string(gamemodes[i][0]), maps[j][1] + string(" ") + gamemodes[i][1], gamemodes[i][2] };
+				levels.push_back(info);
+			}
+	} else if (filter == "Hub") {
+		int hub_version = 1;
+		int hub_carib_version = 1;
+		string hub_description = "Family owned demolition company and your home base. Through the computer terminal you can read messages, accept missions and upgrade you tools.";
+		for (int v = 0; v <= 46; v++) {
+			string filename = "hub" + to_string(v);
+			if (v <= 16) {
+				string title = "Hub Part 1 v" + to_string(hub_version);
+				LevelInfo info = { "hub", filename, title, hub_description };
+				levels.push_back(info);
+				hub_version++;
+			}
+			if ((v >= 20 && v <= 24) || (v >= 40 && v <= 46)) {
+				string title = "Hub Part 2 v" + to_string(hub_version);
+				LevelInfo info = { "hub", filename, title, hub_description };
+				levels.push_back(info);
+				hub_version++;
+			}
+			if (v >= 30 && v <= 34) {
+				string title = "Hub Caribbean v" + to_string(hub_carib_version);
+				LevelInfo info = { "hub_carib", filename, title, hub_description };
+				levels.push_back(info);
+				hub_carib_version++;
+			}
+		}
+	} else if (filter == "Missions") {
+		const char* missions[][4] = {
+			{ "mall", "mall_intro", "The old building problem", "An old building is blocking Gordon's plans for a new wing at the mall. Help him demolish it." },
+			{ "mall", "mall_foodcourt", "Covert chaos", "Scavenge the area and prepare for demolition without causing any damage to the food court. Rest in the escape vehicle when ready. Demolish at least half of the food court during the fireworks and leave the scene." },
+			{ "mall", "mall_shipping", "The shipping logs", "Bring back the shipping logs for Parisa." },
+			{ "mall", "mall_decorations", "Ornament ordeal", "Steal at least four christmas decorations for Gordon's Woonderland. Carry them to your van. Watch out for security robots that will trigger the alarm if you are detected." },
+			{ "mall", "mall_radiolink", "Connecting the dots", "Download communication data by simultaneously connecting multiple transmission antennas to the surveillance van. Make sure each antenna is within range and has free line of sight." },
+			{ "lee", "lee_computers", "The Lee computers", "Parisa wants access to Lee's customer registry. Pick up three computers at the site for her." },
+			{ "lee", "lee_login", "The login devices", "Pick up three login devices for Parisa. They are protected by an alarm system. Security arrives 60 seconds after alarm is triggered. Make sure to plan ahead." },
+			{ "lee", "lee_safe", "Heavy lifting", "The GPS decryption key is in Lee's safe. Move the safe to your escape vehicle. If possible, also get the other safe and pick up all key cabinets." },
+			{ "lee", "lee_tower", "The tower", "Gordon wants to get back at Lee by making his iconic tower shorter. Remove the upper part of the tower." },
+			{ "lee", "lee_powerplant", "Power outage", "Sabotage Lee Chemical's power supply system. Place the large bomb within the marked area by the dam turbines and detonate. Take out switchgear stations and transformers." },
+			{ "lee", "lee_flooding", "Flooding", "Steal Lee's bookkeeping documents for Parisa." },
+			{ "lee_woonderland", "lee_woonderland", "Malice in Woonderland", "Help locked up Lee sabotage Gordon's Woonderland. Demolish the rides so they are below the marked threshold. Breaking a neon sign will trigger the alarm." },
+			{ "marina", "marina_demolish", "Making space", "Make room for Gordon's new yacht at the Marina by demolishing the outermost cabin. Destroy proof of ownership by dumping safes in the ocean." },
+			{ "marina", "marina_gps", "The GPS devices", "Steal GPS devices from Lee's boats and get the log files from harbor office." },
+			{ "marina", "marina_cars", "Classic cars", "Get the two classic cars for Gordon. Drive them to the marked area at the back of the truck. If possible, also pick up spare parts and vehicle registration documents." },
+			{ "marina", "marina_tools", "Tool up", "Anton from Wolfe Construction needs new tools for an upcoming job. Help him get them from the marina" },
+			{ "marina", "marina_art_back", "Art return", "Lee has hidden four paintings at the marina. Help the insurance company retrieve them. Avoid setting off the fire alarm." },
+			{ "marina", "mansion_pool", "The car wash", "Dump at least three of Gordon's expensive cars in water" },
+			{ "mansion", "mansion_art", "Fine arts", "Steal at least four paintings from Gordon's art collection for Lee" },
+			{ "mansion", "mansion_fraud", "Insurance fraud", "Help Gordon steal at least three of his own cars to help him with the insurance payout." },
+			{ "mansion", "mansion_safe", "A wet affair", "Destroy Gordon's insurance papers by dumping his brand new safes in water. The safes feature a moisture alarm that triggers in contact with water or rain." },
+			{ "mansion", "mansion_race", "The speed deal", "Help Lee annoy Gordon by beating the track record on his private race track." },
+			{ "caveisland", "caveisland_computers", "The BlueTide computers", "Steal computers for Parisa to investigate Lee's payments from BlueTide" },
+			{ "caveisland", "caveisland_propane", "Motivational reminder", "Destroy Mr Amanatides propane tanks for Gillian to demonstrate the true value of proper insurance." },
+			{ "caveisland", "caveisland_dishes", "An assortment of dishes", "Download communication data from three satellite dishes and at least two communication terminals. The island is protected by an armed  guard helicopter that arrives shortly after hacking the first target." },
+			{ "caveisland", "caveisland_ingredients", "The secret ingredients", "Help Parisa understand why BlueTide is so addictive. Pick up samples of the secret ingredients. Each sample is stored in a secure safe that can only be opened with explosives. Watch out for security robots." },
+			{ "caveisland", "caveisland_roboclear", "Droid dismount", "Clear the area for Parisa's big raid. Neutralize security robots by dumping them into the ocean." },
+			{ "frustrum", "frustrum_chase", "The chase", "The security helicopter caught you while escaping from Lee Chemicals. Get through the flooded village of Frustrum, reach the speedboat at the far end and escape through the tunnel." },
+			{ "frustrum", "frustrum_tornado", "The BlueTide shortage", "Move BlueTide kegs to the escape vehicle to help Mr Amanatides restock his stores. Stay away from tornados." },
+			{ "frustrum", "frustrum_vehicle", "Truckload of trouble", "A military truck got stuck in the Frustrum canal. Mr Amanatides needs it for his secret project. Bring the vehicle parts to the escape vehicle." },
+			{ "frustrum", "frustrum_pawnshop", "The pawn shop", "Steal valuable items in Frustrum for Anton Wolfe's new pawn shop while everyone is shopping at the Evertides closing down sale." },
+			{ "factory", "factory_espionage", "Roborazzi", "Mr Amanatides needs help with industrial espionage to get a discount on security robots. Take pictures of the new prototypes in Quilez robot research lab." },
+			{ "factory", "factory_tools", "The Quilez tools", "Secure vaults are being installed at Quilez Security. Anton Wolfe wants the construction tools." },
+			{ "factory", "factory_robot", "The droid abduction", "Droid prototypes are kept in the secure vaults. Use the heavy laser cutter to melt the vault doors. Bring at least one droid prototype to the escape boat." },
+			{ "factory", "factory_explosive", "Handle with care", "Bring at least three intact nitroglycerin containers to the escape vehicle. Avoid guard robots." },
+			{ "carib", "carib_alarm", "The alarm system", "Hack the two main security terminals and at least two communication stations within 60 seconds to shut down the alarm system." },
+			{ "carib", "carib_barrels", "Moving the goods", "Collect evidence for Parisa. Move at least three of the heavy barrels to the escape boat." },
+			{ "carib", "carib_destroy", "Havoc in paradise", "Scavenge the area for tools. Destroy at least four of the targets. Avoid the guard helicopter." },
+			{ "carib", "carib_yacht", "Elena's revenge", "One of the workers has spotted your activities. She is having problems with her boss and wants revenge. Help her sink his luxury yacht into the ocean" },
+			{ "cullington", "cullington_bomb", "The final diversion", "Save Tracy and Cullington by making sure Mr Amanatides Truxterminator falls into the ocean without exploding." },
+		};
+		int missions_count = sizeof(missions) / sizeof(missions[0]);
+
+		for (int i = 0; i < missions_count; i++) {
+			LevelInfo info = { missions[i][0], missions[i][1], missions[i][2], missions[i][3] };
+			levels.push_back(info);
+		}
+	} else if (filter == "Art Vandals") {
+		const char* dlc_missions[][4] = {
+			{ "tillaggaryd", "intro", "Art Vandals", "School's out for summer but no time to work on your tan when you play as Freya Woo helping your stepmum Enid in her rowdy plans." },
+			{ "tillaggaryd", "museum_sandbox", "Sandbox", "Sandbox mode, go have some fun!" },
+			{ "tillaggaryd", "paperboy", "Paper girl", "Prepare your paper route then wait for todays papers in the car and start delivering." },
+			{ "tillaggaryd", "art_heist", "Her prized prizes", "Steal Kerstin Stråbäck's art prizes since Enid is jealous." },
+			{ "tillaggaryd", "museum_heist", "Art Vandals", "Steal Kerstin's art from the museum since Enid found out they are up for new prizes. Bring the heavy targets to your car." },
+			{ "tillaggaryd", "museum_cam_heist", "The photo shoot", "Steal the security cameras from the museum." },
+			{ "tillaggaryd", "museum_destroy", "Out with a bang", "Destroy the museum since it's getting re-branded as Kerstin Stråbäck's Art Museum."},
+			{ "mansion", "hub", "The Woo Mansion v1", "Check your phone for messages." },
+			{ "mansion", "hub0", "The Woo Mansion v2", "Check your phone for messages." },
+			{ "mansion", "hub1", "The Woo Mansion v3", "Check your phone for messages." },
+			{ "mansion", "hub2", "The Woo Mansion v4", "Check your phone for messages." },
+			{ "mansion", "hub3", "The Woo Mansion v5", "Check your phone for messages." },
+			{ "mansion", "hub4", "The Woo Mansion v6", "Check your phone for messages." },
+			{ "mansion", "hub5", "The Woo Mansion v7", "Check your phone for messages." },
+		};
+		int dlc_missions_count = sizeof(dlc_missions) / sizeof(dlc_missions[0]);
+
+		for (int i = 0; i < dlc_missions_count; i++) {
+			LevelInfo info = { dlc_missions[i][0], dlc_missions[i][1], dlc_missions[i][2], dlc_missions[i][3] };
+			levels.push_back(info);
+		}
+	} else if (filter == "Time Campers") {
+		const char* dlc_missions[][4] = {
+			{ "town", "town_sandbox", "Combustown", "The old town and the mine." },
+			{ "ravine", "ravine_sandbox", "Mineral Ravine", "This is the ravine level, it is a big ravine, there's also a curch here." },
+			{ "town", "town_heist", "Stocking Up", "Steal something." },
+			{ "town", "town_explosive", "Going Volatile", "Steal explosives." },
+			{ "ravine", "ravine_heist", "Hiding Traces", "Steal something here" },
+			{ "town", "town_destruction", "Preemptive Prohibition", "Destroy saloon" },
+			{ "ravine", "ravine_tornado", "Tumbling around", "Steal the clockwork." },
+			{ "town", "town_grease", "Greasing the gears", "Steal grease." },
+			{ "ravine", "ravine_motivational", "Motivational reminder", "Explode targets." },
+			{ "town", "town_cars", "Four Stolen Hooves", "Steal mill." },
+			{ "ravine", "ravine_bridge", "Choo-choosing path", "Destroy the bridge and get the train into the ravine." },
+			{ "hub", "hub0", "The hub", "The normal hub in löckelle." },
+			{ "camp", "hub1", "Western Camp", "The western camp." },
+		};
+		int dlc_missions_count = sizeof(dlc_missions) / sizeof(dlc_missions[0]);
+
+		for (int i = 0; i < dlc_missions_count; i++) {
+			LevelInfo info = { dlc_missions[i][0], dlc_missions[i][1], dlc_missions[i][2], dlc_missions[i][3] };
+			levels.push_back(info);
+		}
+	} else {
+		LevelInfo info;
+		info = { "about", "about", "Credits", "" };
+		levels.push_back(info);
+		info = { "lee", "ending10", "Lee Chemicals Part 1 Ending", "" };
+		levels.push_back(info);
+		info = { "hub", "ending20", "Hub Part 2 Ending", "" };
+		levels.push_back(info);
+		info = { "mansion", "ending21", "Villa Gordon Part 2 Ending", "" };
+		levels.push_back(info);
+		info = { "marina", "ending22", "Marina Part 2 Ending", "" };
+		levels.push_back(info);
+		info = { "", "quicksave", "Last Saved Level", "" };
+		levels.push_back(info);
+		info = { "lee", "test", "Performance Test", "" };
 		levels.push_back(info);
 	}
-
-	const char* gamemodes[][3] = {
-		{"fetch", "Fetch", "Pick up as many targets as possible and get to your escape vehicle before the time runs out."},
-		{"hunted", "Hunted", "Pick up as many targets as possible from randomized positions. Avoid the guard helicopter."},
-		{"mayhem", "Mayhem", "Destroy as much as possible in 60 seconds. Be careful during preparation because the timer starts when 1000 voxels have been destroyed."},
-	};
-	int gamemodes_count = sizeof(gamemodes) / sizeof(gamemodes[0]);
-
-	const char* maps[][2] {
-		{"lee", "Lee Chemicals"},
-		{"marina", "West Point Marina"},
-		{"mansion", "Villa Gordon"},
-		{"caveisland", "Hollowrock Island"},
-		{"mall", "The Evertides Mall"},
-		{"frustrum", "Frustrum"},
-		{"factory", "Quilez Security"},
-		{"carib", "Isla Estocastica"},
-	};
-	int maps_count = sizeof(maps) / sizeof(maps[0]);
-
-	for (int j = 0; j < maps_count; j++)
-		for (int i = 0; i < gamemodes_count; i++) {
-			LevelInfo info = { maps[j][0], "ch_" + string(maps[j][0]) + "_" + string(gamemodes[i][0]), maps[j][1] + string(" ") + gamemodes[i][1], gamemodes[i][2] };
-			levels.push_back(info);
-		}
-
-	int hub_version = 1;
-	int hub_carib_version = 1;
-	string hub_description = "Family owned demolition company and your home base. Through the computer terminal you can read messages, accept missions and upgrade you tools.";
-	for (int v = 0; v <= 46; v++) {
-		string filename = "hub" + to_string(v);
-		if (v <= 16) {
-			string title = "Hub Part 1 v" + to_string(hub_version);
-			LevelInfo info = { "hub", filename, title, hub_description };
-			levels.push_back(info);
-			hub_version++;
-		}
-		if ((v >= 20 && v <= 24) || (v >= 40 && v <= 46)) {
-			string title = "Hub Part 2 v" + to_string(hub_version);
-			LevelInfo info = { "hub", filename, title, hub_description };
-			levels.push_back(info);
-			hub_version++;
-		}
-		if (v >= 30 && v <= 34) {
-			string title = "Hub Caribbean v" + to_string(hub_carib_version);
-			LevelInfo info = { "hub_carib", filename, title, hub_description };
-			levels.push_back(info);
-			hub_carib_version++;
-		}
-	}
-
-	const char* missions[][4] = {
-		{ "mall", "mall_intro", "The old building problem", "An old building is blocking Gordon's plans for a new wing at the mall. Help him demolish it." },
-		{ "mall", "mall_foodcourt", "Covert chaos", "Scavenge the area and prepare for demolition without causing any damage to the food court. Rest in the escape vehicle when ready. Demolish at least half of the food court during the fireworks and leave the scene." },
-		{ "mall", "mall_shipping", "The shipping logs", "Bring back the shipping logs for Parisa." },
-		{ "mall", "mall_decorations", "Ornament ordeal", "Steal at least four christmas decorations for Gordon's Woonderland. Carry them to your van. Watch out for security robots that will trigger the alarm if you are detected." },
-		{ "mall", "mall_radiolink", "Connecting the dots", "Download communication data by simultaneously connecting multiple transmission antennas to the surveillance van. Make sure each antenna is within range and has free line of sight." },
-		{ "lee", "lee_computers", "The Lee computers", "Parisa wants access to Lee's customer registry. Pick up three computers at the site for her." },
-		{ "lee", "lee_login", "The login devices", "Pick up three login devices for Parisa. They are protected by an alarm system. Security arrives 60 seconds after alarm is triggered. Make sure to plan ahead." },
-		{ "lee", "lee_safe", "Heavy lifting", "The GPS decryption key is in Lee's safe. Move the safe to your escape vehicle. If possible, also get the other safe and pick up all key cabinets." },
-		{ "lee", "lee_tower", "The tower", "Gordon wants to get back at Lee by making his iconic tower shorter. Remove the upper part of the tower." },
-		{ "lee", "lee_powerplant", "Power outage", "Sabotage Lee Chemical's power supply system. Place the large bomb within the marked area by the dam turbines and detonate. Take out switchgear stations and transformers." },
-		{ "lee", "lee_flooding", "Flooding", "Steal Lee's bookkeeping documents for Parisa." },
-		{ "lee_woonderland", "lee_woonderland", "Malice in Woonderland", "Help locked up Lee sabotage Gordon's Woonderland. Demolish the rides so they are below the marked threshold. Breaking a neon sign will trigger the alarm." },
-		{ "marina", "marina_demolish", "Making space", "Make room for Gordon's new yacht at the Marina by demolishing the outermost cabin. Destroy proof of ownership by dumping safes in the ocean." },
-		{ "marina", "marina_gps", "The GPS devices", "Steal GPS devices from Lee's boats and get the log files from harbor office." },
-		{ "marina", "marina_cars", "Classic cars", "Get the two classic cars for Gordon. Drive them to the marked area at the back of the truck. If possible, also pick up spare parts and vehicle registration documents." },
-		{ "marina", "marina_tools", "Tool up", "Anton from Wolfe Construction needs new tools for an upcoming job. Help him get them from the marina" },
-		{ "marina", "marina_art_back", "Art return", "Lee has hidden four paintings at the marina. Help the insurance company retrieve them. Avoid setting off the fire alarm." },
-		{ "marina", "mansion_pool", "The car wash", "Dump at least three of Gordon's expensive cars in water" },
-		{ "mansion", "mansion_art", "Fine arts", "Steal at least four paintings from Gordon's art collection for Lee" },
-		{ "mansion", "mansion_fraud", "Insurance fraud", "Help Gordon steal at least three of his own cars to help him with the insurance payout." },
-		{ "mansion", "mansion_safe", "A wet affair", "Destroy Gordon's insurance papers by dumping his brand new safes in water. The safes feature a moisture alarm that triggers in contact with water or rain." },
-		{ "mansion", "mansion_race", "The speed deal", "Help Lee annoy Gordon by beating the track record on his private race track." },
-		{ "caveisland", "caveisland_computers", "The BlueTide computers", "Steal computers for Parisa to investigate Lee's payments from BlueTide" },
-		{ "caveisland", "caveisland_propane", "Motivational reminder", "Destroy Mr Amanatides propane tanks for Gillian to demonstrate the true value of proper insurance." },
-		{ "caveisland", "caveisland_dishes", "An assortment of dishes", "Download communication data from three satellite dishes and at least two communication terminals. The island is protected by an armed  guard helicopter that arrives shortly after hacking the first target." },
-		{ "caveisland", "caveisland_ingredients", "The secret ingredients", "Help Parisa understand why BlueTide is so addictive. Pick up samples of the secret ingredients. Each sample is stored in a secure safe that can only be opened with explosives. Watch out for security robots." },
-		{ "caveisland", "caveisland_roboclear", "Droid dismount", "Clear the area for Parisa's big raid. Neutralize security robots by dumping them into the ocean." },
-		{ "frustrum", "frustrum_chase", "The chase", "The security helicopter caught you while escaping from Lee Chemicals. Get through the flooded village of Frustrum, reach the speedboat at the far end and escape through the tunnel." },
-		{ "frustrum", "frustrum_tornado", "The BlueTide shortage", "Move BlueTide kegs to the escape vehicle to help Mr Amanatides restock his stores. Stay away from tornados." },
-		{ "frustrum", "frustrum_vehicle", "Truckload of trouble", "A military truck got stuck in the Frustrum canal. Mr Amanatides needs it for his secret project. Bring the vehicle parts to the escape vehicle." },
-		{ "frustrum", "frustrum_pawnshop", "The pawn shop", "Steal valuable items in Frustrum for Anton Wolfe's new pawn shop while everyone is shopping at the Evertides closing down sale." },
-		{ "factory", "factory_espionage", "Roborazzi", "Mr Amanatides needs help with industrial espionage to get a discount on security robots. Take pictures of the new prototypes in Quilez robot research lab." },
-		{ "factory", "factory_tools", "The Quilez tools", "Secure vaults are being installed at Quilez Security. Anton Wolfe wants the construction tools." },
-		{ "factory", "factory_robot", "The droid abduction", "Droid prototypes are kept in the secure vaults. Use the heavy laser cutter to melt the vault doors. Bring at least one droid prototype to the escape boat." },
-		{ "factory", "factory_explosive", "Handle with care", "Bring at least three intact nitroglycerin containers to the escape vehicle. Avoid guard robots." },
-		{ "carib", "carib_alarm", "The alarm system", "Hack the two main security terminals and at least two communication stations within 60 seconds to shut down the alarm system." },
-		{ "carib", "carib_barrels", "Moving the goods", "Collect evidence for Parisa. Move at least three of the heavy barrels to the escape boat." },
-		{ "carib", "carib_destroy", "Havoc in paradise", "Scavenge the area for tools. Destroy at least four of the targets. Avoid the guard helicopter." },
-		{ "carib", "carib_yacht", "Elena's revenge", "One of the workers has spotted your activities. She is having problems with her boss and wants revenge. Help her sink his luxury yacht into the ocean" },
-		{ "cullington", "cullington_bomb", "The final diversion", "Save Tracy and Cullington by making sure Mr Amanatides Truxterminator falls into the ocean without exploding." },
-	};
-	int missions_count = sizeof(missions) / sizeof(missions[0]);
-
-	for (int i = 0; i < missions_count; i++) {
-		LevelInfo info = { missions[i][0], missions[i][1], missions[i][2], missions[i][3] };
-		levels.push_back(info);
-	}
-
-	LevelInfo info;
-	info = { "about", "about", "Credits", "" };
-	levels.push_back(info);
-	info = { "lee", "ending10", "Lee Chemicals Part 1 Ending", "" };
-	levels.push_back(info);
-	info = { "hub", "ending20", "Hub Part 2 Ending", "" };
-	levels.push_back(info);
-	info = { "mansion", "ending21", "Villa Gordon Part 2 Ending", "" };
-	levels.push_back(info);
-	info = { "marina", "ending22", "Marina Part 2 Ending", "" };
-	levels.push_back(info);
-	info = { "", "quicksave", "Last Saved Level", "" };
-	levels.push_back(info);
-	info = { "lee", "test", "Performance Test", "" };
-	levels.push_back(info);
-
 	return levels;
 }
 
@@ -283,7 +328,6 @@ int main(int argc, char* argv[]) {
 	ImGuiWindowFlags dialog_flags = 0;
 	dialog_flags |= ImGuiWindowFlags_NoResize;
 
-	// Needs to be char[] for InputText() to work
 #ifdef _WIN32
 	char quicksave_folder[256] = "C:\\Users\\User\\AppData\\Local\\Teardown";
 	char mods_folder[256] = "C:\\Users\\User\\Documents\\Teardown\\mods";
@@ -310,14 +354,16 @@ int main(int argc, char* argv[]) {
 	bool remove_snow = false;
 	bool no_voxbox = false;
 	bool use_tdcz = false;
-	int game_version = 0; // unused
+	//int game_version = 0;
 
 	ConverterParams* params = new ConverterParams();
 	SDL_Thread* parse_thread = NULL;
 	SDL_Thread* progress_thread = NULL;
 
-	vector<LevelInfo> levels = LoadLevels();
-	vector<LevelInfo>::iterator selected_level_it = levels.begin();
+	string selected_category = "Sandbox";
+	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Art Vandals", "Time Campers", "Others" };
+	vector<LevelInfo> levels = LoadLevels(selected_category);
+	vector<LevelInfo>::iterator selected_level = levels.begin();
 
 	bool done = false;
 	while (!done) {
@@ -382,24 +428,43 @@ int main(int argc, char* argv[]) {
 				ImGuiFileDialog::Instance()->Close();
 			}
 			ImGui::Dummy(ImVec2(0, 5));
-
+/*
 			ImGui::Text("Game Version:    ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
 			ImGui::Combo("##gameversion", &game_version, " 1.5.0\0 1.4.0\0 1.3.0\0 1.2.0\0 1.1.0\0 1.0.0\0 0.9.6\0 0.9.5\0 0.9.2\0 0.9.0\0 0.8.0\0 0.7.4\0 0.7.2\0 0.7.1\0 0.7.0\0 0.6.2\0 0.6.1\0 0.5.2\0 0.5.1\0 0.4.6\0 0.4.5\0 0.3.0\0");
 			ImGui::PopItemWidth();
-
 			ImGui::Dummy(ImVec2(0, 10));
+*/
+			ImGui::Text("Filter maps:     ");
+			ImGui::SameLine();
+
+			ImGui::PushItemWidth(350);
+			if (ImGui::BeginCombo("##combo", selected_category.c_str())) {
+				for (vector<string>::iterator it = categories.begin(); it != categories.end(); it++) {
+					bool is_selected = selected_category == *it;
+					if (ImGui::Selectable(it->c_str(), is_selected)) {
+						selected_category = *it;
+						levels = LoadLevels(selected_category);
+						selected_level = levels.begin();
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			ImGui::PopItemWidth();
+
 			ImGui::Spacing();
 			ImGui::SameLine(64);
 			ImGui::Text("File Name");
 			ImGui::SameLine(364);
 			ImGui::Text("Level Name");
-			if (ImGui::BeginListBox("##listbox", ImVec2(-FLT_MIN, 10 * ImGui::GetTextLineHeightWithSpacing()))) {
+			if (ImGui::BeginListBox("##listbox", ImVec2(-FLT_MIN, 10 * ImGui::GetTextLineHeightWithSpacing() + 5))) {
 				for (vector<LevelInfo>::iterator it = levels.begin(); it != levels.end(); it++) {
-					bool is_selected = selected_level_it == it;
+					bool is_selected = selected_level == it;
 					if (ImGui::Selectable(it->filename.c_str(), is_selected) && !disable_convert)
-						selected_level_it = it;
+						selected_level = it;
 					ImGui::SameLine(300);
 					ImGui::Text(it->title.c_str());
 
@@ -412,7 +477,7 @@ int main(int argc, char* argv[]) {
 
 			ImGui::Text("Selected Level:");
 			ImGui::SameLine();
-			ImGui::Text(selected_level_it->title.c_str());
+			ImGui::Text(selected_level->title.c_str());
 			ImGui::Dummy(ImVec2(0, 10));
 
 			ImGui::Checkbox("Remove snow", &remove_snow);
@@ -446,14 +511,35 @@ int main(int argc, char* argv[]) {
 			if (ImGui::Button("CONVERT", ImVec2(64, 25))) {
 				progress = 0;
 				disable_convert = true;
-				if (selected_level_it->filename == "quicksave") {
+
+				params->level_id = selected_level->level_id;
+				params->level_name = selected_level->title;
+				params->level_desc = selected_level->description;
+
+				if (selected_category == "Art Vandals")
+					params->dlc_id = "artvandals";
+				else if (selected_category == "Time Campers")
+					params->dlc_id = "wildwestheist";
+
+				if (!params->dlc_id.empty()) {
+					params->script_folder = game_folder;
+					params->script_folder += "/mods/" + params->dlc_id + "/script";
+				} else {
+					params->script_folder = game_folder;
+					params->script_folder += "/data/level/" + params->level_id + "/script";
+				}
+
+				if (selected_level->filename == "quicksave") {
 					params->bin_path = quicksave_folder;
-					params->bin_path += "\\";
+					params->bin_path += "/";
+				} else if (!params->dlc_id.empty()) {
+					params->bin_path = game_folder;
+					params->bin_path += "/mods/" + params->dlc_id + "/data/bin/";
 				} else {
 					params->bin_path = game_folder;
-					params->bin_path += "\\data\\bin\\";
+					params->bin_path += "/data/bin/";
 				}
-				params->bin_path += selected_level_it->filename;
+				params->bin_path += selected_level->filename;
 
 				string tdbin = params->bin_path + ".tdbin";
 				FILE* already_decompressed = fopen(tdbin.c_str(), "rb");
@@ -465,16 +551,9 @@ int main(int argc, char* argv[]) {
 					params->bin_path += ".bin";
 
 				params->map_folder = mods_folder;
-				params->map_folder += "\\";
+				params->map_folder += "/";
 				if (!save_as_legacy)
-					params->map_folder += selected_level_it->filename + "\\";
-
-				params->game_folder = game_folder;
-				params->game_folder += "\\";
-
-				params->level_id = selected_level_it->level_id;
-				params->level_name = selected_level_it->title;
-				params->level_desc = selected_level_it->description;
+					params->map_folder += selected_level->filename + "/";
 
 				params->use_voxbox = !no_voxbox;
 				params->remove_snow = remove_snow;

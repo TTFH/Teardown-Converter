@@ -13,10 +13,11 @@ using namespace std;
 extern volatile float progress;
 
 struct ConverterParams {
-	string bin_path = "";
-	string map_folder = "";
-	string game_folder = "";
+	string bin_path = "";		// Path to the bin/tdbin file
+	string map_folder = "";		// Path where the map will be saved
+	string script_folder = "";	// Path where the scripts are copied from
 
+	string dlc_id = "";
 	string level_id = "";
 	string level_name = "";
 	string level_desc = "";

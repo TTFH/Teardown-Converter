@@ -72,6 +72,12 @@ void WriteXML::WriteEnvironment() {
 	if (skybox_texture.find(prefix) == 0)
 		skybox_texture = skybox_texture.substr(prefix.size());
 
+	if (!params.dlc_id.empty()) {
+		prefix = "mods/" + params.dlc_id + "/env/";
+		if (skybox_texture.find(prefix) == 0)
+			skybox_texture = skybox_texture.substr(prefix.size());
+	}
+
 	xml.AddStrAttribute(environment, "skybox", skybox_texture, "cloudy.dds");
 	xml.AddColorAttribute(environment, "skyboxtint", skybox->tint, "1 1 1");
 	xml.AddFloatAttribute(environment, "skyboxbrightness", skybox->brightness, "1");
@@ -833,9 +839,15 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			script_file = script_file.substr(prefix.size());
 
 		if (!params.level_id.empty()) {
-			prefix = "data/level/" + params.level_id;
+			prefix = "data/level/" + params.level_id + "/";
 			if (script_file.find(prefix) == 0)
-				script_file = "LEVEL" + script_file.substr(prefix.size());
+				script_file = "LEVEL/" + script_file.substr(prefix.size());
+		}
+
+		if (!params.dlc_id.empty()) {
+			prefix = "mods/" + params.dlc_id + "/";
+			if (script_file.find(prefix) == 0)
+				script_file = "LEVEL/" + script_file.substr(prefix.size());
 		}
 
 		if (script_file == "achievements.lua" || script_file == "creativemode.lua" || script_file == "explosion.lua" || script_file == "fx.lua" || script_file == "spawn.lua")
