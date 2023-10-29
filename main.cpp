@@ -309,7 +309,7 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 	int window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
-	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 580, window_flags);
+	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 600, window_flags);
 	SDL_GLContext gl_context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, gl_context);
 	SDL_GL_SetSwapInterval(1);
@@ -354,7 +354,7 @@ int main(int argc, char* argv[]) {
 	bool remove_snow = false;
 	bool no_voxbox = false;
 	bool use_tdcz = false;
-	//int game_version = 0;
+	int game_version = 0;
 
 	ConverterParams* params = new ConverterParams();
 	SDL_Thread* parse_thread = NULL;
@@ -428,14 +428,7 @@ int main(int argc, char* argv[]) {
 				ImGuiFileDialog::Instance()->Close();
 			}
 			ImGui::Dummy(ImVec2(0, 5));
-/*
-			ImGui::Text("Game Version:    ");
-			ImGui::SameLine();
-			ImGui::PushItemWidth(80);
-			ImGui::Combo("##gameversion", &game_version, " 1.5.0\0 1.4.0\0 1.3.0\0 1.2.0\0 1.1.0\0 1.0.0\0 0.9.6\0 0.9.5\0 0.9.2\0 0.9.0\0 0.8.0\0 0.7.4\0 0.7.2\0 0.7.1\0 0.7.0\0 0.6.2\0 0.6.1\0 0.5.2\0 0.5.1\0 0.4.6\0 0.4.5\0 0.3.0\0");
-			ImGui::PopItemWidth();
-			ImGui::Dummy(ImVec2(0, 10));
-*/
+
 			ImGui::Text("Filter maps:     ");
 			ImGui::SameLine();
 
@@ -453,6 +446,11 @@ int main(int argc, char* argv[]) {
 				}
 				ImGui::EndCombo();
 			}
+			ImGui::PopItemWidth();
+
+			ImGui::SameLine();
+			ImGui::PushItemWidth(80);
+			ImGui::Combo("##gameversion", &game_version, " 1.5.0\0 1.4.0\0 1.3.0\0 1.2.0\0 1.1.0\0 1.0.0\0 0.9.6\0 0.9.5\0 0.9.2\0 0.9.0\0 0.8.0\0 0.7.4\0 0.7.2\0 0.7.1\0 0.7.0\0 0.6.2\0 0.6.1\0 0.5.2\0 0.5.1\0 0.4.6\0 0.4.5\0 0.3.0\0");
 			ImGui::PopItemWidth();
 
 			ImGui::Spacing();
@@ -478,6 +476,7 @@ int main(int argc, char* argv[]) {
 			ImGui::Text("Selected Level:");
 			ImGui::SameLine();
 			ImGui::Text(selected_level->title.c_str());
+			ImGui::TextWrapped(selected_level->description.c_str());
 			ImGui::Dummy(ImVec2(0, 10));
 
 			ImGui::Checkbox("Remove snow", &remove_snow);
