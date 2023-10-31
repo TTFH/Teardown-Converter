@@ -16,6 +16,10 @@
 #include "file_dialog/ImGuiFileDialog.h"
 
 #include "lib/tinyxml2.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "lib/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "lib/stb_image_write.h"
 
 #include "src/parser.h"
 
@@ -56,13 +60,26 @@ void copy_folder(string origin, string destination) {
 		fs::copy(origin, destination, fs::copy_options::recursive);
 }
 
+void SavePreviewImage(string map_folder, string level_id) {
+	// Convert to JPEG
+	string input_image = "preview/" + level_id + ".png";
+	string output_path = map_folder + "preview.jpg";
+	int width, height, channels;
+	uint8_t* image = stbi_load(input_image.c_str(), &width, &height, &channels, 0);
+	if (image == NULL) {
+		printf("[WARNING] Could not load preview image.\n");
+		return;
+	}
+	stbi_write_jpg(output_path.c_str(), width, height, channels, image, 90);
+	stbi_image_free(image);
+}
+
 int DecompileMap(void* param) {
 	ConverterParams* data = (ConverterParams*)param;
 
 	fs::create_directories(data->map_folder);
 	if (!data->legacy_format) {
-		string preview_image = "preview/" + data->level_id + ".png";
-		copy_file(preview_image, data->map_folder + "preview.png");
+		SavePreviewImage(data->map_folder, data->level_id);
 		SaveInfoTxt(data->map_folder, data->level_name, data->level_desc);
 	}
 

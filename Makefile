@@ -14,6 +14,7 @@ UNAME_S := $(shell uname -s)
 
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -DNDEBUG -O3
 CXXFLAGS += -std=c++17 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog -Ilib
+CXXFLAGS += -Wno-missing-field-initializers
 LIBS = -lz -lstdc++fs
 
 ##---------------------------------------------------------------------

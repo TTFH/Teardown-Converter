@@ -239,7 +239,10 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		} else
 			vox_file = vox_files[shape->palette];
 
-		MVShape mvshape = { vox_object.c_str(), 0, 0, sizez / 2, voxels };
+		int mv_pos_x = -10 * shape->transform.pos.x;
+		int mv_pos_y = 10 * shape->transform.pos.z;
+		int mv_pos_z = 10 * shape->transform.pos.y + sizez / 2;
+		MVShape mvshape = { vox_object.c_str(), mv_pos_x, mv_pos_y, mv_pos_z, voxels };
 
 		bool is_wheel_shape = false;
 		if (params.remove_snow) {
@@ -327,8 +330,12 @@ void WriteXML::WriteCompound(uint32_t handle, const Tensor3D &voxels, MV_FILE* c
 	pos_x -= (sizex / 2) * 0.1;
 	pos_z += (sizey / 2) * 0.1;
 
+	int mv_pos_x = -10 * pos_x;
+	int mv_pos_y = 10 * pos_z;
+	int mv_pos_z = 10 * pos_y + part_sizez / 2;
+
 	string vox_object = "shape" + to_string(handle) + "_part" + to_string(i) + to_string(j) + to_string(k);
-	MVShape mvshape = { vox_object, 0, 0, part_sizez / 2, Tensor3D(part_sizex, part_sizey, part_sizez) };
+	MVShape mvshape = { vox_object, mv_pos_x, mv_pos_y, mv_pos_z, Tensor3D(part_sizex, part_sizey, part_sizez) };
 	mvshape.voxels.Set(0, 0, 0, 255);
 	mvshape.voxels.Set(part_sizex - 1, part_sizey - 1, part_sizez - 1, 255);
 	compound_vox->SetColor(255, 255, 0, 0);
