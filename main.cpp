@@ -378,7 +378,7 @@ int main(int argc, char* argv[]) {
 	SDL_Thread* progress_thread = NULL;
 
 	string selected_category = "Sandbox";
-	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Art Vandals", "Time Campers", "Others" };
+	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Time Campers", "Others" };
 	vector<LevelInfo> levels = LoadLevels(selected_category);
 	vector<LevelInfo>::iterator selected_level = levels.begin();
 
@@ -539,7 +539,7 @@ int main(int argc, char* argv[]) {
 
 				if (!params->dlc_id.empty()) {
 					params->script_folder = game_folder;
-					params->script_folder += "/mods/" + params->dlc_id + "/script";
+					params->script_folder += "/dlcs/" + params->dlc_id + "/script";
 				} else {
 					params->script_folder = game_folder;
 					params->script_folder += "/data/level/" + params->level_id + "/script";
@@ -550,7 +550,7 @@ int main(int argc, char* argv[]) {
 					params->bin_path += "/";
 				} else if (!params->dlc_id.empty()) {
 					params->bin_path = game_folder;
-					params->bin_path += "/mods/" + params->dlc_id + "/data/bin/";
+					params->bin_path += "/dlcs/" + params->dlc_id + "/data/bin/";
 				} else {
 					params->bin_path = game_folder;
 					params->bin_path += "/data/bin/";

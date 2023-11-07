@@ -72,7 +72,6 @@ struct MVShape {
 	string name;
 	int pos_x, pos_y, pos_z;
 	Tensor3D voxels;
-
 	bool operator==(const MVShape& other) const;
 };
 

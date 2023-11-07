@@ -73,7 +73,7 @@ void WriteXML::WriteEnvironment() {
 		skybox_texture = skybox_texture.substr(prefix.size());
 
 	if (!params.dlc_id.empty()) {
-		prefix = "mods/" + params.dlc_id + "/env/";
+		prefix = "dlcs/" + params.dlc_id + "/env/";
 		if (skybox_texture.find(prefix) == 0)
 			skybox_texture = skybox_texture.substr(prefix.size());
 	}
@@ -239,10 +239,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		} else
 			vox_file = vox_files[shape->palette];
 
-		int mv_pos_x = -10 * shape->transform.pos.x;
-		int mv_pos_y = 10 * shape->transform.pos.z;
-		int mv_pos_z = 10 * shape->transform.pos.y + sizez / 2;
-		MVShape mvshape = { vox_object.c_str(), mv_pos_x, mv_pos_y, mv_pos_z, voxels };
+		MVShape mvshape = { vox_object.c_str(), 0, 0, sizez / 2, voxels };
 
 		bool is_wheel_shape = false;
 		if (params.remove_snow) {
@@ -852,7 +849,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		}
 
 		if (!params.dlc_id.empty()) {
-			prefix = "mods/" + params.dlc_id + "/";
+			prefix = "dlcs/" + params.dlc_id + "/";
 			if (script_file.find(prefix) == 0)
 				script_file = "LEVEL/" + script_file.substr(prefix.size());
 		}
