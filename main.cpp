@@ -88,8 +88,11 @@ int DecompileMap(void* param) {
 		copy_folder(data->script_folder, data->map_folder + "custom/script");
 	} else {
 		fs::create_directories(data->map_folder + "vox");
-		fs::create_directories(data->map_folder + "main");
-		copy_folder(data->script_folder, data->map_folder + "main/script");
+		if (data->dlc_id.empty()) {
+			fs::create_directories(data->map_folder + "main");
+			copy_folder(data->script_folder, data->map_folder + "main/script");
+		} else
+			copy_folder(data->script_folder, data->map_folder + "script");
 	}
 
 	ParseFile(*data);
@@ -251,19 +254,35 @@ vector<LevelInfo> LoadLevels(string filter) {
 		}
 	} else if (filter == "Time Campers") {
 		const char* dlc_missions[][4] = {
-			{ "town", "town_sandbox", "Combustown", "The old town and the mine." },
-			{ "ravine", "ravine_sandbox", "Mineral Ravine", "This is the ravine level, it is a big ravine, there's also a curch here." },
-			{ "town", "town_heist", "Stocking Up", "Steal something." },
-			{ "town", "town_explosive", "Going Volatile", "Steal explosives." },
-			{ "ravine", "ravine_heist", "Hiding Traces", "Steal something here" },
-			{ "town", "town_destruction", "Preemptive Prohibition", "Destroy saloon" },
-			{ "ravine", "ravine_tornado", "Tumbling around", "Steal the clockwork." },
-			{ "town", "town_grease", "Greasing the gears", "Steal grease." },
-			{ "ravine", "ravine_motivational", "Motivational reminder", "Explode targets." },
-			{ "town", "town_cars", "Four Stolen Hooves", "Steal mill." },
-			{ "ravine", "ravine_bridge", "Choo-choosing path", "Destroy the bridge and get the train into the ravine." },
-			{ "hub", "hub0", "The hub", "The normal hub in löckelle." },
-			{ "camp", "hub1", "Western Camp", "The western camp." },
+			{ "hub_wildwest", "hub", "Western Camp Sandbox", "The western camp." },
+			{ "town", "town_sandbox", "Combustown Sandbox", "The old town and the mine." },
+			{ "ravine", "ravine_sandbox", "Mineral Ravine Sandbox", "This is the ravine level, it is a big ravine, there's also a curch here." },
+
+			{ "town", "town_heist", "Stocking Up", "Steal supplies for your camp, then go to your escape vehicle" },
+			{ "town", "town_explosive", "Going Volatile", "Steal ingredients to make your own explosives. They are protected by an alarm system. The hot air balloon security arrives shortly after the alarm is triggered." },
+			{ "ravine", "ravine_heist", "Hiding Traces", "Gather all objects stuck in time loops. The objects can be shot down but doing that or grabbing them will alert the hot air balloon." },
+			{ "town", "town_destruction", "Preemptive Prohibition", "Demolish the saloon to keep unwanted visitors away from Combustown. The buildings looks very flammable." },
+			{ "ravine", "ravine_tornado", "Tumbling around", "Bring the clockwork parts to the escape vehicle. Stay away from tornadoes" },
+			{ "town", "town_grease", "Greasing the gears", "Steal grease barrels and jars to lubricate the clockwork" },
+			{ "ravine", "ravine_motivational", "Motivational reminder", "Destroy the gunpowder supplies to demonstrate the true value of proper insurance." },
+			{ "town", "town_cars", "Four Stolen Hooves", "Bring the wheel, horse and gear to the escape vehicle. Use horses and ropes to drag the heavy targets. If possible, steal some food for the horse and some extra wire." },
+			{ "ravine", "ravine_bridge", "Choo-choosing path", "Destroy the bridge and get to the escape vehicle before the train arrives." },
+
+			{ "hub_lockelle", "hub_lockelle", "The hub", "The normal hub in löckelle." },
+			{ "hub_wildwest", "hub1", "Western Camp", "Check your laptop in the camper for messages." },
+			{ "hub_wildwest", "hub2", "Western Camp", "Check your laptop in the camper for messages." },
+			{ "hub_wildwest", "hub3", "Western Camp", "Check your laptop in the camper for messages." },
+			{ "hub_wildwest", "hub4", "Western Camp", "Check your laptop in the camper for messages." },
+			{ "hub_wildwest", "hub5", "Western Camp", "Check your laptop in the camper for messages." },
+			{ "hub_wildwest", "hub6", "Western Camp", "Check your laptop in the camper for messages." },
+			{ "hub_wildwest", "hub7", "Western Camp", "Check your laptop in the camper for messages." },
+			{ "hub_wildwest", "hub8", "Western Camp", "Check your laptop in the camper for messages." },
+			{ "hub_wildwest", "hub9", "Western Camp", "Check your laptop in the camper for messages." },
+
+			{ "hub_lockelle", "start", "Löckelle Teardown Services", "Family owned demolition company and your home base. Through the computer terminal you can read messages, accept missions and upgrade you tools." },
+			{ "hub_wildwest", "main", "Main menu", "Time Campers DLC - Main menu" },
+			{ "hub_wildwest", "final", "Credits", "Time Campers DLC - Credits" },
+			{ "ravine", "timetravel", "Timetravel", "Crash animation at the ravine" },
 		};
 		int dlc_missions_count = sizeof(dlc_missions) / sizeof(dlc_missions[0]);
 
@@ -283,7 +302,7 @@ vector<LevelInfo> LoadLevels(string filter) {
 		levels.push_back(info);
 		info = { "marina", "ending22", "Marina Part 2 Ending", "" };
 		levels.push_back(info);
-		info = { "", "quicksave", "Last Saved Level", "" };
+		info = { "", "quicksave", "Quicksave", "Last Saved Level" };
 		levels.push_back(info);
 		info = { "lee", "test", "Performance Test", "" };
 		levels.push_back(info);
@@ -298,6 +317,29 @@ string GetFilename(const char* path) {
 		filename = filename.substr(pos + 1);
 	filename = filename.substr(0, filename.find_last_of("."));
 	return filename;
+}
+
+SDL_Texture* LoadTexture(SDL_Renderer* renderer, string filename, int &width, int &height) {
+	int channels;
+	uint8_t* data = stbi_load(filename.c_str(), &width, &height, &channels, STBI_default);
+	if (data == NULL) {
+		fprintf(stderr, "Failed to load image: %s\n", stbi_failure_reason());
+		return NULL;
+	}
+	printf("Loaded image %s (%dx%d, %d channels)\n", filename.c_str(), width, height, channels);
+	SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(data, width, height, 8 * channels, channels * width, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+	if (surface == NULL) {
+		fprintf(stderr, "Failed to create SDL surface: %s\n", SDL_GetError());
+		return NULL;
+	}
+	SDL_Texture* texture_ptr = SDL_CreateTextureFromSurface(renderer, surface);
+	if (texture_ptr == NULL) {
+		fprintf(stderr, "Failed to create SDL texture: %s\n", SDL_GetError());
+		return NULL;
+	}
+	SDL_FreeSurface(surface);
+	stbi_image_free(data);
+	return texture_ptr;
 }
 
 int main(int argc, char* argv[]) {
@@ -327,6 +369,7 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 	int window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 600, window_flags);
+	//SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	SDL_GLContext gl_context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, gl_context);
 	SDL_GL_SetSwapInterval(1);
@@ -372,7 +415,12 @@ int main(int argc, char* argv[]) {
 	bool no_voxbox = false;
 	bool use_tdcz = false;
 	int game_version = 0;
-
+/*
+	int preview_width = 350;
+	int preview_height = 200;
+	string selected_preview = "";
+	SDL_Texture* preview_texture = NULL;
+*/
 	ConverterParams* params = new ConverterParams();
 	SDL_Thread* parse_thread = NULL;
 	SDL_Thread* progress_thread = NULL;
@@ -478,11 +526,11 @@ int main(int argc, char* argv[]) {
 			if (ImGui::BeginListBox("##listbox", ImVec2(-FLT_MIN, 10 * ImGui::GetTextLineHeightWithSpacing() + 5))) {
 				for (vector<LevelInfo>::iterator it = levels.begin(); it != levels.end(); it++) {
 					bool is_selected = selected_level == it;
-					if (ImGui::Selectable(it->filename.c_str(), is_selected) && !disable_convert)
+					if (ImGui::Selectable(it->filename.c_str(), is_selected) && !disable_convert) {
 						selected_level = it;
+					}
 					ImGui::SameLine(300);
 					ImGui::Text(it->title.c_str());
-
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
 				}
@@ -494,6 +542,14 @@ int main(int argc, char* argv[]) {
 			ImGui::SameLine();
 			ImGui::Text(selected_level->title.c_str());
 			ImGui::TextWrapped(selected_level->description.c_str());
+
+			/*if (selected_preview != selected_level->level_id) {
+				selected_preview = selected_level->level_id;
+				string texture_path = "preview/" + selected_preview + ".png";
+				preview_texture = LoadTexture(renderer, texture_path, preview_width, preview_height);
+			}
+			if (preview_texture != NULL)
+				ImGui::Image(preview_texture, ImVec2(preview_width, preview_height));*/
 			ImGui::Dummy(ImVec2(0, 10));
 
 			ImGui::Checkbox("Remove snow", &remove_snow);
@@ -550,7 +606,7 @@ int main(int argc, char* argv[]) {
 					params->bin_path += "/";
 				} else if (!params->dlc_id.empty()) {
 					params->bin_path = game_folder;
-					params->bin_path += "/dlcs/" + params->dlc_id + "/data/bin/";
+					params->bin_path += "/dlcs/" + params->dlc_id + "/bin/";
 				} else {
 					params->bin_path = game_folder;
 					params->bin_path += "/data/bin/";
