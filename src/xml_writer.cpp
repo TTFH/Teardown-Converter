@@ -30,6 +30,14 @@ XML_Writer::XML_Writer() {
 	main_xml = new XMLDocument();
 	scene = main_xml->NewElement("scene");
 	main_xml->InsertFirstChild(scene);
+
+	props = main_xml->NewElement("group");
+	AddStrAttribute(props, "name", "Dynamic");
+	AddElement(scene, props);
+
+	scripts = main_xml->NewElement("group");
+	AddStrAttribute(scripts, "name", "Scripts");
+	AddElement(scene, scripts);
 }
 
 XML_Writer::~XML_Writer() {
@@ -42,6 +50,14 @@ void XML_Writer::SaveFile(const char* filename) {
 
 XMLElement* XML_Writer::getScene() {
 	return scene;
+}
+
+XMLElement* XML_Writer::getDynamicGroup() {
+	return props;
+}
+
+XMLElement* XML_Writer::getScriptsGroup() {
+	return scripts;
 }
 
 XMLElement* XML_Writer::getNode(uint32_t handle) {

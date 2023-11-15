@@ -18,11 +18,15 @@ private:
 	map<uint32_t, XMLElement*> element_mapping;
 	XMLDocument* main_xml;
 	XMLElement* scene;
+	XMLElement* props;
+	XMLElement* scripts;
 public:
 	XML_Writer();
 	~XML_Writer();
 	void SaveFile(const char* filename);
 	XMLElement* getScene();
+	XMLElement* getDynamicGroup();
+	XMLElement* getScriptsGroup();
 	XMLElement* getNode(uint32_t handle);
 	XMLElement* CreateElement(const char* element_name);
 

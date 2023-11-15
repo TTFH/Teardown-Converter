@@ -173,7 +173,7 @@ void WriteXML::WriteEntities() {
 		WriteEntity2ndPass(scene.entities[i]);
 }
 
-void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t handle, string description) {
+void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t handle) {
 	int sizex = shape->voxels.size[0];
 	int sizey = shape->voxels.size[1];
 	int sizez = shape->voxels.size[2];
@@ -196,7 +196,6 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 
 		entity_element->SetName("voxbox");
 		WriteTransform(entity_element, shape->transform);
-		xml.AddStrAttribute(entity_element, "desc", description);
 		xml.AddIntFloatAttribute(entity_element, "texture", shape->texture_tile, shape->texture_weight);
 		xml.AddIntFloatAttribute(entity_element, "blendtexture", shape->blendtexture_tile, shape->blendtexture_weight);
 		xml.AddFloatAttribute(entity_element, "density", shape->density, "1");
@@ -218,7 +217,6 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 
 	entity_element->SetName("vox");
 	WriteTransform(entity_element, shape->transform);
-	xml.AddStrAttribute(entity_element, "desc", description);
 	xml.AddIntFloatAttribute(entity_element, "texture", shape->texture_tile, shape->texture_weight);
 	xml.AddIntFloatAttribute(entity_element, "blendtexture", shape->blendtexture_tile, shape->blendtexture_weight);
 	xml.AddFloatAttribute(entity_element, "density", shape->density, "1");
@@ -399,7 +397,8 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			if (!params.legacy_format && entity->parent == NULL && !body->dynamic && entity->tags.getSize() == 0) {
 				entity_element->SetName("group");
 				xml.AddStrAttribute(entity_element, "name", "Static");
-			}
+			} else if (parent == xml.getScene())
+				parent = xml.getDynamicGroup();
 
 			if (entity->parent != NULL && !body->dynamic && entity->tags.getSize() == 0)
 				entity_element = NULL; // Ignore wheel body
@@ -410,7 +409,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			break;
 		case KindShape: {
 			Shape* shape = static_cast<Shape*>(entity->kind);
-			WriteShape(entity_element, shape, entity->handle, entity->desc);
+			WriteShape(entity_element, shape, entity->handle);
 		}
 			break;
 		case KindLight: {
@@ -731,8 +730,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 	}
 
 	if (entity_element != NULL) {
-		if (entity->kind_byte != KindShape)
-			xml.AddStrAttribute(entity_element, "desc", entity->desc);
+		xml.AddStrAttribute(entity_element, "desc", entity->desc);
 		xml.AddElement(parent, entity_element, entity->handle);
 	} else
 		entity_element = parent;
@@ -856,7 +854,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 
 		if (script_file == "achievements.lua" || script_file == "creativemode.lua" || script_file == "explosion.lua" || script_file == "fx.lua" || script_file == "spawn.lua")
 			return;
-		xml.AddElement(xml.getScene(), entity_element);
+		xml.AddElement(xml.getScriptsGroup(), entity_element);
 
 		xml.AddStrAttribute(entity_element, "file", script_file);
 		assert(script->params.getSize() <= 4);
