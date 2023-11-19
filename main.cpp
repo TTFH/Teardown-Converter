@@ -91,8 +91,11 @@ int DecompileMap(void* param) {
 		if (data->dlc_id.empty()) {
 			fs::create_directories(data->map_folder + "main");
 			copy_folder(data->script_folder, data->map_folder + "main/script");
-		} else
-			copy_folder(data->script_folder, data->map_folder + "script");
+		} else {
+			copy_folder(data->script_folder + "script", data->map_folder + "script");
+			copy_folder(data->script_folder + "runtime", data->map_folder + "runtime");
+			copy_folder(data->script_folder + data->level_id, data->map_folder + data->level_id);
+		}
 	}
 
 	ParseFile(*data);
@@ -515,7 +518,7 @@ int main(int argc, char* argv[]) {
 
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
-			ImGui::Combo("##gameversion", &game_version, " 1.5.0\0 1.4.0\0 1.3.0\0 1.2.0\0 1.1.0\0 1.0.0\0 0.9.6\0 0.9.5\0 0.9.2\0 0.9.0\0 0.8.0\0 0.7.4\0 0.7.2\0 0.7.1\0 0.7.0\0 0.6.2\0 0.6.1\0 0.5.2\0 0.5.1\0 0.4.6\0 0.4.5\0 0.3.0\0");
+			ImGui::Combo("##gameversion", &game_version, " 1.5.1\0 1.5.0\0 1.4.0\0 1.3.0\0 1.2.0\0 1.1.0\0 1.0.0\0 0.9.6\0 0.9.5\0 0.9.2\0 0.9.0\0 0.8.0\0 0.7.4\0 0.7.2\0 0.7.1\0 0.7.0\0 0.6.2\0 0.6.1\0 0.5.2\0 0.5.1\0 0.4.6\0 0.4.5\0 0.3.0\0");
 			ImGui::PopItemWidth();
 
 			ImGui::Spacing();
@@ -553,8 +556,10 @@ int main(int argc, char* argv[]) {
 			ImGui::Dummy(ImVec2(0, 10));
 
 			ImGui::Checkbox("Remove snow", &remove_snow);
-			ImGui::Checkbox("Legacy format", &save_as_legacy);
+			ImGui::SameLine(150);
 			ImGui::Checkbox("Do not use voxboxes", &no_voxbox);
+			ImGui::Checkbox("Legacy format", &save_as_legacy);
+			ImGui::SameLine(150);
 			ImGui::Checkbox("Compress .vox files (slow)", &use_tdcz);
 			ImGui::Dummy(ImVec2(0, 5));
 
@@ -595,7 +600,7 @@ int main(int argc, char* argv[]) {
 
 				if (!params->dlc_id.empty()) {
 					params->script_folder = game_folder;
-					params->script_folder += "/dlcs/" + params->dlc_id + "/script";
+					params->script_folder += "/dlcs/" + params->dlc_id + "/";
 				} else {
 					params->script_folder = game_folder;
 					params->script_folder += "/data/level/" + params->level_id + "/script";
