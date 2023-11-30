@@ -822,11 +822,11 @@ void TDBIN::parse() {
 		tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
 
 		if (tdbin_version >= VERSION_0_5_1)
-			scene.level_id = ReadString();
+			scene.game_levelid = ReadString();
 		if (tdbin_version >= VERSION_1_5_0) {
-			scene.level_path = ReadString();
-			scene.level_mode = ReadString();
-			scene.level_location = ReadString();
+			scene.game_levelpath = ReadString();
+			scene.layers = ReadString();
+			scene.game_mod = ReadString();
 			scene.z_u32 = ReadInt();
 
 			int entries = ReadInt();

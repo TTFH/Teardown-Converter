@@ -149,10 +149,10 @@ struct Palette {
 struct Scene {
 	char magic[5];					// TDBIN
 	uint8_t version[3] = {0, 3, 0};	// version
-	string level_id;
-	string level_path;
-	string level_mode;
-	string level_location;
+	string game_levelid;
+	string game_levelpath;
+	string layers;
+	string game_mod;
 	uint32_t z_u32;
 	Vec<Registry> enabled_mods;
 	uint32_t driven_vehicle = 0;	// driven
