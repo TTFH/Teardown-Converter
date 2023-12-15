@@ -1,0 +1,14 @@
+{
+	"files.associations": {
+		"*.glsl": "objective-c"
+	},
+	"makefile.launchConfigurations": [
+		{
+			"cwd": "c:\\Users\\User\\Downloads\\Teardown\\Teardown-Converter\\release",
+			"binaryPath": "c:\\Users\\User\\Downloads\\Teardown\\Teardown-Converter\\release\\teardown-converter",
+			"binaryArgs": [],
+			"MIMode": "gdb",
+			"miDebuggerPath": "c:\\msys64\\usr\\bin\\gdb.exe"
+		}
+	]
+}

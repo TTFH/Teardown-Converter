@@ -1,0 +1,27 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Debug (gdb)",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}\\release\\teardown-converter.exe",
+			"MIMode": "gdb",
+			"cwd": "${workspaceFolder}\\release\\",
+			"miDebuggerPath": "C:\\msys64\\usr\\bin\\gdb.exe",
+			"setupCommands": [
+				{
+					"description": "Habilitar la impresión con sangría para gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				},
+				{
+					"description": "Establecer tipo de desensamblado en Intel",
+					"text": "-gdb-set disassembly-flavor intel",
+					"ignoreFailures": true
+				}
+			]
+		}
+
+	]
+}

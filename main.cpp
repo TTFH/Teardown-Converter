@@ -355,9 +355,9 @@ int main(int argc, char* argv[]) {
 			params.bin_path = argv[1];
 			params.map_folder = GetFilename(argv[1]) + "/";
 			ParseFile(params);
+			return 0;
 		} else
 			printf("CLI Usage: %s quicksave.bin\n", argv[0]);
-		return 0;
 	}
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
@@ -429,7 +429,7 @@ int main(int argc, char* argv[]) {
 	SDL_Thread* progress_thread = NULL;
 
 	string selected_category = "Sandbox";
-	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Time Campers", "Others" };
+	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Art Vandals", "Time Campers", "Others" };
 	vector<LevelInfo> levels = LoadLevels(selected_category);
 	vector<LevelInfo>::iterator selected_level = levels.begin();
 
