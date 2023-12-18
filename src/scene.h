@@ -44,7 +44,7 @@ struct Player {
 	float pitch;
 	Vector velocity;
 	float health;
-	float z_f32_1;
+	float transition_time;
 	float bluetide_timer;
 	float z_f32_2;
 	float z_f32_3;

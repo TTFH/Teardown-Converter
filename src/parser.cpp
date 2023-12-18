@@ -724,7 +724,7 @@ void TDBIN::ReadPlayer() {
 	player->velocity = ReadVector();
 	player->health = ReadFloat();
 
-	player->z_f32_1 = ReadFloat();
+	player->transition_time = ReadFloat();
 	player->bluetide_timer = ReadFloat();
 	if (tdbin_version >= VERSION_0_9_0) {
 		player->z_f32_2 = ReadFloat();

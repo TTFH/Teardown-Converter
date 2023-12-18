@@ -53,6 +53,7 @@ public:
 	}
 };
 
+#define VERSION_1_5_3 153
 #define VERSION_1_5_2 152
 #define VERSION_1_5_1 151
 #define VERSION_1_5_0 150 // Added scene path, list of enabled mods, extra paint color
