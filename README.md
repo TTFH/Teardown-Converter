@@ -1,7 +1,7 @@
 # Teardown-Converter
 An application for parsing and converting maps of the game Teardown from binary format (.tdbin) to editable format (.xml, .vox)  
 
-![UI](https://github.com/TTFH/Teardown-Converter/blob/915781675c2beefefdfd99f4ebc837aaecb1db96/utils/converter_ui.png)  
+![UI](https://github.com/TTFH/Teardown-Converter/blob/main/converter_ui.png)  
 
 ## How to Download
 **You can download a precompiled version here:** https://github.com/TTFH/Teardown-Converter/releases  
