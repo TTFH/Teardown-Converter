@@ -12,7 +12,7 @@
 
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
-#include "imgui_impl_opengl2.h"
+#include "imgui_impl_sdlrenderer2.h"
 #include "file_dialog/ImGuiFileDialog.h"
 
 #include "lib/tinyxml2.h"
@@ -326,10 +326,10 @@ SDL_Texture* LoadTexture(SDL_Renderer* renderer, string filename, int &width, in
 	int channels;
 	uint8_t* data = stbi_load(filename.c_str(), &width, &height, &channels, STBI_default);
 	if (data == NULL) {
-		fprintf(stderr, "Failed to load image: %s\n", stbi_failure_reason());
+		fprintf(stderr, "Failed to load image %s %s\n", filename.c_str(), stbi_failure_reason());
 		return NULL;
 	}
-	printf("Loaded image %s (%dx%d, %d channels)\n", filename.c_str(), width, height, channels);
+	//printf("Loaded image %s (%dx%d, %d channels)\n", filename.c_str(), width, height, channels);
 	SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(data, width, height, 8 * channels, channels * width, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 	if (surface == NULL) {
 		fprintf(stderr, "Failed to create SDL surface: %s\n", SDL_GetError());
@@ -365,14 +365,11 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-	int window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 600, window_flags);
-	//SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+
 	SDL_GLContext gl_context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, gl_context);
 	SDL_GL_SetSwapInterval(1);
@@ -383,8 +380,8 @@ int main(int argc, char* argv[]) {
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
 	ImGui::StyleColorsDark();
-	ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
-	ImGui_ImplOpenGL2_Init();
+	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
+	ImGui_ImplSDLRenderer2_Init(renderer);
 	ImVec4 clear_color = ImVec4(0.27f, 0.57f, 0.72f, 1.00f);
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
 
@@ -418,12 +415,12 @@ int main(int argc, char* argv[]) {
 	bool no_voxbox = false;
 	bool use_tdcz = false;
 	int game_version = 0;
-/*
+
 	int preview_width = 350;
 	int preview_height = 200;
 	string selected_preview = "";
 	SDL_Texture* preview_texture = NULL;
-*/
+
 	ConverterParams* params = new ConverterParams();
 	SDL_Thread* parse_thread = NULL;
 	SDL_Thread* progress_thread = NULL;
@@ -444,7 +441,7 @@ int main(int argc, char* argv[]) {
 				done = true;
 		}
 
-		ImGui_ImplOpenGL2_NewFrame();
+		ImGui_ImplSDLRenderer2_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 
@@ -545,22 +542,23 @@ int main(int argc, char* argv[]) {
 			ImGui::SameLine();
 			ImGui::Text(selected_level->title.c_str());
 			ImGui::TextWrapped(selected_level->description.c_str());
+			ImGui::Dummy(ImVec2(0, 10));
 
-			/*if (selected_preview != selected_level->level_id) {
+			if (selected_preview != selected_level->level_id) {
 				selected_preview = selected_level->level_id;
 				string texture_path = "preview/" + selected_preview + ".png";
 				preview_texture = LoadTexture(renderer, texture_path, preview_width, preview_height);
 			}
 			if (preview_texture != NULL)
-				ImGui::Image(preview_texture, ImVec2(preview_width, preview_height));*/
-			ImGui::Dummy(ImVec2(0, 10));
+				ImGui::Image(preview_texture, ImVec2(preview_width / 2, preview_height / 2));
 
+			ImGui::SameLine();
+			ImGui::BeginGroup();
 			ImGui::Checkbox("Remove snow", &remove_snow);
-			ImGui::SameLine(150);
 			ImGui::Checkbox("Do not use voxboxes", &no_voxbox);
 			ImGui::Checkbox("Legacy format", &save_as_legacy);
-			ImGui::SameLine(150);
 			ImGui::Checkbox("Compress .vox files (slow)", &use_tdcz);
+			ImGui::EndGroup();
 			ImGui::Dummy(ImVec2(0, 5));
 
 			if (disable_convert) {
@@ -658,11 +656,11 @@ int main(int argc, char* argv[]) {
 		}
 
 		ImGui::Render();
-		glViewport(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-		glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-		glClear(GL_COLOR_BUFFER_BIT);
-		ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
-		SDL_GL_SwapWindow(window);
+		SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+		SDL_SetRenderDrawColor(renderer, (uint8_t)(clear_color.x * 255), (uint8_t)(clear_color.y * 255), (uint8_t)(clear_color.z * 255), (uint8_t)(clear_color.w * 255));
+		SDL_RenderClear(renderer);
+		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
+		SDL_RenderPresent(renderer);
 	}
 
 	if (config_root == NULL) {
@@ -679,13 +677,14 @@ int main(int argc, char* argv[]) {
 	if (progress_thread != NULL)
 		SDL_WaitThread(progress_thread, NULL);
 
-	ImGui_ImplOpenGL2_Shutdown();
+	ImGui_ImplSDLRenderer2_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();
 
-	SDL_GL_DeleteContext(gl_context);
+	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
+
 
 	return 0;
 }
