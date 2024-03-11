@@ -153,7 +153,7 @@ struct Scene {
 	string game_levelpath;
 	string layers;
 	string game_mod;
-	uint32_t z_u32;
+	uint32_t z1_u32;
 	Vec<Registry> enabled_mods;
 	uint32_t driven_vehicle = 0;	// driven
 	Vector shadow_volume;			// shadowVolume
@@ -168,6 +168,7 @@ struct Scene {
 	Player player;
 	Environment environment;
 	Boundary boundary;
+	uint32_t z2_u32;
 	Vec<Fire> fires;
 	Vec<Palette> palettes;
 	Vec<Registry> registry;

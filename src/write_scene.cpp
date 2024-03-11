@@ -190,7 +190,8 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	Tensor3D voxels(sizex, sizey, sizez);
 	voxels.FromRunLengthEncoding(shape->voxels.palette_indexes);
 
-	if (params.use_voxbox && voxels.IsFilledSingleColor()) {
+	bool is_scaled = shape->scale * 10.0 != 1.0;
+	if (params.use_voxbox && voxels.IsFilledSingleColor() && !is_scaled) {
 		uint8_t index = voxels.Get(0, 0, 0);
 		Material palette_entry = palette.materials[index];
 
@@ -210,7 +211,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 	}
 
 	Vector axis_offset(0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0);
-	if (shape->scale * 10.0 != 1.0)
+	if (is_scaled)
 		axis_offset = axis_offset * (shape->scale * 10.0);
 	shape->transform.pos = shape->transform.pos + shape->transform.rot * axis_offset;
 	shape->transform.rot = shape->transform.rot * QuatEuler(90, 0, 0);

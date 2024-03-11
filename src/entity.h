@@ -53,9 +53,7 @@ public:
 	}
 };
 
-#define VERSION_1_5_3 153
-#define VERSION_1_5_2 152
-#define VERSION_1_5_1 151
+#define VERSION_1_5_4 154 // Changes to boundary, shape and vehicle
 #define VERSION_1_5_0 150 // Added scene path, list of enabled mods, extra paint color
 #define VERSION_1_4_0 140 // Added water->visibility
 #define VERSION_1_3_0 130 // Added 17 bytes to Wheel
@@ -183,6 +181,7 @@ struct Shape {
 	// 0xFFFFFFFF 0xFFFFFFFF 0x00
 	uint32_t z_u32_2[2];
 	uint8_t z3_u8;
+	uint8_t z4_u8;
 
 	Transform old_transform;
 };
@@ -360,9 +359,10 @@ struct Vehicle {
 	Vec<uint32_t> refs;
 	Vec<Exhaust> exhausts;	// exhaust
 	Vec<Vital> vitals;		// vital
-	float z4_f32;
+	float z2_f32;
 	uint8_t z2_u8;
 	float brokenthreshold;
+	float z3_f32;
 };
 
 struct Wheel {

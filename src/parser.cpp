@@ -335,7 +335,8 @@ Shape* TDBIN::ReadShape() {
 		shape->z_u32_2[i] = ReadInt();
 	if (tdbin_version >= VERSION_0_7_0)
 		shape->z3_u8 = ReadByte();
-
+	if (tdbin_version >= VERSION_1_5_4)
+		shape->z3_u8 = ReadByte();
 	return shape;
 }
 
@@ -558,11 +559,13 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->vitals[i].z_f32 = ReadFloat();
 		vehicle->vitals[i].shape_handle = ReadInt();
 	}
-	vehicle->z4_f32 = ReadFloat();
+	vehicle->z2_f32 = ReadFloat();
 	if (tdbin_version >= VERSION_0_9_0) {
 		vehicle->z2_u8 = ReadByte();
 		vehicle->brokenthreshold = ReadFloat();
 	}
+	if (tdbin_version >= VERSION_1_5_4)
+		vehicle->z3_f32 = ReadFloat();
 	return vehicle;
 }
 
@@ -827,7 +830,7 @@ void TDBIN::parse() {
 			scene.game_levelpath = ReadString();
 			scene.layers = ReadString();
 			scene.game_mod = ReadString();
-			scene.z_u32 = ReadInt();
+			scene.z1_u32 = ReadInt();
 
 			int entries = ReadInt();
 			scene.enabled_mods.resize(entries);
@@ -874,6 +877,9 @@ void TDBIN::parse() {
 		boundary->padright = ReadFloat();
 		boundary->padbottom = ReadFloat();
 	}
+
+	if (tdbin_version >= VERSION_1_5_4)
+		scene.z2_u32 = ReadInt();
 
 	int fire_count = ReadInt();
 	scene.fires.resize(fire_count);

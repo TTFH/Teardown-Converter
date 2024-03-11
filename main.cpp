@@ -325,6 +325,9 @@ string GetFilename(const char* path) {
 SDL_Texture* LoadTexture(SDL_Renderer* renderer, string filename, int &width, int &height) {
 	int channels;
 	uint8_t* data = stbi_load(filename.c_str(), &width, &height, &channels, STBI_default);
+	if (data == NULL)
+		data = stbi_load("preview/preview.png", &width, &height, &channels, STBI_default);
+
 	if (data == NULL) {
 		fprintf(stderr, "Failed to load image %s %s\n", filename.c_str(), stbi_failure_reason());
 		return NULL;
@@ -355,6 +358,7 @@ int main(int argc, char* argv[]) {
 			params.bin_path = argv[1];
 			params.map_folder = GetFilename(argv[1]) + "/";
 			ParseFile(params);
+			SaveInfoTxt(params.map_folder, "Converted", "Converted map");
 			return 0;
 		} else
 			printf("CLI Usage: %s quicksave.bin\n", argv[0]);
@@ -368,7 +372,6 @@ int main(int argc, char* argv[]) {
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 600, window_flags);
 	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-
 
 	SDL_GLContext gl_context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, gl_context);
@@ -515,7 +518,7 @@ int main(int argc, char* argv[]) {
 
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
-			ImGui::Combo("##gameversion", &game_version, " 1.5.2\0 1.5.1\0 1.5.0\0 1.4.0\0 1.3.0\0 1.2.0\0 1.1.0\0 1.0.0\0 0.9.6\0 0.9.5\0 0.9.2\0 0.9.0\0 0.8.0\0 0.7.4\0 0.7.2\0 0.7.1\0 0.7.0\0 0.6.2\0 0.6.1\0 0.5.2\0 0.5.1\0 0.4.6\0 0.4.5\0 0.3.0\0");
+			ImGui::Combo("##gameversion", &game_version, " 1.5.4\0 1.5.3\0 1.5.2\0 1.5.1\0 1.5.0\0 1.4.0\0 1.3.0\0 1.2.0\0 1.1.0\0 1.0.0\0 0.9.6\0 0.9.5\0 0.9.2\0 0.9.0\0 0.8.0\0 0.7.4\0 0.7.2\0 0.7.1\0 0.7.0\0 0.6.2\0 0.6.1\0 0.5.2\0 0.5.1\0 0.4.6\0 0.4.5\0 0.3.0\0");
 			ImGui::PopItemWidth();
 
 			ImGui::Spacing();
