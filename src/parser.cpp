@@ -299,6 +299,12 @@ Body* TDBIN::ReadBody() {
 	if (tdbin_version < VERSION_0_9_0)
 		ReadByte();
 	body->body_flags = ReadByte();
+	if (tdbin_version >= VERSION_1_5_4) {
+		body->z1_f32 = ReadFloat();
+		body->z1_u8 = ReadByte();
+		body->z2_f32 = ReadFloat();
+		body->z2_u8 = ReadByte();
+	}
 	return body;
 }
 
@@ -336,7 +342,7 @@ Shape* TDBIN::ReadShape() {
 	if (tdbin_version >= VERSION_0_7_0)
 		shape->z3_u8 = ReadByte();
 	if (tdbin_version >= VERSION_1_5_4)
-		shape->z3_u8 = ReadByte();
+		shape->z4_u8 = ReadByte();
 	return shape;
 }
 
@@ -611,7 +617,7 @@ Screen* TDBIN::ReadScreen() {
 	screen->fxraster = ReadFloat();
 	screen->fxca = ReadFloat();
 	screen->fxnoise = ReadFloat();
-	screen->z_f32 = ReadFloat();
+	screen->fxglitch = ReadFloat();
 	return screen;
 }
 
@@ -837,6 +843,12 @@ void TDBIN::parse() {
 			for (int i = 0; i < entries; i++)
 				scene.enabled_mods[i] = ReadRegistry();
 		}
+		if (tdbin_version >= VERSION_1_5_4) {
+			int entries = ReadInt();
+			scene.spawned_mods.resize(entries);
+			for (int i = 0; i < entries; i++)
+				scene.spawned_mods[i] = ReadRegistry();
+		}
 		scene.driven_vehicle = ReadInt();
 	}
 
@@ -876,10 +888,9 @@ void TDBIN::parse() {
 		boundary->padtop = ReadFloat();
 		boundary->padright = ReadFloat();
 		boundary->padbottom = ReadFloat();
+		if (tdbin_version >= VERSION_1_5_4)
+			boundary->maxheight = ReadFloat();
 	}
-
-	if (tdbin_version >= VERSION_1_5_4)
-		scene.z2_u32 = ReadInt();
 
 	int fire_count = ReadInt();
 	scene.fires.resize(fire_count);

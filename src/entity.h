@@ -53,7 +53,7 @@ public:
 	}
 };
 
-#define VERSION_1_5_4 154 // Changes to boundary, shape and vehicle
+#define VERSION_1_5_4 154 // Changes to boundary, shape, vehicle and body
 #define VERSION_1_5_0 150 // Added scene path, list of enabled mods, extra paint color
 #define VERSION_1_4_0 140 // Added water->visibility
 #define VERSION_1_3_0 130 // Added 17 bytes to Wheel
@@ -150,6 +150,10 @@ struct Body {
 	Vector angular_velocity;
 	bool dynamic;				// dynamic
 	uint8_t body_flags;
+	float z1_f32;
+	uint8_t z1_u8;
+	float z2_f32;
+	uint8_t z2_u8;
 };
 
 struct Voxels {
@@ -183,7 +187,7 @@ struct Shape {
 	uint8_t z3_u8;
 	uint8_t z4_u8;
 
-	Transform old_transform;
+	Transform old_transform;		// helper for screen positon
 };
 
 enum LightType { // uint8_t
@@ -324,6 +328,7 @@ struct VehicleProperties {
 	float z3_f32;		// 1.5 ???
 	float antiroll;		// antiroll
 	VehicleSound sound;	// sound
+	// TODO: smokeintensity
 };
 
 struct Exhaust {
@@ -397,7 +402,7 @@ struct Screen {
 	float fxraster;			// fxraster
 	float fxca;				// fxca
 	float fxnoise;			// fxnoise
-	float z_f32;
+	float fxglitch;			// fxglitch
 };
 
 enum TriggerKind { // uint32_t

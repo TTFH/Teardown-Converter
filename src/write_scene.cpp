@@ -126,6 +126,7 @@ void WriteXML::WriteBoundary() {
 	xml.AddFloatAttribute(boundary, "padright", scene.boundary.padright, "5");
 	xml.AddFloatAttribute(boundary, "padtop", -scene.boundary.padtop, "5");
 	xml.AddFloatAttribute(boundary, "padbottom", scene.boundary.padbottom, "5");
+	xml.AddFloatAttribute(boundary, "maxheight", scene.boundary.maxheight, "0");
 
 	for (int i = 0; i < vertex_count; i++) {
 		XMLElement* vertex = xml.CreateElement("vertex");
@@ -694,6 +695,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddFloatAttribute(entity_element, "fxraster", screen->fxraster, "0");
 			xml.AddFloatAttribute(entity_element, "fxca", screen->fxca, "0");
 			xml.AddFloatAttribute(entity_element, "fxnoise", screen->fxnoise, "0");
+			xml.AddFloatAttribute(entity_element, "fxglitch", screen->fxglitch, "0");
 		}
 			break;
 		case KindTrigger: {

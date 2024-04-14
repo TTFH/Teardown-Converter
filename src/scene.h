@@ -48,6 +48,13 @@ struct Player {
 	float bluetide_timer;
 	float z_f32_2;
 	float z_f32_3;
+	/*
+	HealthRegeneration: bool
+	WalkingSpeed: float
+	JumpSpeed: float
+	GodMode: bool
+	FlyMode: bool
+	*/
 };
 
 struct Sun {
@@ -118,6 +125,7 @@ struct Boundary {
 	float padtop = -5;		// negative
 	float padright = 5;
 	float padbottom = 5;
+	float maxheight = 0;
 };
 
 struct Fire {
@@ -155,6 +163,7 @@ struct Scene {
 	string game_mod;
 	uint32_t z1_u32;
 	Vec<Registry> enabled_mods;
+	Vec<Registry> spawned_mods;
 	uint32_t driven_vehicle = 0;	// driven
 	Vector shadow_volume;			// shadowVolume
 	Transform spawnpoint;			// spawnpoint
@@ -168,7 +177,6 @@ struct Scene {
 	Player player;
 	Environment environment;
 	Boundary boundary;
-	uint32_t z2_u32;
 	Vec<Fire> fires;
 	Vec<Palette> palettes;
 	Vec<Registry> registry;
