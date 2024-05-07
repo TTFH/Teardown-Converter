@@ -560,7 +560,7 @@ int main(int argc, char* argv[]) {
 			ImGui::Checkbox("Remove snow", &remove_snow);
 			ImGui::Checkbox("Do not use voxboxes", &no_voxbox);
 			ImGui::Checkbox("Legacy format", &save_as_legacy);
-			ImGui::Checkbox("Compress .vox files (slow)", &use_tdcz);
+			ImGui::Checkbox("Compress .vox files (very slow)", &use_tdcz);
 			ImGui::EndGroup();
 			ImGui::Dummy(ImVec2(0, 5));
 

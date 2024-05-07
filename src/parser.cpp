@@ -300,10 +300,10 @@ Body* TDBIN::ReadBody() {
 		ReadByte();
 	body->body_flags = ReadByte();
 	if (tdbin_version >= VERSION_1_5_4) {
-		body->z1_f32 = ReadFloat();
-		body->z1_u8 = ReadByte();
-		body->z2_f32 = ReadFloat();
-		body->z2_u8 = ReadByte();
+		body->friction = ReadFloat();
+		body->friction_mode = ReadByte();
+		body->restitution = ReadFloat();
+		body->restitution_mode = ReadByte();
 	}
 	return body;
 }
@@ -736,8 +736,8 @@ void TDBIN::ReadPlayer() {
 	player->transition_time = ReadFloat();
 	player->bluetide_timer = ReadFloat();
 	if (tdbin_version >= VERSION_0_9_0) {
+		player->z_f32_1 = ReadFloat();
 		player->z_f32_2 = ReadFloat();
-		player->z_f32_3 = ReadFloat();
 	}
 }
 

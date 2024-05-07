@@ -139,7 +139,7 @@ struct Entity {
 	Vec<Entity*> children;
 	uint32_t beef_beef;
 
-	Entity* parent;
+	Entity* parent;		// helper for graph navigation
 	~Entity();
 };
 
@@ -150,10 +150,10 @@ struct Body {
 	Vector angular_velocity;
 	bool dynamic;				// dynamic
 	uint8_t body_flags;
-	float z1_f32;
-	uint8_t z1_u8;
-	float z2_f32;
-	uint8_t z2_u8;
+	float friction;
+	uint8_t friction_mode;
+	float restitution;
+	uint8_t restitution_mode;
 };
 
 struct Voxels {
@@ -300,7 +300,7 @@ struct Joint {
 	float rotspring;			// rotspring
 	float ball_rot[4];
 	float limits[2];			// limits (in degrees for hinge, meters for prismatic)
-	float z_f32_2[2];			// Unknown, for hinge maybe???
+	float z_f32_2[2];
 	float size;					// size
 	bool sound;					// sound
 	bool autodisable;			// autodisable
