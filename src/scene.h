@@ -40,25 +40,18 @@ struct PostProcessing {
 
 struct Player {
 	Transform transform;
-	float yaw;
 	float pitch;
+	float yaw;
 	Vector velocity;
 	float health;
-	float transition_time;
-	float bluetide_timer;
-	float z_f32_1;
-	float z_f32_2;
-	/*
-	HealthRegeneration: bool
-	WalkingSpeed: float
-	JumpSpeed: float
-	GodMode: bool
-	FlyMode: bool
-	*/
+	float z_f32_1; // TODO: tool movement?
+	float z_f32_2; // TODO:campaign.health
+	float z_f32_3; // TODO:
+	float z_f32_4; // TODO: bluetide speed modifier
 };
 
 struct Sun {
-	float tint_brightness[3];
+	float tint_brightness[3]; // TODO: Vector
 	Color colorTint;	// sunColorTint
 	Vector dir;			// sunDir
 	float brightness;	// sunBrightness
@@ -74,7 +67,7 @@ struct Skybox {
 	float brightness = 1;	// skyboxbrightness
 	float rot;				// skyboxrot in radians
 	Sun sun;
-	uint8_t z_u8;
+	bool auto_sun_dir;
 	Color constant = {0.003, 0.003, 0.003, 1};	// constant
 	float ambient;								// ambient
 	float ambientexponent = 1.3;				// ambientexponent
@@ -133,7 +126,9 @@ struct Fire {
 	Vector pos;
 	float max_time;
 	float time;
-	uint8_t z_u8_6[6];
+	bool z_u8_1;
+	bool z_u8_2;
+	uint32_t z_u32;
 };
 
 struct Material {
@@ -161,12 +156,16 @@ struct Scene {
 	string game_levelpath;
 	string layers;
 	string game_mod;
-	uint32_t z1_u32;
+
+	uint32_t z1_u32;	// 43681
+
 	Vec<Registry> enabled_mods;
 	Vec<Registry> spawned_mods;
+
 	uint32_t driven_vehicle = 0;	// driven
 	Vector shadow_volume;			// shadowVolume
 	Transform spawnpoint;			// spawnpoint
+
 	// Pattern: 1  n  n-5  n-1
 	uint32_t world_body_handle;
 	uint32_t flashlight_handle;

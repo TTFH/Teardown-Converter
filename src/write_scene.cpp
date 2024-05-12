@@ -776,7 +776,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			if (shape_parent != NULL && entity_mapping.find(shape_handle) != entity_mapping.end()) {
 				Entity* entity = entity_mapping[shape_handle];
 				assert(entity->kind_byte == KindShape);
-				Shape* shape = (Shape*)entity->kind;
+				Shape* shape = static_cast<Shape*>(entity->kind);
 				Transform shape_tr = shape->transform;
 				Vector relative_pos = joint->shape_positions[0];
 
@@ -855,8 +855,13 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				script_file = "LEVEL/" + script_file.substr(prefix.size());
 		}
 
+		prefix = "RAW:";
+		if (script_file.find(prefix) == 0)
+			return;
+
 		if (script_file == "achievements.lua" || script_file == "creativemode.lua" || script_file == "explosion.lua" || script_file == "fx.lua" || script_file == "spawn.lua")
 			return;
+
 		xml.AddElement(xml.getScriptsGroup(), entity_element);
 
 		xml.AddStrAttribute(entity_element, "file", script_file);

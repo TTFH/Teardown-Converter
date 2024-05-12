@@ -135,6 +135,7 @@ struct Entity {
 	uint32_t handle;
 	SmallVec<Tag> tags; // uint8_t size
 	string desc;		// desc
+	EntityFlags flags;
 	void* kind;
 	Vec<Entity*> children;
 	uint32_t beef_beef;
@@ -144,12 +145,11 @@ struct Entity {
 };
 
 struct Body {
-	EntityFlags flags;
 	Transform transform;
 	Vector velocity;
 	Vector angular_velocity;
 	bool dynamic;				// dynamic
-	uint8_t body_flags;
+	uint8_t active;
 	float friction;
 	uint8_t friction_mode;
 	float restitution;
@@ -164,7 +164,6 @@ struct Voxels {
 };
 
 struct Shape {
-	EntityFlags flags;
 	Transform transform;
 	uint16_t shape_flags;			// 0x10 = collide
 	uint8_t collision_layer;
@@ -177,15 +176,16 @@ struct Shape {
 	float blendtexture_weight = 1;	// blendtexture
 	Vector texture_offset;
 	float emissive_scale;
-	uint8_t z1_u8;
+	bool is_broken;
+
 	uint8_t shape_type;
 	Voxels voxels;
 	uint32_t palette;
 	float scale;					// scale = 10.0 * this
 	// 0xFFFFFFFF 0xFFFFFFFF 0x00
 	uint32_t z_u32_2[2];
+	bool is_disconnected;
 	uint8_t z3_u8;
-	uint8_t z4_u8;
 
 	Transform old_transform;		// helper for screen positon
 };
@@ -220,12 +220,10 @@ struct Light {
 };
 
 struct Location {
-	EntityFlags flags;
 	Transform transform;
 };
 
 struct Water {
-	EntityFlags flags;
 	Transform transform;
 	float depth;				// depth
 	float wave;					// wave
@@ -258,7 +256,6 @@ struct MeshShape {
 };
 
 struct Enemy {
-	uint8_t z_u8;
 	uint32_t z_u32;
 	MeshShapeCommon data;
 	MeshShape shape;
@@ -304,7 +301,7 @@ struct Joint {
 	float size;					// size
 	bool sound;					// sound
 	bool autodisable;			// autodisable
-	uint32_t z_u32_2[2];
+	float z_f32_4[2];
 	Rope rope;					// Only if type = Rope
 };
 
@@ -344,12 +341,9 @@ struct Vital {
 };
 
 struct Vehicle {
-	EntityFlags flags;
 	uint32_t body_handle;
 	Transform transform;
-	Vector velocity;
-	Vector angular_velocity;
-	float z1_f32;
+	Transform transform2;
 	Vec<uint32_t> wheel_handles;
 	VehicleProperties properties;
 	Vector camera;			// camera
@@ -357,7 +351,7 @@ struct Vehicle {
 	Vector exit;			// exit
 	Vector propeller;		// propeller
 	float difflock;			// difflock
-	float boat_sink;
+	float health;
 	uint32_t main_voxel_count;
 	uint8_t z1_u8;
 	float drivable;			// 0 if nodrive
@@ -371,12 +365,12 @@ struct Vehicle {
 };
 
 struct Wheel {
-	EntityFlags flags;
 	uint32_t vehicle;
 	uint32_t vehicle_body;
 	uint32_t body;
 	uint32_t shape;
-	uint32_t z1_f32_4[4];
+	uint32_t z1_f32_handle;
+	uint32_t z1_f32_3[3];
 	uint8_t z_u8;
 	Transform transform;
 	Transform empty_transform;
@@ -390,7 +384,6 @@ struct Wheel {
 };
 
 struct Screen {
-	EntityFlags flags;
 	Transform transform;
 	float size[2];			// size
 	float bulge;			// bulge
@@ -419,7 +412,6 @@ struct TriggerSound {
 };
 
 struct Trigger {
-	EntityFlags flags;
 	Transform transform;
 	uint32_t type;				// type
 	float sphere_size;			// size
@@ -457,7 +449,6 @@ struct ValueTransition {
 };
 
 struct Script {
-	EntityFlags flags;
 	string file;			// file
 	Vec<Registry> params;	// param%d
 	float last_update;

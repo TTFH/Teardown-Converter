@@ -118,8 +118,9 @@ Fire TDBIN::ReadFire() {
 	fire.pos = ReadVector();
 	fire.max_time = ReadFloat();
 	fire.time = ReadFloat();
-	for (int i = 0; i < 6; i++)
-		fire.z_u8_6[i] = ReadByte();
+	fire.z_u8_1 = ReadByte() != 0;
+	fire.z_u8_2 = ReadByte() != 0;
+	fire.z_u32 = ReadInt();
 	return fire;
 }
 
@@ -270,6 +271,8 @@ Entity* TDBIN::ReadEntity() {
 		entity->tags[i] = ReadTag();
 
 	entity->desc = ReadString();
+	if (entity->kind_byte != KindLight && entity->kind_byte != KindJoint) // Ah, yes... consistency
+		entity->flags = ReadEntityFlags();
 	entity->kind = ReadEntityKind(entity->kind_byte);
 
 	if (entity->kind_byte != KindEnemy) {
@@ -291,14 +294,13 @@ Entity* TDBIN::ReadEntity() {
 
 Body* TDBIN::ReadBody() {
 	Body* body = new Body();
-	body->flags = ReadEntityFlags();
 	body->transform = ReadTransform();
 	body->velocity = ReadVector();
 	body->angular_velocity = ReadVector();
 	body->dynamic = ReadByte() != 0;
 	if (tdbin_version < VERSION_0_9_0)
 		ReadByte();
-	body->body_flags = ReadByte();
+	body->active = ReadByte();
 	if (tdbin_version >= VERSION_1_5_4) {
 		body->friction = ReadFloat();
 		body->friction_mode = ReadByte();
@@ -310,7 +312,6 @@ Body* TDBIN::ReadBody() {
 
 Shape* TDBIN::ReadShape() {
 	Shape* shape = new Shape();
-	shape->flags = ReadEntityFlags();
 	shape->transform = ReadTransform();
 	shape->shape_flags = ReadWord();
 	shape->collision_layer = ReadByte();
@@ -331,7 +332,7 @@ Shape* TDBIN::ReadShape() {
 	}
 
 	shape->emissive_scale = ReadFloat();
-	shape->z1_u8 = ReadByte();
+	shape->is_broken = ReadByte() != 0;
 	shape->shape_type = ReadByte();
 	shape->voxels = ReadVoxels();
 	shape->palette = ReadInt();
@@ -340,9 +341,9 @@ Shape* TDBIN::ReadShape() {
 	for (int i = 0; i < 2; i++)
 		shape->z_u32_2[i] = ReadInt();
 	if (tdbin_version >= VERSION_0_7_0)
-		shape->z3_u8 = ReadByte();
+		shape->is_disconnected = ReadByte();
 	if (tdbin_version >= VERSION_1_5_4)
-		shape->z4_u8 = ReadByte();
+		shape->z3_u8 = ReadByte();
 	return shape;
 }
 
@@ -379,14 +380,12 @@ Light* TDBIN::ReadLight() {
 
 Location* TDBIN::ReadLocation() {
 	Location* location = new Location();
-	location->flags = ReadEntityFlags();
 	location->transform = ReadTransform();
 	return location;
 }
 
 Water* TDBIN::ReadWater() {
 	Water* water = new Water();
-	water->flags = ReadEntityFlags();
 	water->transform = ReadTransform();
 	water->depth = ReadFloat();
 	water->wave = ReadFloat();
@@ -408,7 +407,6 @@ Water* TDBIN::ReadWater() {
 
 Enemy* TDBIN::ReadEnemy() {
 	Enemy* enemy = new Enemy();
-	enemy->z_u8 = ReadByte();
 	enemy->z_u32 = ReadInt();
 
 	enemy->data.z_u8 = ReadByte();
@@ -510,7 +508,7 @@ Joint* TDBIN::ReadJoint() {
 		joint->autodisable = ReadByte() != 0;
 	if (tdbin_version >= VERSION_0_9_0)
 		for (int i = 0; i < 2; i++)
-			joint->z_u32_2[i] = ReadInt();
+			joint->z_f32_4[i] = ReadFloat();
 	if (joint->type == _Rope)
 		joint->rope = ReadRope();
 	return joint;
@@ -518,12 +516,9 @@ Joint* TDBIN::ReadJoint() {
 
 Vehicle* TDBIN::ReadVehicle() {
 	Vehicle* vehicle = new Vehicle();
-	vehicle->flags = ReadEntityFlags();
 	vehicle->body_handle = ReadInt();
 	vehicle->transform = ReadTransform();
-	vehicle->velocity = ReadVector();
-	vehicle->angular_velocity = ReadVector();
-	vehicle->z1_f32 = ReadFloat();
+	vehicle->transform2 = ReadTransform();
 
 	int wheel_count = ReadInt();
 	vehicle->wheel_handles.resize(wheel_count);
@@ -537,7 +532,7 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->exit = ReadVector();
 	vehicle->propeller = ReadVector();
 	vehicle->difflock = ReadFloat();
-	vehicle->boat_sink = ReadFloat();
+	vehicle->health = ReadFloat();
 	vehicle->main_voxel_count = ReadInt();
 	if (tdbin_version != VERSION_0_3_0) {
 		vehicle->z1_u8 = ReadByte();
@@ -577,14 +572,14 @@ Vehicle* TDBIN::ReadVehicle() {
 
 Wheel* TDBIN::ReadWheel() {
 	Wheel* wheel = new Wheel();
-	wheel->flags = ReadEntityFlags();
 	wheel->vehicle = ReadInt();
 	wheel->vehicle_body = ReadInt();
 	wheel->body = ReadInt();
 	wheel->shape = ReadInt();
 	if (tdbin_version >= VERSION_1_3_0) {
-		for (int i = 0; i < 4; i++)
-			wheel->z1_f32_4[i] = ReadInt();
+		wheel->z1_f32_handle = ReadInt();
+		for (int i = 0; i < 3; i++)
+			wheel->z1_f32_3[i] = ReadInt();
 		wheel->z_u8 = ReadByte();
 	}
 	wheel->transform = ReadTransform();
@@ -603,7 +598,6 @@ Wheel* TDBIN::ReadWheel() {
 
 Screen* TDBIN::ReadScreen() {
 	Screen* screen = new Screen();
-	screen->flags = ReadEntityFlags();
 	screen->transform = ReadTransform();
 	for (int i = 0; i < 2; i++)
 		screen->size[i] = ReadFloat();
@@ -623,7 +617,6 @@ Screen* TDBIN::ReadScreen() {
 
 Trigger* TDBIN::ReadTrigger() {
 	Trigger* trigger = new Trigger();
-	trigger->flags = ReadEntityFlags();
 	trigger->transform = ReadTransform();
 	trigger->type = ReadInt();
 	trigger->sphere_size = ReadFloat();
@@ -645,7 +638,6 @@ Trigger* TDBIN::ReadTrigger() {
 
 Script* TDBIN::ReadScript() {
 	Script* script = new Script();
-	script->flags = ReadEntityFlags();
 	script->file = ReadString();
 
 	int entries = ReadInt();
@@ -728,17 +720,17 @@ void* TDBIN::ReadEntityKind(uint8_t kind_byte) {
 void TDBIN::ReadPlayer() {
 	Player* player = &scene.player;
 	player->transform = ReadTransform();
-	player->yaw = ReadFloat();
 	player->pitch = ReadFloat();
+	player->yaw = ReadFloat();
 	player->velocity = ReadVector();
 	player->health = ReadFloat();
 
-	player->transition_time = ReadFloat();
-	player->bluetide_timer = ReadFloat();
 	if (tdbin_version >= VERSION_0_9_0) {
 		player->z_f32_1 = ReadFloat();
 		player->z_f32_2 = ReadFloat();
 	}
+	player->z_f32_3 = ReadFloat();
+	player->z_f32_4 = ReadFloat();
 }
 
 void TDBIN::ReadEnvironment() {
@@ -762,7 +754,7 @@ void TDBIN::ReadEnvironment() {
 	skybox->sun.fogScale = ReadFloat();
 	skybox->sun.glare = ReadFloat();
 	if (tdbin_version != VERSION_0_3_0)
-		skybox->z_u8 = ReadByte();
+		skybox->auto_sun_dir = ReadByte() != 0;
 	if (tdbin_version >= VERSION_0_7_0)
 		skybox->constant = ReadColor();
 	skybox->ambient = ReadFloat();
@@ -925,10 +917,6 @@ void TDBIN::parse() {
 }
 
 void ParseFile(ConverterParams params) {
-	if (!exists(params.map_folder)) {
-		create_directories(params.map_folder);
-		create_directories(params.map_folder + (params.legacy_format ? "custom" : "vox"));
-	}
 	WriteXML parser(params);
 	try {
 		parser.parse();
@@ -936,6 +924,10 @@ void ParseFile(ConverterParams params) {
 		printf("You're a few terabytes low on RAM or this application crashed.\n");
 		printf("It's most likely the second.\n");
 		exit(EXIT_FAILURE);
+	}
+	if (!exists(params.map_folder)) {
+		create_directories(params.map_folder);
+		create_directories(params.map_folder + (params.legacy_format ? "custom" : "vox"));
 	}
 	parser.WriteScene();
 	parser.WriteSpawnpoint();
