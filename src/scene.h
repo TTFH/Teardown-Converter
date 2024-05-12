@@ -180,8 +180,6 @@ struct Scene {
 	Vec<Palette> palettes;
 	Vec<Registry> registry;
 	Vec<Entity*> entities;
-	uint32_t entity_count;
-	uint8_t padding[9];
 };
 
 #endif

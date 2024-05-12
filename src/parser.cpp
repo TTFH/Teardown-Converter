@@ -676,9 +676,9 @@ Script* TDBIN::ReadScript() {
 			script->transitions[i].variable = ReadString();
 			script->transitions[i].kind = ReadByte();
 			script->transitions[i].transition_time = ReadFloat();
-			script->transitions[i].time = ReadDouble();
-			for (int j = 0; j < 4; j++)
-				script->transitions[i].z_u8_4[j] = ReadByte();
+			script->transitions[i].time = ReadFloat();
+			script->transitions[i].z1_f32 = ReadFloat();
+			script->transitions[i].z2_f32 = ReadFloat();
 		}
 	}
 	return script;
@@ -905,13 +905,7 @@ void TDBIN::parse() {
 		scene.entities[i] = ReadEntity();
 		scene.entities[i]->parent = NULL;
 	}
-	/*if (tdbin_version >= VERSION_0_5_0) {
-		scene.entity_count = ReadInt();
-		for (int i = 0; i < (tdbin_version >= VERSION_0_7_0 ? 9 : 4); i++) {
-			scene.padding[i] = ReadByte();
-		}
-	}
-	if (fgetc(bin_file) != EOF)
+	/*if (fgetc(bin_file) != EOF)
 		throw runtime_error("File size mismatch.");*/
 	printf("File parsed successfully!\n");
 }

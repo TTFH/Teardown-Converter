@@ -131,12 +131,14 @@ enum EntityKind { // uint8_t
 };
 
 struct Entity {
-	uint8_t kind_byte;
+	uint8_t kind_byte;	// TODO: type
 	uint32_t handle;
 	SmallVec<Tag> tags; // uint8_t size
 	string desc;		// desc
+
 	EntityFlags flags;
-	void* kind;
+	void* kind;			// TODO: self
+
 	Vec<Entity*> children;
 	uint32_t beef_beef;
 
@@ -421,20 +423,6 @@ struct Trigger {
 	TriggerSound sound;
 };
 
-enum ScriptSoundKind { // uint32_t
-	Normal = 1,
-	Loop,
-	Unknown,
-};
-/*
-enum TransitionKind { // uint8_t
-	Cosine,
-	EaseIn,
-	EaseOut,
-	Bounce,
-	Linear
-};
-*/
 struct ScriptSound {
 	uint32_t kind;
 	string name;
@@ -444,8 +432,9 @@ struct ValueTransition {
 	string variable;
 	uint8_t kind;
 	float transition_time;
-	double time;
-	uint8_t z_u8_4[4];
+	float time;
+	float z1_f32;
+	float z2_f32;
 };
 
 struct Script {
