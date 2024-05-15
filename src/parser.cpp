@@ -114,13 +114,13 @@ Transform TDBIN::ReadTransform() {
 
 Fire TDBIN::ReadFire() {
 	Fire fire;
-	fire.entity_handle = ReadInt();
-	fire.pos = ReadVector();
+	fire.shape = ReadInt();
+	fire.position = ReadVector();
 	fire.max_time = ReadFloat();
 	fire.time = ReadFloat();
-	fire.z_u8_1 = ReadByte() != 0;
-	fire.z_u8_2 = ReadByte() != 0;
-	fire.z_u32 = ReadInt();
+	fire.painted = ReadByte() != 0;
+	fire.broken = ReadByte() != 0;
+	fire.spawned_count = ReadInt();
 	return fire;
 }
 
@@ -258,9 +258,6 @@ Entity* TDBIN::ReadEntity() {
 	Entity* entity = new Entity();
 	entity->kind_byte = ReadByte();
 
-	if (tdbin_version >= VERSION_0_9_6 && entity->kind_byte >= KindEnemy)
-		entity->kind_byte++; // Skip Enemy
-
 	entity->handle = ReadInt();
 	entity_mapping[entity->handle] = entity;
 	//printf("Reading %s with handle %d\n", EntityKindName[entity->kind_byte], entity->handle);
@@ -275,13 +272,11 @@ Entity* TDBIN::ReadEntity() {
 		entity->flags = ReadEntityFlags();
 	entity->kind = ReadEntityKind(entity->kind_byte);
 
-	if (entity->kind_byte != KindEnemy) {
-		int childrens = ReadInt();
-		entity->children.resize(childrens);
-		for (int i = 0; i < childrens; i++) {
-			entity->children[i] = ReadEntity();
-			entity->children[i]->parent = entity;
-		}
+	int childrens = ReadInt();
+	entity->children.resize(childrens);
+	for (int i = 0; i < childrens; i++) {
+		entity->children[i] = ReadEntity();
+		entity->children[i]->parent = entity;
 	}
 
 	entity->beef_beef = ReadInt();
@@ -403,83 +398,6 @@ Water* TDBIN::ReadWater() {
 		water->water_vertices[i].pos[1] = ReadFloat();
 	}
 	return water;
-}
-
-Enemy* TDBIN::ReadEnemy() {
-	Enemy* enemy = new Enemy();
-	enemy->z_u32 = ReadInt();
-
-	enemy->data.z_u8 = ReadByte();
-	enemy->data.handle = ReadInt();
-	for (int i = 0; i < 3; i++)
-		enemy->data.z_u8_3[i] = ReadByte();
-	enemy->data.transform = ReadTransform();
-	for (int i = 0; i < 8; i++)
-		enemy->data.z_f32_8[i] = ReadFloat();
-
-	enemy->shape.data.handle = ReadInt();
-	for (int i = 0; i < 3; i++)
-		enemy->shape.data.z_u8_3[i] = ReadByte();
-	enemy->shape.data.transform = ReadTransform();
-	for (int i = 0; i < 8; i++)
-		enemy->shape.data.z_f32_8[i] = ReadFloat();
-
-	enemy->shape.z_f32 = ReadFloat();
-	for (int i = 0; i < 3; i++)
-		enemy->shape.z_u8_3[i] = ReadByte();
-	enemy->shape.color = ReadColor();
-	for (int i = 0; i < 4; i++)
-		enemy->shape.z_f32_4[i] = ReadFloat();
-
-	int vertex_count = ReadInt();
-	enemy->shape.vertices.resize(vertex_count);
-	for (int i = 0; i < vertex_count; i++) {
-		enemy->shape.vertices[i].position = ReadVector();
-		enemy->shape.vertices[i].normal = ReadVector();
-	}
-
-	int index_count = ReadInt();
-	enemy->shape.indices.resize(index_count);
-	for (int i = 0; i < index_count; i++)
-		enemy->shape.indices[i] = ReadInt();
-
-	enemy->shape.z_u32 = ReadInt();
-	enemy->shape.beef_beef = ReadInt();
-
-	for (int i = 0; i < 27; i++) {
-		enemy->child_shapes[i].data.z_u8 = ReadByte();
-		enemy->child_shapes[i].data.handle = ReadInt();
-		for (int j = 0; j < 3; j++)
-			enemy->child_shapes[i].data.z_u8_3[j] = ReadByte();
-		enemy->child_shapes[i].data.transform = ReadTransform();
-		for (int j = 0; j < 8; j++)
-			enemy->child_shapes[i].data.z_f32_8[j] = ReadFloat();
-
-		enemy->child_shapes[i].z_f32 = ReadFloat();
-		for (int j = 0; j < 3; j++)
-			enemy->child_shapes[i].z_u8_3[j] = ReadByte();
-		enemy->child_shapes[i].color = ReadColor();
-		for (int j = 0; j < 4; j++)
-			enemy->child_shapes[i].z_f32_4[j] = ReadFloat();
-
-		vertex_count = ReadInt();
-		enemy->child_shapes[i].vertices.resize(vertex_count);
-		for (int j = 0; j < vertex_count; j++) {
-			enemy->child_shapes[i].vertices[j].position = ReadVector();
-			enemy->child_shapes[i].vertices[j].normal = ReadVector();
-		}
-
-		index_count = ReadInt();
-		enemy->child_shapes[i].indices.resize(index_count);
-		for (int j = 0; j < index_count; j++)
-			enemy->child_shapes[i].indices[j] = ReadInt();
-
-		enemy->child_shapes[i].z_u32 = ReadInt();
-		enemy->child_shapes[i].beef_beef = ReadInt();
-	}
-
-	enemy->beef_beef = ReadInt();
-	return enemy;
 }
 
 Joint* TDBIN::ReadJoint() {
@@ -696,8 +614,6 @@ void* TDBIN::ReadEntityKind(uint8_t kind_byte) {
 			return ReadLocation();
 		case KindWater:
 			return ReadWater();
-		case KindEnemy:
-			return ReadEnemy();
 		case KindJoint:
 			return ReadJoint();
 		case KindVehicle:
@@ -725,12 +641,12 @@ void TDBIN::ReadPlayer() {
 	player->velocity = ReadVector();
 	player->health = ReadFloat();
 
+	player->transition_timer = ReadFloat();
+	player->time_underwater = ReadFloat();
 	if (tdbin_version >= VERSION_0_9_0) {
-		player->z_f32_1 = ReadFloat();
-		player->z_f32_2 = ReadFloat();
+		player->bluetide_timer = ReadFloat();
+		player->bluetide_power = ReadFloat();
 	}
-	player->z_f32_3 = ReadFloat();
-	player->z_f32_4 = ReadFloat();
 }
 
 void TDBIN::ReadEnvironment() {
@@ -742,16 +658,15 @@ void TDBIN::ReadEnvironment() {
 	if (tdbin_version >= VERSION_0_8_0)
 		skybox->brightness = ReadFloat();
 	skybox->rot = ReadFloat();
-	for (int i = 0; i < 3; i++)
-		skybox->sun.tint_brightness[i] = ReadFloat();
-	skybox->sun.colorTint = ReadColor();
+	skybox->sun.tint_brightness = ReadVector();
+	skybox->sun.colortint = ReadColor();
 	skybox->sun.dir = ReadVector();
 	skybox->sun.brightness = ReadFloat();
 	if (tdbin_version == VERSION_0_3_0)
 		ReadByte();
 	skybox->sun.spread = ReadFloat();
 	skybox->sun.length = ReadFloat();
-	skybox->sun.fogScale = ReadFloat();
+	skybox->sun.fogscale = ReadFloat();
 	skybox->sun.glare = ReadFloat();
 	if (tdbin_version != VERSION_0_3_0)
 		skybox->auto_sun_dir = ReadByte() != 0;
@@ -823,12 +738,12 @@ void TDBIN::parse() {
 		tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
 
 		if (tdbin_version >= VERSION_0_5_1)
-			scene.game_levelid = ReadString();
+			scene.level_id = ReadString();
 		if (tdbin_version >= VERSION_1_5_0) {
-			scene.game_levelpath = ReadString();
+			scene.level_path = ReadString();
 			scene.layers = ReadString();
-			scene.game_mod = ReadString();
-			scene.z1_u32 = ReadInt();
+			scene.mod = ReadString();
+			scene.aaa1 = ReadInt();
 
 			int entries = ReadInt();
 			scene.enabled_mods.resize(entries);
@@ -847,13 +762,13 @@ void TDBIN::parse() {
 	scene.shadow_volume = ReadVector();
 	scene.spawnpoint = ReadTransform();
 	if (tdbin_version >= VERSION_0_5_1) {
-		scene.world_body_handle = ReadInt();
-		scene.flashlight_handle = ReadInt();
+		scene.world_body = ReadInt();
+		scene.flashlight = ReadInt();
 	}
 	if (tdbin_version >= VERSION_0_7_0)
-		scene.explosion_lua_handle = ReadInt();
+		scene.explosion_lua = ReadInt();
 	if (tdbin_version >= VERSION_1_1_0)
-		scene.achievements_lua_handle = ReadInt();
+		scene.achievements_lua = ReadInt();
 
 	if (tdbin_version >= VERSION_0_7_0) {
 		PostProcessing* postpro = &scene.postpro;

@@ -121,7 +121,6 @@ enum EntityKind { // uint8_t
 	KindLight,
 	KindLocation,
 	KindWater,
-	KindEnemy,
 	KindJoint,
 	KindVehicle,
 	KindWheel,
@@ -235,34 +234,6 @@ struct Water {
 	Color color = { 0.01, 0.01, 0.01, 1 }; // color
 	float visibility = 3;		// visibility
 	Vec<Vertex> water_vertices;
-};
-
-struct MeshShapeCommon {
-	uint8_t z_u8; // if child
-	uint32_t handle;
-	uint8_t z_u8_3[3];
-	Transform transform;
-	float z_f32_8[8];
-};
-
-struct MeshShape {
-	MeshShapeCommon data;
-	float z_f32;
-	uint8_t z_u8_3[3];
-	Color color;
-	float z_f32_4[4];
-	Vec<MeshVertex> vertices;
-	Vec<uint32_t> indices;
-	uint32_t z_u32;
-	uint32_t beef_beef;
-};
-
-struct Enemy {
-	uint32_t z_u32;
-	MeshShapeCommon data;
-	MeshShape shape;
-	MeshShape child_shapes[27];
-	uint32_t beef_beef;
 };
 
 enum JointType { // uint32_t

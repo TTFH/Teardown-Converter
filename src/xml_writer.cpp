@@ -127,9 +127,10 @@ void XML_Writer::AddVectorAttribute(XMLElement* element, const char* name, Vecto
 		element->SetAttribute(name, buffer.c_str());
 }
 
-void XML_Writer::AddFloat2Attribute(XMLElement* element, const char* name, float value1, float value2) {
+void XML_Writer::AddFloat2Attribute(XMLElement* element, const char* name, float value1, float value2, string default_value) {
 	string buffer = FloatToString(value1) + " " + FloatToString(value2);
-	element->SetAttribute(name, buffer.c_str());
+	if (default_value == "" || buffer != default_value)
+		element->SetAttribute(name, buffer.c_str());
 }
 
 void XML_Writer::AddFloat3Attribute(XMLElement* element, const char* name, float value1, float value2, float value3) {

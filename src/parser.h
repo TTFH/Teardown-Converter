@@ -67,7 +67,6 @@ private:
 	Light* ReadLight();
 	Location* ReadLocation();
 	Water* ReadWater();
-	Enemy* ReadEnemy();
 	Joint* ReadJoint();
 	Vehicle* ReadVehicle();
 	Wheel* ReadWheel();

@@ -44,20 +44,20 @@ struct Player {
 	float yaw;
 	Vector velocity;
 	float health;
-	float z_f32_1; // TODO: tool movement?
-	float z_f32_2; // TODO:campaign.health
-	float z_f32_3; // TODO:
-	float z_f32_4; // TODO: bluetide speed modifier
+	float transition_timer;
+	float time_underwater;
+	float bluetide_timer;
+	float bluetide_power;
 };
 
 struct Sun {
-	float tint_brightness[3]; // TODO: Vector
-	Color colorTint;	// sunColorTint
+	Vector tint_brightness;
+	Color colortint;	// sunColorTint
 	Vector dir;			// sunDir
 	float brightness;	// sunBrightness
 	float spread;		// sunSpread
 	float length;		// sunLength
-	float fogScale = 1;	// sunFogScale
+	float fogscale = 1;	// sunFogScale
 	float glare;		// sunGlare
 };
 
@@ -93,7 +93,7 @@ struct Snow {
 	Vector dir = {0, -1, 0};	// snowdir x y z
 	float spread = 0.2;			// snowdir spread
 	float amount = 0;			// snowamount
-	float speed;
+	float speed = 0;			// snowamount
 	bool onground = false;		// snowonground
 };
 
@@ -122,13 +122,13 @@ struct Boundary {
 };
 
 struct Fire {
-	uint32_t entity_handle;
-	Vector pos;
+	uint32_t shape;
+	Vector position;
 	float max_time;
 	float time;
-	bool z_u8_1;
-	bool z_u8_2;
-	uint32_t z_u32;
+	bool painted;
+	bool broken;
+	uint32_t spawned_count;
 };
 
 struct Material {
@@ -149,29 +149,37 @@ struct Palette {
 	uint8_t other_tint[4 * 256];
 };
 
+struct Unk1 {
+	Vector z_1;
+	Vector z_2;
+	float z_3;
+	float z_4;
+	uint32_t z_5;
+	float z_6;
+};
+
+struct Unk2 {
+	string z_1;
+	bool z_2;
+};
+
 struct Scene {
 	char magic[5];					// TDBIN
 	uint8_t version[3] = {0, 3, 0};	// version
-	string game_levelid;
-	string game_levelpath;
+	string level_id;
+	string level_path;
 	string layers;
-	string game_mod;
-
-	uint32_t z1_u32;	// 43681
-
+	string mod;
+	uint32_t aaa1;
 	Vec<Registry> enabled_mods;
 	Vec<Registry> spawned_mods;
-
 	uint32_t driven_vehicle = 0;	// driven
 	Vector shadow_volume;			// shadowVolume
 	Transform spawnpoint;			// spawnpoint
-
-	// Pattern: 1  n  n-5  n-1
-	uint32_t world_body_handle;
-	uint32_t flashlight_handle;
-	uint32_t explosion_lua_handle;
-	uint32_t achievements_lua_handle;
-
+	uint32_t world_body;
+	uint32_t flashlight;
+	uint32_t explosion_lua;
+	uint32_t achievements_lua;
 	PostProcessing postpro;
 	Player player;
 	Environment environment;
@@ -180,6 +188,11 @@ struct Scene {
 	Vec<Palette> palettes;
 	Vec<Registry> registry;
 	Vec<Entity*> entities;
+	uint32_t entity_count;
+	uint32_t broken_voxels;
+	Vec<Unk1> z_st1;
+	bool spraycan_in_use;
+	Vec<Unk2> z_st2;
 };
 
 #endif

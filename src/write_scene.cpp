@@ -13,21 +13,6 @@
 #include "write_scene.h"
 #include "../lib/tinyxml2.h"
 
-void SaveOBJ(const char* path, const Vec<MeshVertex>& vertices, const Vec<uint32_t>& indices) {
-	FILE* output = fopen(path, "w");
-	for (unsigned int i = 0; i < vertices.getSize(); i++)
-		fprintf(output, "v %f %f %f\n", vertices[i].position.x, vertices[i].position.y, vertices[i].position.z);
-	for (unsigned int i = 0; i < vertices.getSize(); i++)
-		fprintf(output, "vn %f %f %f\n", vertices[i].normal.x, vertices[i].normal.y, vertices[i].normal.z);
-	for (unsigned int i = 0; i < indices.getSize(); i += 3) {
-        fprintf(output, "f %d//%d %d//%d %d//%d\n",
-            indices[i] + 1, indices[i] + 1,
-            indices[i + 1] + 1, indices[i + 1] + 1,
-            indices[i + 2] + 1, indices[i + 2] + 1);
-    }
-	fclose(output);
-}
-
 WriteXML::WriteXML(ConverterParams params) : params(params) {
 	init(params.bin_path.c_str());
 }
@@ -88,12 +73,14 @@ void WriteXML::WriteEnvironment() {
 	xml.AddColorAttribute(environment, "fogColor", fog->color, "1 1 1");
 	xml.AddFloat4Attribute(environment, "fogParams", fog->start, fog->start + fog->distance, fog->amount, fog->exponent, "40 100 0.9 4");
 	xml.AddFloatAttribute(environment, "sunBrightness", skybox->sun.brightness, "0");
-	xml.AddColorAttribute(environment, "sunColorTint", skybox->sun.colorTint, "1 1 1");
-	//xml.AddVectorAttribute(environment, "sunDir", skybox->sun.dir);
-	xml.AddStrAttribute(environment, "sunDir", "auto");
+	xml.AddColorAttribute(environment, "sunColorTint", skybox->sun.colortint, "1 1 1");
+	if (skybox->auto_sun_dir)
+		xml.AddStrAttribute(environment, "sunDir", "auto");
+	else
+		xml.AddVectorAttribute(environment, "sunDir", skybox->sun.dir);
 	xml.AddFloatAttribute(environment, "sunSpread", skybox->sun.spread, "0");
 	xml.AddFloatAttribute(environment, "sunLength", skybox->sun.length, "32");
-	xml.AddFloatAttribute(environment, "sunFogScale", skybox->sun.fogScale, "1");
+	xml.AddFloatAttribute(environment, "sunFogScale", skybox->sun.fogscale, "1");
 	xml.AddFloatAttribute(environment, "sunGlare", skybox->sun.glare, "1");
 	xml.AddFloatNAttribute(environment, "exposure", scene.environment.exposure, 2, "0 10");
 	xml.AddFloatAttribute(environment, "brightness", scene.environment.brightness, "1");
@@ -107,7 +94,7 @@ void WriteXML::WriteEnvironment() {
 	xml.AddFloatAttribute(environment, "slippery", scene.environment.slippery, "0");
 	xml.AddFloatAttribute(environment, "waterhurt", scene.environment.waterhurt, "0");
 	xml.AddFloat4Attribute(environment, "snowdir", snow->dir.x, snow->dir.y, snow->dir.z, snow->spread, "0 -1 0 0.2");
-	xml.AddFloatAttribute(environment, "snowamount", snow->amount, "0");
+	xml.AddFloat2Attribute(environment, "snowamount", snow->amount, snow->speed, "0 0");
 	xml.AddBoolAttribute(environment, "snowonground", snow->onground && !params.remove_snow, false);
 	xml.AddVectorAttribute(environment, "wind", scene.environment.wind, "0 0 0");
 
@@ -519,35 +506,6 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				XMLElement* vertex = xml.CreateElement("vertex");
 				xml.AddElement(entity_element, vertex);
 				xml.AddFloatNAttribute(vertex, "pos", water->water_vertices[i].pos, 2);
-			}
-		}
-			break;
-		case KindEnemy: {
-			Enemy* enemy = static_cast<Enemy*>(entity->kind);
-			entity_element->SetName("mesh");
-			WriteTransform(entity_element, enemy->data.transform);
-			string mesh_name = "mesh" + to_string(enemy->data.handle) + ".obj";
-			xml.AddStrAttribute(entity_element, "file", mesh_name);
-			SaveOBJ(mesh_name.c_str(), enemy->shape.vertices, enemy->shape.indices);
-
-			XMLElement* head = xml.CreateElement("group");
-			WriteTransform(head, enemy->shape.data.transform);
-			xml.AddElement(entity_element, head);
-
-			for (int i = 0; i < 27; i++) {
-				mesh_name = "mesh" + to_string(enemy->child_shapes[i].data.handle) + ".obj";
-				XMLElement* mesh = xml.CreateElement("mesh");
-				WriteTransform(mesh, enemy->child_shapes[i].data.transform);
-				xml.AddStrAttribute(mesh, "file", mesh_name);
-				xml.AddFloat3Attribute(mesh, "color",
-					pow(enemy->child_shapes[i].color.r, 1 / 2.2f),
-					pow(enemy->child_shapes[i].color.g, 1 / 2.2f),
-					pow(enemy->child_shapes[i].color.b, 1 / 2.2f));
-				if (i < 3)
-					xml.AddElement(head, mesh);
-				else
-					xml.AddElement(entity_element, mesh);
-				SaveOBJ(mesh_name.c_str(), enemy->child_shapes[i].vertices, enemy->child_shapes[i].indices);
 			}
 		}
 			break;
