@@ -475,7 +475,7 @@ int main(int argc, char* argv[]) {
 				ImGuiFileDialog::Instance()->Close();
 			}
 
-			ImGui::Text("Mods folder:	 ");
+			ImGui::Text("Mods folder:     ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(350);
 			ImGui::InputText("##modsfolder", mods_folder, IM_ARRAYSIZE(mods_folder));
@@ -490,7 +490,7 @@ int main(int argc, char* argv[]) {
 				ImGuiFileDialog::Instance()->Close();
 			}
 
-			ImGui::Text("Game folder:	 ");
+			ImGui::Text("Game folder:     ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(350);
 			ImGui::InputText("##gamefolder", game_folder, IM_ARRAYSIZE(game_folder));
@@ -506,7 +506,7 @@ int main(int argc, char* argv[]) {
 			}
 			ImGui::Dummy(ImVec2(0, 5));
 
-			ImGui::Text("Filter maps:	 ");
+			ImGui::Text("Filter maps:     ");
 			ImGui::SameLine();
 
 			ImGui::PushItemWidth(350);
@@ -562,13 +562,13 @@ int main(int argc, char* argv[]) {
 				preview_texture = LoadTexture(texture_path.c_str());
 			}
 			if (preview_texture != 0)
-				ImGui::Image((void*)(intptr_t)preview_texture, ImVec2(175, 100));
+				ImGui::Image((void*)(uintptr_t)preview_texture, ImVec2(175, 100));
 
 			ImGui::SameLine();
 			ImGui::BeginGroup();
 			ImGui::Checkbox("Remove snow", &remove_snow);
-			ImGui::Checkbox("Do not use voxboxes", &no_voxbox);
 			ImGui::Checkbox("Legacy format", &save_as_legacy);
+			ImGui::Checkbox("Do not use voxboxes", &no_voxbox);
 			ImGui::Checkbox("Compress .vox files (very slow)", &use_tdcz);
 			ImGui::EndGroup();
 			ImGui::Dummy(ImVec2(0, 5));
@@ -592,8 +592,8 @@ int main(int argc, char* argv[]) {
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.3f, 0.8f, 0.8f));
 
 			ImGui::Spacing();
-			ImGui::SameLine(ImGui::GetWindowSize().x / 2 - 62);
-			if (ImGui::Button("CONVERT", ImVec2(64, 25))) {
+			ImGui::SameLine(ImGui::GetWindowSize().x / 2 - 72);
+			if (ImGui::Button("CONVERT", ImVec2(72, 32))) {
 				progress = 0;
 				disable_convert = true;
 
@@ -655,8 +655,8 @@ int main(int argc, char* argv[]) {
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.9f, 0.9f));
 
-			ImGui::SameLine(ImGui::GetWindowSize().x / 2 + 30);
-			if (ImGui::Button("Close", ImVec2(64, 25)))
+			ImGui::SameLine(ImGui::GetWindowSize().x / 2 + 36);
+			if (ImGui::Button("Close", ImVec2(72, 32)))
 				glfwSetWindowShouldClose(window, true);
 			ImGui::PopStyleColor(3);
 
