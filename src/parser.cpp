@@ -41,7 +41,7 @@ TDBIN::~TDBIN() {
 }
 
 bool TDBIN::ReadBool() {
-	return ReadBool();
+	return ReadByte() != 0;
 }
 
 uint8_t TDBIN::ReadByte() {
@@ -256,7 +256,7 @@ Entity* TDBIN::ReadEntity() {
 
 	entity->handle = ReadInt();
 	entity_mapping[entity->handle] = entity;
-	printf("Reading %s with handle %d\n", EntityKindName[entity->type], entity->handle);
+	//printf("Reading %s with handle %d\n", EntityKindName[entity->type], entity->handle);
 
 	uint8_t tag_count = ReadByte();
 	entity->tags.resize(tag_count);
@@ -560,8 +560,8 @@ Script* TDBIN::ReadScript() {
 	return script;
 }
 
-void* TDBIN::ReadEntityKind(uint8_t kind_byte) {
-	switch (kind_byte) {
+void* TDBIN::ReadEntityKind(uint8_t type) {
+	switch (type) {
 		case KindBody:
 			return ReadBody();
 		case KindShape:
@@ -585,7 +585,7 @@ void* TDBIN::ReadEntityKind(uint8_t kind_byte) {
 		case KindScript:
 			return ReadScript();
 		default:
-			printf("[ERROR] Invalid entity kind: %d\n", kind_byte);
+			printf("[ERROR] Invalid entity type: %d\n", type);
 			exit(EXIT_FAILURE);
 			return NULL;
 	}
@@ -682,7 +682,7 @@ void TDBIN::parse() {
 	for (int i = 0; i < entries; i++)
 		scene.enabled_mods[i] = ReadRegistry();
 
-	int entries = ReadInt();
+	entries = ReadInt();
 	scene.spawned_mods.resize(entries);
 	for (int i = 0; i < entries; i++)
 		scene.spawned_mods[i] = ReadRegistry();
@@ -728,7 +728,7 @@ void TDBIN::parse() {
 	for (int i = 0; i < palette_count; i++)
 		scene.palettes[i] = ReadPalette();
 
-	int entries = ReadInt();
+	entries = ReadInt();
 	scene.registry.resize(entries);
 	for (int i = 0; i < entries; i++)
 		scene.registry[i] = ReadRegistry();
@@ -745,6 +745,7 @@ void TDBIN::parse() {
 }
 
 void ParseFile(ConverterParams params) {
+	progress = 0.1;
 	WriteXML parser(params);
 	try {
 		parser.parse();
@@ -757,13 +758,18 @@ void ParseFile(ConverterParams params) {
 		create_directories(params.map_folder);
 		create_directories(params.map_folder + (params.legacy_format ? "custom" : "vox"));
 	}
+	progress = 0.25;
 	parser.WriteScene();
 	parser.WriteSpawnpoint();
 	parser.WriteEnvironment();
 	parser.WriteBoundary();
 	parser.WritePostProcessing();
+	progress = 0.5;
 	parser.WriteEntities();
+	progress = 0.75;
 	parser.SaveXML();
+	progress = 0.9;
 	parser.SaveVoxFiles();
 	printf("Map successfully converted!\n");
+	progress = 1;
 }

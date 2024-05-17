@@ -1,10 +1,16 @@
 #include <stdio.h>
 #include <string.h>
+#include <pthread.h>
+#include <atomic>
 #include <chrono>
 #include <string>
-#include <thread>
 #include <vector>
 #include <filesystem>
+
+#include "src/parser.h"
+
+#include "glad/glad.h"
+#include <GLFW/glfw3.h>
 
 #include "imgui/imgui.h"
 #include "imgui/backend/imgui_impl_glfw.h"
@@ -17,13 +23,11 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "lib/stb_image_write.h"
 
-#include "src/parser.h"
-
 using namespace std;
 using namespace tinyxml2;
 namespace fs = std::filesystem;
 
-volatile float progress = 0;
+atomic<float> progress = 0;
 
 struct LevelInfo {
 	string level_id;
@@ -70,7 +74,7 @@ void SavePreviewImage(string map_folder, string level_id) {
 	stbi_image_free(image);
 }
 
-int DecompileMap(void* param) {
+void* DecompileMap(void* param) {
 	ConverterParams* data = (ConverterParams*)param;
 
 	fs::create_directories(data->map_folder);
@@ -78,7 +82,6 @@ int DecompileMap(void* param) {
 		SavePreviewImage(data->map_folder, data->level_id);
 		SaveInfoTxt(data->map_folder, data->level_name, data->level_desc);
 	}
-
 	if (data->legacy_format) {
 		fs::create_directories(data->map_folder + "custom");
 		copy_folder(data->script_folder, data->map_folder + "custom/script");
@@ -93,19 +96,8 @@ int DecompileMap(void* param) {
 			copy_folder(data->script_folder + data->level_id, data->map_folder + data->level_id);
 		}
 	}
-
 	ParseFile(*data);
-	return 0;
-}
-
-int FakeProgressBar(void* param) {
-	(void)param;
-	progress = 0.01f;
-	while (progress < 0.98) {
-		this_thread::sleep_for(chrono::seconds(1));
-		progress += ((float)rand() / RAND_MAX) / 10.0f;
-	}
-	return 0;
+	return NULL;
 }
 
 vector<LevelInfo> LoadLevels(string filter) {
@@ -289,6 +281,15 @@ vector<LevelInfo> LoadLevels(string filter) {
 			LevelInfo info = { dlc_missions[i][0], dlc_missions[i][1], dlc_missions[i][2], dlc_missions[i][3] };
 			levels.push_back(info);
 		}
+	} else if (filter == "Folkrace") {
+		const char* dlc_missions[][4] = {
+			{ "map", "file", "name", "desc" },
+		};
+		int dlc_missions_count = sizeof(dlc_missions) / sizeof(dlc_missions[0]);
+		for (int i = 0; i < dlc_missions_count; i++) {
+			LevelInfo info = { dlc_missions[i][0], dlc_missions[i][1], dlc_missions[i][2], dlc_missions[i][3] };
+			levels.push_back(info);
+		}
 	} else {
 		LevelInfo info;
 		info = { "about", "about", "Credits", "" };
@@ -317,33 +318,58 @@ string GetFilename(const char* path) {
 	filename = filename.substr(0, filename.find_last_of("."));
 	return filename;
 }
-/*
-SDL_Texture* LoadTexture(SDL_Renderer* renderer, string filename, int &width, int &height) {
-	int channels;
-	uint8_t* data = stbi_load(filename.c_str(), &width, &height, &channels, STBI_default);
-	if (data == NULL)
-		data = stbi_load("preview/preview.png", &width, &height, &channels, STBI_default);
 
-	if (data == NULL) {
-		fprintf(stderr, "Failed to load image %s %s\n", filename.c_str(), stbi_failure_reason());
-		return NULL;
+GLFWwindow* InitOpenGL(const char* window_title, int width, int height) {
+	int major = 4;
+	int minor = 6;
+#ifdef __linux__
+	major = 4;
+	minor = 2;
+#elif __APPLE__
+	major = 4;
+	minor = 1;
+#endif
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
+	glfwWindowHint(GLFW_SAMPLES, 1); // MSAA
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+	GLFWwindow* window = glfwCreateWindow(width, height, window_title, NULL, NULL);
+	if (window == NULL) {
+		printf("[GLFW] Failed to initialize OpenGL\n");
+		glfwTerminate();
+		exit(EXIT_FAILURE);
 	}
-	//printf("Loaded image %s (%dx%d, %d channels)\n", filename.c_str(), width, height, channels);
-	SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(data, width, height, 8 * channels, channels * width, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-	if (surface == NULL) {
-		fprintf(stderr, "Failed to create SDL surface: %s\n", SDL_GetError());
-		return NULL;
-	}
-	SDL_Texture* texture_ptr = SDL_CreateTextureFromSurface(renderer, surface);
-	if (texture_ptr == NULL) {
-		fprintf(stderr, "Failed to create SDL texture: %s\n", SDL_GetError());
-		return NULL;
-	}
-	SDL_FreeSurface(surface);
-	stbi_image_free(data);
-	return texture_ptr;
+	glfwMakeContextCurrent(window);
+	glfwSwapInterval(1); // Enable vsync
+	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+	glViewport(0, 0, width, height);
+	return window;
 }
-*/
+
+GLuint LoadTexture(const char* path) {
+	GLuint texture_id;
+	int width, height, channels;
+	uint8_t* data = stbi_load(path, &width, &height, &channels, STBI_rgb_alpha);
+	//printf("Loading texture %s with %d channels\n", path, channels);
+
+	glGenTextures(1, &texture_id);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	float clampColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, clampColor);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(data);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return texture_id;
+}
+
 int main(int argc, char* argv[]) {
 #ifdef _WIN32
 	_setmaxstdio(2048);
@@ -360,18 +386,7 @@ int main(int argc, char* argv[]) {
 			printf("CLI Usage: %s quicksave.bin\n", argv[0]);
 	}
 
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
-		printf("[ERROR] Failed to init SDL: %s\n", SDL_GetError());
-		return -1;
-	}
-
-	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-	SDL_Window* window = SDL_CreateWindow("Teardown Converter", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 600, window_flags);
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-
-	SDL_GLContext gl_context = SDL_GL_CreateContext(window);
-	SDL_GL_MakeCurrent(window, gl_context);
-	SDL_GL_SetSwapInterval(1);
+	GLFWwindow* window = InitOpenGL("Teardown Converter", 700, 600);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -379,8 +394,8 @@ int main(int argc, char* argv[]) {
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
 	ImGui::StyleColorsDark();
-	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
-	ImGui_ImplSDLRenderer2_Init(renderer);
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 410");
 	ImVec4 clear_color = ImVec4(0.27f, 0.57f, 0.72f, 1.00f);
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
 
@@ -415,33 +430,31 @@ int main(int argc, char* argv[]) {
 	bool use_tdcz = false;
 	int game_version = 0;
 
-	int preview_width = 350;
-	int preview_height = 200;
 	string selected_preview = "";
-	SDL_Texture* preview_texture = NULL;
+	GLuint preview_texture = 0;
 
+	pthread_t parse_thread;
 	ConverterParams* params = new ConverterParams();
-	SDL_Thread* parse_thread = NULL;
-	SDL_Thread* progress_thread = NULL;
 
 	string selected_category = "Sandbox";
-	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Art Vandals", "Time Campers", "Others" };
+	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Art Vandals", "Time Campers", "Folkrace", "Others" };
 	vector<LevelInfo> levels = LoadLevels(selected_category);
 	vector<LevelInfo>::iterator selected_level = levels.begin();
 
-	bool done = false;
-	while (!done) {
-		SDL_Event event;
-		while (SDL_PollEvent(&event)) {
-			ImGui_ImplSDL2_ProcessEvent(&event);
-			if (event.type == SDL_QUIT)
-				done = true;
-			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
-				done = true;
-		}
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		ImGui_ImplSDLRenderer2_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+			glfwSetWindowShouldClose(window, true);
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
 		{
@@ -455,14 +468,14 @@ int main(int argc, char* argv[]) {
 			ImGui::SameLine();
 
 			if (ImGui::Button("Select Folder##1"))
-				ImGuiFileDialog::Instance()->OpenDialog("DirDialogQF", "Select Quicksave folder", nullptr, ".");
+				ImGuiFileDialog::Instance()->OpenDialog("DirDialogQF", "Select Quicksave folder", ".");
 			if (ImGuiFileDialog::Instance()->Display("DirDialogQF")) {
 				if (ImGuiFileDialog::Instance()->IsOk())
 					strcpy(quicksave_folder, ImGuiFileDialog::Instance()->GetCurrentPath().c_str());
 				ImGuiFileDialog::Instance()->Close();
 			}
 
-			ImGui::Text("Mods folder:     ");
+			ImGui::Text("Mods folder:	 ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(350);
 			ImGui::InputText("##modsfolder", mods_folder, IM_ARRAYSIZE(mods_folder));
@@ -470,14 +483,14 @@ int main(int argc, char* argv[]) {
 			ImGui::SameLine();
 
 			if (ImGui::Button("Select Folder##2"))
-				ImGuiFileDialog::Instance()->OpenDialog("DirDialogMF", "Select Mods folder", nullptr, ".");
+				ImGuiFileDialog::Instance()->OpenDialog("DirDialogMF", "Select Mods folder", ".");
 			if (ImGuiFileDialog::Instance()->Display("DirDialogMF")) {
 				if (ImGuiFileDialog::Instance()->IsOk())
 					strcpy(mods_folder, ImGuiFileDialog::Instance()->GetCurrentPath().c_str());
 				ImGuiFileDialog::Instance()->Close();
 			}
 
-			ImGui::Text("Game folder:     ");
+			ImGui::Text("Game folder:	 ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(350);
 			ImGui::InputText("##gamefolder", game_folder, IM_ARRAYSIZE(game_folder));
@@ -485,7 +498,7 @@ int main(int argc, char* argv[]) {
 			ImGui::SameLine();
 
 			if (ImGui::Button("Select Folder##3"))
-				ImGuiFileDialog::Instance()->OpenDialog("DirDialogGF", "Select Game folder", nullptr, ".");
+				ImGuiFileDialog::Instance()->OpenDialog("DirDialogGF", "Select Game folder", ".");
 			if (ImGuiFileDialog::Instance()->Display("DirDialogGF")) {
 				if (ImGuiFileDialog::Instance()->IsOk())
 					strcpy(game_folder, ImGuiFileDialog::Instance()->GetCurrentPath().c_str());
@@ -493,7 +506,7 @@ int main(int argc, char* argv[]) {
 			}
 			ImGui::Dummy(ImVec2(0, 5));
 
-			ImGui::Text("Filter maps:     ");
+			ImGui::Text("Filter maps:	 ");
 			ImGui::SameLine();
 
 			ImGui::PushItemWidth(350);
@@ -546,10 +559,10 @@ int main(int argc, char* argv[]) {
 			if (selected_preview != selected_level->level_id) {
 				selected_preview = selected_level->level_id;
 				string texture_path = "preview/" + selected_preview + ".png";
-				preview_texture = LoadTexture(renderer, texture_path, preview_width, preview_height);
+				preview_texture = LoadTexture(texture_path.c_str());
 			}
-			if (preview_texture != NULL)
-				ImGui::Image(preview_texture, ImVec2(preview_width / 2, preview_height / 2));
+			if (preview_texture != 0)
+				ImGui::Image((void*)(intptr_t)preview_texture, ImVec2(175, 100));
 
 			ImGui::SameLine();
 			ImGui::BeginGroup();
@@ -560,16 +573,14 @@ int main(int argc, char* argv[]) {
 			ImGui::EndGroup();
 			ImGui::Dummy(ImVec2(0, 5));
 
-			if (disable_convert) {
-				if (progress >= 1) {
-					progress = 1;
-					disable_convert = false;
-				}
+			if (disable_convert && progress >= 1) {
+				progress = 1;
+				disable_convert = false;
 			}
 
 			const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 			const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
-			if (progress > 0 && progress <= 1)
+			if (disable_convert)
 				ImGui::BufferingBar("##buffer_bar", progress, ImVec2(600, 8), bg, col);
 
 			ImGui::Dummy(ImVec2(0, 10));
@@ -594,6 +605,8 @@ int main(int argc, char* argv[]) {
 					params->dlc_id = "artvandals";
 				else if (selected_category == "Time Campers")
 					params->dlc_id = "wildwestheist";
+				else if (selected_category == "Folkrace")
+					params->dlc_id = "summercamp";
 
 				if (!params->dlc_id.empty()) {
 					params->script_folder = game_folder;
@@ -634,7 +647,7 @@ int main(int argc, char* argv[]) {
 				params->compress_vox = use_tdcz;
 				params->legacy_format = save_as_legacy;
 
-				parse_thread = SDL_CreateThread(DecompileMap, "decompile_thread", (void*)params);
+				pthread_create(&parse_thread, NULL, DecompileMap, params);
 			}
 			ImGui::PopStyleColor(3);
 
@@ -644,22 +657,24 @@ int main(int argc, char* argv[]) {
 
 			ImGui::SameLine(ImGui::GetWindowSize().x / 2 + 30);
 			if (ImGui::Button("Close", ImVec2(64, 25)))
-				done = true;
+				glfwSetWindowShouldClose(window, true);
 			ImGui::PopStyleColor(3);
 
 			if (disabled)
 				ImGui::EndDisabled();
-
 			ImGui::End();
 		}
 
+		glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		ImGui::Render();
-		SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-		SDL_SetRenderDrawColor(renderer, (uint8_t)(clear_color.x * 255), (uint8_t)(clear_color.y * 255), (uint8_t)(clear_color.z * 255), (uint8_t)(clear_color.w * 255));
-		SDL_RenderClear(renderer);
-		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
-		SDL_RenderPresent(renderer);
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		glfwSwapBuffers(window);
 	}
+
+	pthread_join(parse_thread, NULL);
+	delete params;
 
 	if (config_root == NULL) {
 		config_root = config_file.NewElement("config");
@@ -670,13 +685,11 @@ int main(int argc, char* argv[]) {
 	config_root->SetAttribute("quicksave_folder", quicksave_folder);
 	config_file.SaveFile("config.xml");
 
-	ImGui_ImplSDLRenderer2_Shutdown();
-	ImGui_ImplSDL2_Shutdown();
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 
-	SDL_DestroyRenderer(renderer);
-	SDL_DestroyWindow(window);
-	SDL_Quit();
-
+	glfwDestroyWindow(window);
+	glfwTerminate();
 	return 0;
 }

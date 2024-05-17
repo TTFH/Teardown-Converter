@@ -3,12 +3,15 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <atomic>
 #include <string>
 #include <map>
 
 #include "scene.h"
 
 using namespace std;
+
+extern atomic<float> progress;
 
 struct ConverterParams {
 	string bin_path = "";		// Path to the bin/tdbin file

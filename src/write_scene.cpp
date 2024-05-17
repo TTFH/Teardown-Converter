@@ -173,7 +173,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 
 	shape->old_transform = shape->transform;
 	Palette palette = scene.palettes[shape->palette];
-	bool collide = shape->shape_flags & 0x10 != 0;
+	bool collide = (shape->shape_flags & 0x10) != 0;
 
 	Tensor3D voxels(sizex, sizey, sizez);
 	voxels.FromRunLengthEncoding(shape->voxels.palette_indexes);
