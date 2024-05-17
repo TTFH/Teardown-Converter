@@ -60,19 +60,7 @@ Vector operator*(const Quat& q, const Vector& p1) {
 }
 
 Quat QuatEuler(double roll, double yaw, double pitch) {
-	double c1 = cos(rad(roll) / 2.0);
-	double s1 = sin(rad(roll) / 2.0);
-	double c2 = cos(rad(yaw) / 2.0);
-	double s2 = sin(rad(yaw) / 2.0);
-	double c3 = cos(rad(pitch) / 2.0);
-	double s3 = sin(rad(pitch) / 2.0);
-
-	return Quat(
-		s1 * c2 * c3 + c1 * s2 * s3,
-		c1 * s2 * c3 + s1 * c2 * s3,
-		c1 * c2 * s3 - s1 * s2 * c3,
-		c1 * c2 * c3 - s1 * s2 * s3
-	);
+	return QuatEulerRad(rad(roll), rad(yaw), rad(pitch));
 }
 
 Quat QuatEulerRad(double roll, double yaw, double pitch) {
@@ -142,7 +130,7 @@ Tensor3D::Tensor3D(int sizex, int sizey, int sizez) {
 }
 
 /*
-Cicle of life:
+Cycle of life:
 This can probably be automatized by defining a custom copy constructor
 but it may cause performance loss due to overhead.
 

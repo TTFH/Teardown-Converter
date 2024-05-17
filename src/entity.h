@@ -53,40 +53,12 @@ public:
 	}
 };
 
-#define VERSION_1_5_4 154 // Changes to boundary, shape, vehicle and body
-#define VERSION_1_5_0 150 // Added scene path, list of enabled mods, extra paint color
-#define VERSION_1_4_0 140 // Added water->visibility
-#define VERSION_1_3_0 130 // Added 17 bytes to Wheel
-#define VERSION_1_2_0 120 // No changes
-#define VERSION_1_1_0 110 // Added handle to achievements.lua
-#define VERSION_1_0_0 100 // No changes
-#define VERSION_0_9_6 96 // Removed ~~Herobrine~~ Enemy spiders
-#define VERSION_0_9_5 95 // Added joint->autodisable
-#define VERSION_0_9_2 92 // Entity flags increased to 16 bits
-#define VERSION_0_9_0 90 // Added Boundary padding, Water color, blend texture, joint sound, etc.
-#define VERSION_0_8_0 80 // Added skybox->brightness, postprocessing->bloom
-#define VERSION_0_7_4 74 // Added var transitions to Script for SetValue()
-#define VERSION_0_7_2 72 // No changes
-#define VERSION_0_7_1 71 // Added stuff to env, probably snow related
-#define VERSION_0_7_0 70 // Added PostProcessing, Capsule light, vehicle->exhausts[].strength, more stuff to env, explosion.lua
-#define VERSION_0_6_2 62 // No changes
-#define VERSION_0_6_1 61 // No changes
-#define VERSION_0_5_5 55 // Added env->slippery
-#define VERSION_0_5_2 52 // No changes
-#define VERSION_0_5_1 51 // Added level name, flashlight and world body handles
-#define VERSION_0_5_0 50 // Added light->scale, removed list from Script (order of childrens?)
-#define VERSION_0_4_6 46 // No changes
-#define VERSION_0_4_5 45 // Added magic, version, fog->color
-#define VERSION_0_3_0 30 // Perf test
-
 #define SmallVec Vec
-
-typedef uint16_t EntityFlags;
 
 extern const char* EntityKindName[];
 
-struct Vertex { // vertex
-	float pos[2]; // pos
+struct Vertex {		// vertex
+	float pos[2];	// pos
 };
 
 struct Registry {
@@ -108,11 +80,6 @@ struct Sound {
 	float volume;
 };
 
-struct MeshVertex {
-	Vector position;
-	Vector normal;
-};
-
 // ------------------------------------
 
 enum EntityKind { // uint8_t
@@ -130,13 +97,13 @@ enum EntityKind { // uint8_t
 };
 
 struct Entity {
-	uint8_t kind_byte;	// TODO: type
+	uint8_t type;
 	uint32_t handle;
-	SmallVec<Tag> tags; // uint8_t size
+	SmallVec<Tag> tags;
 	string desc;		// desc
 
-	EntityFlags flags;
-	void* kind;			// TODO: self
+	uint16_t flags;
+	void* self;
 
 	Vec<Entity*> children;
 	uint32_t beef_beef;
@@ -166,26 +133,27 @@ struct Voxels {
 
 struct Shape {
 	Transform transform;
-	uint16_t shape_flags;			// 0x10 = collide
+	uint16_t shape_flags;		// collide: 0x10
 	uint8_t collision_layer;
 	uint8_t collision_mask;
-	float density;					// density
-	float strength;					// strength
-	uint16_t texture_tile;			// texture
-	uint16_t blendtexture_tile = 0;	// blendtexture
-	float texture_weight;			// texture
-	float blendtexture_weight = 1;	// blendtexture
+	float density;				// density
+	float strength;				// strength
+	uint16_t texture_tile;		// texture
+	uint16_t blendtexture_tile;	// blendtexture
+	float texture_weight;		// texture
+	float blendtexture_weight;	// blendtexture
 	Vector texture_offset;
 	float emissive_scale;
 	bool is_broken;
+	uint8_t has_voxels;
 
-	uint8_t shape_type;
 	Voxels voxels;
 	uint32_t palette;
-	float scale;					// scale = 10.0 * this
-	// 0xFFFFFFFF 0xFFFFFFFF 0x00
-	uint32_t z_u32_2[2];
+	float scale;				// scale = 10.0 * this
+	// 0xFFFFFFFF 0xFFFFFFFF
+	uint32_t z_u32_2[2]; // 8 bytes
 	bool is_disconnected;
+
 	uint8_t z3_u8;
 
 	Transform old_transform;		// helper for screen positon
@@ -203,7 +171,7 @@ struct Light {
 	uint8_t type;		// type
 	Transform transform;
 	Color color;		// color = pow(this, 1 / 2.2)
-	float scale = 1;	// scale
+	float scale;		// scale
 	float reach;		// reach
 	float size;			// size
 	float unshadowed;	// unshadowed
@@ -226,13 +194,13 @@ struct Location {
 
 struct Water {
 	Transform transform;
-	float depth;				// depth
-	float wave;					// wave
-	float ripple;				// ripple
-	float motion;				// motion
-	float foam;					// foam
-	Color color = { 0.01, 0.01, 0.01, 1 }; // color
-	float visibility = 3;		// visibility
+	float depth;		// depth
+	float wave;			// wave
+	float ripple;		// ripple
+	float motion;		// motion
+	float foam;			// foam
+	Color color; 		// color
+	float visibility;	// visibility
 	Vec<Vertex> water_vertices;
 };
 
@@ -284,8 +252,8 @@ struct VehicleSound {
 };
 
 struct VehicleProperties {
-	float topspeed;		// topspeed = 3.6 * this
-	float z1_f32;		// mostly 8.3334 ???
+	float topspeed;		// topspeed = 3.6 * this, in m/s
+	float top_speed_clamp;	// clamped to 30 Km/h, in m/s
 	float spring;		// spring
 	float damping;		// damping
 	float acceleration;	// acceleration
@@ -295,21 +263,20 @@ struct VehicleProperties {
 	bool handbrake;
 	float antispin;		// antispin
 	float steerassist;	// steerassist
-	float z3_f32;		// 1.5 ???
+	float z_f32;		// TODO: 1.5 ???
 	float antiroll;		// antiroll
 	VehicleSound sound;	// sound
-	// TODO: smokeintensity
 };
 
 struct Exhaust {
 	Transform transform;
-	float strength = 1;
+	float strength;
 };
 
 struct Vital {
 	uint32_t body_handle;
 	Vector pos;
-	float z_f32;		// 0.5 ???
+	float z_f32;		// TODO: 0.5 ???
 	uint32_t shape_handle;
 };
 
@@ -326,15 +293,15 @@ struct Vehicle {
 	float difflock;			// difflock
 	float health;
 	uint32_t main_voxel_count;
-	uint8_t z1_u8;
-	float drivable;			// 0 if nodrive
+	bool breaking;
+	float z1_f32;
 	Vec<uint32_t> refs;
 	Vec<Exhaust> exhausts;	// exhaust
 	Vec<Vital> vitals;		// vital
-	float z2_f32;
-	uint8_t z2_u8;
+	float bounds_dist;
+	bool noroll;
 	float brokenthreshold;
-	float z3_f32;
+	float z2_f32;
 };
 
 struct Wheel {
@@ -342,7 +309,7 @@ struct Wheel {
 	uint32_t vehicle_body;
 	uint32_t body;
 	uint32_t shape;
-	uint32_t z1_f32_handle;
+	uint32_t z_handle;
 	uint32_t z1_f32_3[3];
 	uint8_t z_u8;
 	Transform transform;

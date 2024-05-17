@@ -6,13 +6,9 @@
 #include <vector>
 #include <filesystem>
 
-#include <SDL.h>
-#include <SDL_opengl.h>
-#include <SDL_thread.h>
-
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
+#include "imgui/imgui.h"
+#include "imgui/backend/imgui_impl_glfw.h"
+#include "imgui/backend/imgui_impl_opengl3.h"
 #include "file_dialog/ImGuiFileDialog.h"
 
 #include "lib/tinyxml2.h"
@@ -321,7 +317,7 @@ string GetFilename(const char* path) {
 	filename = filename.substr(0, filename.find_last_of("."));
 	return filename;
 }
-
+/*
 SDL_Texture* LoadTexture(SDL_Renderer* renderer, string filename, int &width, int &height) {
 	int channels;
 	uint8_t* data = stbi_load(filename.c_str(), &width, &height, &channels, STBI_default);
@@ -347,7 +343,7 @@ SDL_Texture* LoadTexture(SDL_Renderer* renderer, string filename, int &width, in
 	stbi_image_free(data);
 	return texture_ptr;
 }
-
+*/
 int main(int argc, char* argv[]) {
 #ifdef _WIN32
 	_setmaxstdio(2048);
@@ -518,7 +514,7 @@ int main(int argc, char* argv[]) {
 
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
-			ImGui::Combo("##gameversion", &game_version, " 1.5.4\0 1.5.3\0 1.5.2\0 1.5.1\0 1.5.0\0 1.4.0\0 1.3.0\0 1.2.0\0 1.1.0\0 1.0.0\0 0.9.6\0 0.9.5\0 0.9.2\0 0.9.0\0 0.8.0\0 0.7.4\0 0.7.2\0 0.7.1\0 0.7.0\0 0.6.2\0 0.6.1\0 0.5.2\0 0.5.1\0 0.4.6\0 0.4.5\0 0.3.0\0");
+			ImGui::Combo("##gameversion", &game_version, " 1.5.4\0");
 			ImGui::PopItemWidth();
 
 			ImGui::Spacing();
@@ -639,7 +635,6 @@ int main(int argc, char* argv[]) {
 				params->legacy_format = save_as_legacy;
 
 				parse_thread = SDL_CreateThread(DecompileMap, "decompile_thread", (void*)params);
-				progress_thread = SDL_CreateThread(FakeProgressBar, "progress_thread", NULL);
 			}
 			ImGui::PopStyleColor(3);
 
@@ -675,11 +670,6 @@ int main(int argc, char* argv[]) {
 	config_root->SetAttribute("quicksave_folder", quicksave_folder);
 	config_file.SaveFile("config.xml");
 
-	if (parse_thread != NULL)
-		SDL_WaitThread(parse_thread, NULL);
-	if (progress_thread != NULL)
-		SDL_WaitThread(progress_thread, NULL);
-
 	ImGui_ImplSDLRenderer2_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();
@@ -687,7 +677,6 @@ int main(int argc, char* argv[]) {
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
-
 
 	return 0;
 }

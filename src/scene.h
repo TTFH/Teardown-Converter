@@ -31,11 +31,11 @@ extern const char* MaterialKindName[];
 bool operator==(uint8_t lhs, const MaterialKind& rhs);
 
 struct PostProcessing {
-	float brightness = 1;				// brightness
-	Color colorbalance = {1, 1, 1, 1};	// colorbalance
-	float saturation = 1;				// saturation
-	float gamma = 1;					// gamma
-	float bloom = 1;					// bloom
+	float brightness;	// brightness
+	Color colorbalance;	// colorbalance
+	float saturation;	// saturation
+	float gamma;		// gamma
+	float bloom;		// bloom
 };
 
 struct Player {
@@ -57,44 +57,46 @@ struct Sun {
 	float brightness;	// sunBrightness
 	float spread;		// sunSpread
 	float length;		// sunLength
-	float fogscale = 1;	// sunFogScale
+	float fogscale;		// sunFogScale
 	float glare;		// sunGlare
 };
 
 struct Skybox {
 	string texture;			// skybox
 	Color tint;				// skyboxtint
-	float brightness = 1;	// skyboxbrightness
+	float brightness;		// skyboxbrightness
 	float rot;				// skyboxrot in radians
 	Sun sun;
 	bool auto_sun_dir;
-	Color constant = {0.003, 0.003, 0.003, 1};	// constant
-	float ambient;								// ambient
-	float ambientexponent = 1.3;				// ambientexponent
+	Color constant;			// constant
+	float ambient;			// ambient
+	float ambientexponent;	// ambientexponent
 };
 
 struct Fog {
-	Color color = {1, 1, 1, 1};	// fogColor
+	Color color;	// fogColor
 	// fogParams:
 	float start;
-	float distance;		// end = start + distance
+	float distance;	// end = start + distance
 	float amount;
 	float exponent;
 };
 
-struct EnvWater {
-	float wetness;		// wetness
-	float puddleamount;	// puddleamount
-	float puddlesize;	// puddlesize =  0.01 / this
-	float rain;			// rain
-};
+namespace Env {
+	struct Water {
+		float wetness;		// wetness
+		float puddleamount;	// puddleamount
+		float puddlesize;	// puddlesize = 0.01 / this
+		float rain;			// rain
+	};
+}
 
 struct Snow {
-	Vector dir = {0, -1, 0};	// snowdir x y z
-	float spread = 0.2;			// snowdir spread
-	float amount = 0;			// snowamount
-	float speed = 0;			// snowamount
-	bool onground = false;		// snowonground
+	Vector dir;		// snowdir x y z
+	float spread;	// snowdir spread
+	float amount;	// snowamount
+	float speed;	// snowamount
+	bool onground;	// snowonground
 };
 
 struct Environment {
@@ -102,23 +104,23 @@ struct Environment {
 	float exposure[2];	// exposure
 	float brightness;	// brightness
 	Fog fog;
-	EnvWater water;
+	Env::Water water;
 	bool nightlight;	// nightlight
 	Sound ambience;		// ambience
-	float slippery = 0;	// slippery
-	float fogscale = 1;	// fogscale
+	float slippery;		// slippery
+	float fogscale;		// fogscale
 	Snow snow;
 	Vector wind;		// wind
-	float waterhurt = 0;// waterhurt
+	float waterhurt;	// waterhurt
 };
 
 struct Boundary {
 	Vec<Vertex> vertices;
-	float padleft = -5;		// negative
-	float padtop = -5;		// negative
-	float padright = 5;
-	float padbottom = 5;
-	float maxheight = 0;
+	float padleft;		// negative
+	float padtop;		// negative
+	float padright;
+	float padbottom;
+	float maxheight;
 };
 
 struct Fire {
@@ -138,15 +140,15 @@ struct Material {
 	float shinyness;
 	float metalness;
 	float emissive;	// [0..32]
-	bool replaceable;
+	bool is_tint;
 };
 
 struct Palette {
 	Material materials[256];
-	uint8_t z_u8;
+	bool z_u8;
 	uint8_t black_tint[4 * 256];
 	uint8_t yellow_tint[4 * 256];
-	uint8_t other_tint[4 * 256];
+	uint8_t rgba_tint[4 * 256];
 };
 
 struct Unk1 {
@@ -164,8 +166,8 @@ struct Unk2 {
 };
 
 struct Scene {
-	char magic[5];					// TDBIN
-	uint8_t version[3] = {0, 3, 0};	// version
+	char magic[5];				// TDBIN
+	uint8_t version[3];			// version
 	string level_id;
 	string level_path;
 	string layers;
@@ -173,9 +175,9 @@ struct Scene {
 	uint32_t aaa1;
 	Vec<Registry> enabled_mods;
 	Vec<Registry> spawned_mods;
-	uint32_t driven_vehicle = 0;	// driven
-	Vector shadow_volume;			// shadowVolume
-	Transform spawnpoint;			// spawnpoint
+	uint32_t driven_vehicle;	// driven
+	Vector shadow_volume;		// shadowVolume
+	Transform spawnpoint;		// spawnpoint
 	uint32_t world_body;
 	uint32_t flashlight;
 	uint32_t explosion_lua;
@@ -191,7 +193,7 @@ struct Scene {
 	uint32_t entity_count;
 	uint32_t broken_voxels;
 	Vec<Unk1> z_st1;
-	bool spraycan_in_use;
+	bool has_snow;
 	Vec<Unk2> z_st2;
 };
 

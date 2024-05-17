@@ -10,8 +10,6 @@
 
 using namespace std;
 
-extern volatile float progress;
-
 struct ConverterParams {
 	string bin_path = "";		// Path to the bin/tdbin file
 	string map_folder = "";		// Path where the map will be saved
@@ -33,11 +31,11 @@ void ParseFile(ConverterParams params);
 class TDBIN {
 protected:
 	Scene scene;
-	int tdbin_version = 0;
 	map<uint32_t, Entity*> entity_mapping;
 private:
 	FILE* bin_file;
 
+	bool ReadBool();
 	uint8_t ReadByte();
 	uint16_t ReadWord();
 	uint32_t ReadInt();
@@ -45,7 +43,6 @@ private:
 	double ReadDouble();
 	string ReadString();
 
-	uint16_t ReadEntityFlags();
 	Registry ReadRegistry();
 	Color ReadColor();
 	Vector ReadVector();

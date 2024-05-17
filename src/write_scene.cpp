@@ -46,7 +46,7 @@ void WriteXML::WriteSpawnpoint() {
 void WriteXML::WriteEnvironment() {
 	Skybox* skybox = &scene.environment.skybox;
 	Fog* fog = &scene.environment.fog;
-	EnvWater* water = &scene.environment.water;
+	Env::Water* water = &scene.environment.water;
 	Snow* snow = &scene.environment.snow;
 
 	XMLElement* environment = xml.CreateElement("environment");
@@ -173,7 +173,7 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 
 	shape->old_transform = shape->transform;
 	Palette palette = scene.palettes[shape->palette];
-	bool collide = tdbin_version < VERSION_0_9_0 || (shape->shape_flags & 0x10) != 0;
+	bool collide = shape->shape_flags & 0x10 != 0;
 
 	Tensor3D voxels(sizex, sizey, sizez);
 	voxels.FromRunLengthEncoding(shape->voxels.palette_indexes);
@@ -232,9 +232,9 @@ void WriteXML::WriteShape(XMLElement* &entity_element, Shape* shape, uint32_t ha
 		if (params.remove_snow) {
 			Entity* this_entity = entity_mapping[handle];
 			Entity* vox_parent = this_entity->parent;
-			if (vox_parent != NULL && vox_parent->kind_byte == KindBody) {
+			if (vox_parent != NULL && vox_parent->type == KindBody) {
 				Entity* vox_grandparent = vox_parent->parent;
-				if (vox_grandparent != NULL && vox_grandparent->kind_byte == KindWheel)
+				if (vox_grandparent != NULL && vox_grandparent->type == KindWheel)
 					is_wheel_shape = true;
 			}
 		}
@@ -370,14 +370,14 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 	}
 	xml.AddStrAttribute(entity_element, "tags", tags);
 
-	switch (entity->kind_byte) {
+	switch (entity->type) {
 		case KindBody: {
-			Body* body = static_cast<Body*>(entity->kind);
+			Body* body = static_cast<Body*>(entity->self);
 			entity_element->SetName("body");
 
 			Entity* body_parent = entity->parent;
-			if (body_parent != NULL && body_parent->kind_byte == KindVehicle) {
-				Vehicle* parent_vehicle = (Vehicle*)body_parent->kind;
+			if (body_parent != NULL && body_parent->type == KindVehicle) {
+				Vehicle* parent_vehicle = (Vehicle*)body_parent->self;
 				body->transform = TransformToLocalTransform(parent_vehicle->transform, body->transform);
 			}
 			WriteTransform(entity_element, body->transform);
@@ -397,20 +397,20 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindShape: {
-			Shape* shape = static_cast<Shape*>(entity->kind);
+			Shape* shape = static_cast<Shape*>(entity->self);
 			WriteShape(entity_element, shape, entity->handle);
 		}
 			break;
 		case KindLight: {
-			Light* light = static_cast<Light*>(entity->kind);
+			Light* light = static_cast<Light*>(entity->self);
 			entity_element->SetName("light");
 
 			Entity* light_parent = entity->parent;
-			if (light_parent != NULL && light_parent->kind_byte == KindShape) {
-				Shape* parent_shape = (Shape*)light_parent->kind;
+			if (light_parent != NULL && light_parent->type == KindShape) {
+				Shape* parent_shape = (Shape*)light_parent->self;
 				Transform light_tr = TransformToLocalTransform(parent_shape->transform, light->transform);
 				WriteTransform(entity_element, light_tr);
-			} else if (light_parent != NULL && light_parent->kind_byte != KindScreen && light_parent->kind_byte != KindLight)
+			} else if (light_parent != NULL && light_parent->type != KindScreen && light_parent->type != KindLight)
 				WriteTransform(entity_element, light->transform);
 
 			if (light->type == Capsule)
@@ -447,11 +447,11 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindLocation: {
-			Location* location = static_cast<Location*>(entity->kind);
+			Location* location = static_cast<Location*>(entity->self);
 			entity_element->SetName("location");
 
 			Entity* location_parent = entity->parent;
-			while (location_parent != NULL && location_parent->kind_byte != KindVehicle)
+			while (location_parent != NULL && location_parent->type != KindVehicle)
 				location_parent = location_parent->parent;
 			if (location_parent != NULL) {
 				// Location is inside a vehicle
@@ -460,28 +460,28 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			}
 
 			location_parent = entity->parent;
-			if (location_parent != NULL && location_parent->kind_byte == KindShape) {
+			if (location_parent != NULL && location_parent->type == KindShape) {
 				// The location is inside a static shape
-				Shape* parent_shape = (Shape*)location_parent->kind;
+				Shape* parent_shape = (Shape*)location_parent->self;
 				Transform loc_tr = TransformToLocalTransform(parent_shape->transform, location->transform);
 				WriteTransform(entity_element, loc_tr);
 
 				// The location is inside a dynamic body
 				Entity* location_grandparent = location_parent->parent;
-				if (location_grandparent != NULL && location_grandparent->kind_byte == KindBody) {
-					Body* grandparent_body = (Body*)location_grandparent->kind;
+				if (location_grandparent != NULL && location_grandparent->type == KindBody) {
+					Body* grandparent_body = (Body*)location_grandparent->self;
 					if (grandparent_body->dynamic) {
 						Transform location_tr = TransformToLocalTransform(grandparent_body->transform, location->transform);
 						location_tr = TransformToLocalTransform(parent_shape->transform, location_tr);
 						WriteTransform(entity_element, location_tr);
 					}
 				}
-			} else if (location_parent != NULL && location_parent->kind_byte == KindBody) {
-				Body* parent_body = (Body*)location_parent->kind;
+			} else if (location_parent != NULL && location_parent->type == KindBody) {
+				Body* parent_body = (Body*)location_parent->self;
 				Transform loc_tr = TransformToLocalTransform(parent_body->transform, location->transform);
 				WriteTransform(entity_element, loc_tr);
-			} else if (location_parent != NULL && location_parent->kind_byte == KindTrigger) {
-				Trigger* parent_trigger = (Trigger*)location_parent->kind;
+			} else if (location_parent != NULL && location_parent->type == KindTrigger) {
+				Trigger* parent_trigger = (Trigger*)location_parent->self;
 				Transform loc_tr = TransformToLocalTransform(parent_trigger->transform, location->transform);
 				WriteTransform(entity_element, loc_tr);
 			} else
@@ -489,7 +489,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindWater: {
-			Water* water = static_cast<Water*>(entity->kind);
+			Water* water = static_cast<Water*>(entity->self);
 			entity_element->SetName("water");
 			WriteTransform(entity_element, water->transform);
 			xml.AddStrAttribute(entity_element, "type", "polygon");
@@ -510,7 +510,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindJoint: {
-			Joint* joint = static_cast<Joint*>(entity->kind);
+			Joint* joint = static_cast<Joint*>(entity->self);
 			if (joint->type == _Rope) {
 				entity_element->SetName("rope");
 				xml.AddFloatAttribute(entity_element, "size", joint->size, "0.2");
@@ -540,7 +540,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindVehicle: {
-			Vehicle* vehicle = static_cast<Vehicle*>(entity->kind);
+			Vehicle* vehicle = static_cast<Vehicle*>(entity->self);
 			entity_element->SetName("vehicle");
 			WriteTransform(entity_element, vehicle->transform);
 
@@ -600,12 +600,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindWheel: {
-			Wheel* wheel = static_cast<Wheel*>(entity->kind);
+			Wheel* wheel = static_cast<Wheel*>(entity->self);
 			entity_element->SetName("wheel");
 
 			Entity* wheel_parent = entity->parent;
-			if (wheel_parent != NULL && wheel_parent->kind_byte == KindShape) {
-				Shape* parent_shape = (Shape*)wheel_parent->kind;
+			if (wheel_parent != NULL && wheel_parent->type == KindShape) {
+				Shape* parent_shape = (Shape*)wheel_parent->self;
 				Transform wheel_tr = TransformToLocalTransform(parent_shape->transform, wheel->transform);
 				WriteTransform(entity_element, wheel_tr);
 			} else
@@ -617,12 +617,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindScreen: {
-			Screen* screen = static_cast<Screen*>(entity->kind);
+			Screen* screen = static_cast<Screen*>(entity->self);
 			entity_element->SetName("screen");
 
 			Entity* screen_parent = entity->parent;
-			if (screen_parent != NULL && screen_parent->kind_byte == KindShape) {
-				Shape* parent_shape = (Shape*)screen_parent->kind;
+			if (screen_parent != NULL && screen_parent->type == KindShape) {
+				Shape* parent_shape = (Shape*)screen_parent->self;
 				// Revert applied transform
 				Transform parent_shape_tr = TransformToLocalTransform(parent_shape->old_transform, parent_shape->transform);
 				Transform screen_tr = TransformToLocalTransform(parent_shape_tr, screen->transform);
@@ -657,7 +657,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		}
 			break;
 		case KindTrigger: {
-			Trigger* trigger = static_cast<Trigger*>(entity->kind);
+			Trigger* trigger = static_cast<Trigger*>(entity->self);
 			entity_element->SetName("trigger");
 			if (trigger->type == TrBox) {
 				Vector offset = Vector(0, trigger->box_size[1], 0);
@@ -701,8 +701,8 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 }
 
 void WriteXML::WriteEntity2ndPass(Entity* entity) {
-	if (entity->kind_byte == KindVehicle) {
-		Vehicle* vehicle = static_cast<Vehicle*>(entity->kind);
+	if (entity->type == KindVehicle) {
+		Vehicle* vehicle = static_cast<Vehicle*>(entity->self);
 		int vital_count = vehicle->vitals.getSize();
 		for (int i = 0; i < vital_count; i++) {
 			uint32_t body_handle = vehicle->vitals[i].body_handle;
@@ -714,8 +714,8 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				xml.AddVectorAttribute(vital, "pos", vehicle->vitals[i].pos);
 			}
 		}
-	} else if (entity->kind_byte == KindJoint) {
-		Joint* joint = static_cast<Joint*>(entity->kind);
+	} else if (entity->type == KindJoint) {
+		Joint* joint = static_cast<Joint*>(entity->self);
 		if (joint->type != _Rope) {
 			XMLElement* entity_element = xml.CreateElement("joint");
 			// Add tags to joints
@@ -733,8 +733,8 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			XMLElement* shape_parent = xml.getNode(shape_handle);
 			if (shape_parent != NULL && entity_mapping.find(shape_handle) != entity_mapping.end()) {
 				Entity* entity = entity_mapping[shape_handle];
-				assert(entity->kind_byte == KindShape);
-				Shape* shape = static_cast<Shape*>(entity->kind);
+				assert(entity->type == KindShape);
+				Shape* shape = static_cast<Shape*>(entity->self);
 				Transform shape_tr = shape->transform;
 				Vector relative_pos = joint->shape_positions[0];
 
@@ -792,8 +792,8 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			if (shape_parent != NULL) // Ignore joints without an attached shape
 				xml.AddElement(shape_parent, entity_element, entity->handle);
 		}
-	} else if (entity->kind_byte == KindScript) {
-		Script* script = static_cast<Script*>(entity->kind);
+	} else if (entity->type == KindScript) {
+		Script* script = static_cast<Script*>(entity->self);
 		XMLElement* entity_element = xml.CreateElement("script");
 
 		string script_file = script->file;
