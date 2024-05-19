@@ -91,7 +91,5 @@ bool IsFileCompressed(const char* filename) {
 	uint8_t header[5];
 	fread(header, sizeof(uint8_t), 5, test_file);
 	fclose(test_file);
-	//return header[0] == 0x78 && header[1] == 0x9C && header[2] == 0xEC;
-	//return header[0] == 0x78 && header[1] == 0x01 && header[2] == 0xEC; // 1.5.0 quicksave
 	return strncmp((char*)header, "TDBIN", sizeof(header)) != 0;
 }

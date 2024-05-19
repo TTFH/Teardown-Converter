@@ -229,9 +229,9 @@ struct Rope {
 
 struct Joint {
 	uint32_t type;				// type
-	uint32_t shape_handles[2];	// Conected shapes handles
-	Vector shape_positions[2];	// Relative position to each shape
-	Vector shape_axes[2];		// Last column of YZX rotation matrix
+	uint32_t shapes[2];
+	Vector positions[2];
+	Vector axis[2];
 	bool connected;
 	bool collide;				// collide
 	float rotstrength;			// rotstrength

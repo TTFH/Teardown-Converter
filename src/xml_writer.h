@@ -15,11 +15,11 @@ string FloatToString(float value);
 
 class XML_Writer {
 private:
-	map<uint32_t, XMLElement*> element_mapping;
 	XMLDocument* main_xml;
 	XMLElement* scene;
 	XMLElement* props;
 	XMLElement* scripts;
+	map<uint32_t, XMLElement*> element_mapping;
 public:
 	XML_Writer();
 	~XML_Writer();
@@ -30,9 +30,8 @@ public:
 	XMLElement* getNode(uint32_t handle);
 	XMLElement* CreateElement(const char* element_name);
 
-	void MoveElement(XMLElement* new_parent, XMLElement* child); // Alias of AddElement
 	void AddElement(XMLElement* parent, XMLElement* child, uint32_t handle = 0);
-	void AddBoolAttribute(XMLElement* element, const char* name, bool value);
+	void MoveElement(XMLElement* new_parent, XMLElement* child);
 	void AddBoolAttribute(XMLElement* element, const char* name, bool value, bool default_value);
 	void AddAttribute(XMLElement* element, const char* name, const char* value);
 	void AddStrAttribute(XMLElement* element, const char* name, string value, string default_value = "");

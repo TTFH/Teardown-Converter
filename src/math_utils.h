@@ -6,7 +6,7 @@
 
 using namespace std;
 
-#define PI 3.14159265
+#define PI 3.14159265358979323846
 
 typedef vector<pair<uint8_t, uint8_t>> RLE;
 

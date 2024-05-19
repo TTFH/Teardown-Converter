@@ -54,3 +54,9 @@ Entity::~Entity() {
 			break;
 	}
 }
+/*
+Joint::~Joint() {
+	if (type == _Rope)
+		delete rope;
+}
+*/

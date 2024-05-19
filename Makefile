@@ -14,7 +14,7 @@ UNAME_S := $(shell uname -s)
 
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -g -DNDEBUG -O3
 CXXFLAGS += -std=c++17 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog -Ilib
-CXXFLAGS += -Wno-missing-field-initializers -Wno-strict-aliasing
+CXXFLAGS += -Wno-missing-field-initializers
 LIBS = -lz -lstdc++fs -lpthread
 
 ##---------------------------------------------------------------------
@@ -23,17 +23,13 @@ LIBS = -lz -lstdc++fs -lpthread
 
 ifeq ($(UNAME_S), Linux)
 	ECHO_MESSAGE = "Linux"
-	CXXFLAGS += -Wno-unused-parameter -Wno-unused-result -Wno-format-security
-	CXXFLAGS += -Wno-unused-function -Wno-implicit-fallthrough -Wno-unknown-pragmas
-	CXXFLAGS += `sdl2-config --cflags`
-	LIBS += -lGL -ldl `sdl2-config --libs`
+	CXXFLAGS += `pkg-config --cflags glfw3`
+	LIBS + -lglfw `pkg-config --static --libs glfw3`
 endif
 
 ifeq ($(OS), Windows_NT)
 	ECHO_MESSAGE = "Windows"
-	CXXFLAGS += -Wno-unused-function -Wno-implicit-fallthrough
 	CXXFLAGS += `pkg-config --cflags glfw3`
-	CXXFLAGS += -IC:/msys64/mingw64/include
 	LIBS += -lglfw3 -lgdi32 -lopengl32 -limm32 -static icon.res
 endif
 

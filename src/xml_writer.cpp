@@ -84,10 +84,6 @@ void XML_Writer::AddAttribute(XMLElement* element, const char* name, const char*
 	element->SetAttribute(name, value);
 }
 
-void XML_Writer::AddBoolAttribute(XMLElement* element, const char* name, bool value) {
-	element->SetAttribute(name, value);
-}
-
 void XML_Writer::AddBoolAttribute(XMLElement* element, const char* name, bool value, bool default_value) {
 	if (value != default_value)
 		element->SetAttribute(name, value);

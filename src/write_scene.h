@@ -25,6 +25,7 @@ private:
 	void WriteEntity(XMLElement*, Entity*);
 	void WriteTransform(XMLElement*, Transform);
 	void WriteShape(XMLElement*&, Shape*, uint32_t);
+	void WriteVertices(XMLElement* parent, const Vec<Vertex> &vertices);
 	void WriteCompound(uint32_t, const Tensor3D&, MV_FILE*, string, XMLElement*, Shape*, int, int, int);
 public:
 	WriteXML(ConverterParams params);

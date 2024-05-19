@@ -382,11 +382,11 @@ Joint* TDBIN::ReadJoint() {
 	Joint* joint = new Joint();
 	joint->type = ReadInt();
 	for (int i = 0; i < 2; i++)
-		joint->shape_handles[i] = ReadInt();
+		joint->shapes[i] = ReadInt();
 	for (int i = 0; i < 2; i++)
-			joint->shape_positions[i] = ReadVector();
+			joint->positions[i] = ReadVector();
 	for (int i = 0; i < 2; i++)
-		joint->shape_axes[i] = ReadVector();
+		joint->axis[i] = ReadVector();
 	joint->connected = ReadBool();
 	joint->collide = ReadBool();
 	joint->rotstrength = ReadFloat();
@@ -739,8 +739,29 @@ void TDBIN::parse() {
 		scene.entities[i] = ReadEntity();
 		scene.entities[i]->parent = NULL;
 	}
-	/*if (fgetc(bin_file) != EOF)
-		throw runtime_error("File size mismatch.");*/
+
+	entries = ReadInt();
+	scene.z_st1.resize(entries);
+	for (int i = 0; i < entries; i++) {
+		scene.z_st1[i].z_1 = ReadVector();
+		scene.z_st1[i].z_2 = ReadVector();
+		scene.z_st1[i].z_3 = ReadFloat();
+		scene.z_st1[i].z_4 = ReadFloat();
+		scene.z_st1[i].z_5 = ReadInt();
+		scene.z_st1[i].z_6 = ReadFloat();
+	}
+
+	scene.has_snow = ReadBool();
+
+	entries = ReadInt();
+	scene.z_st2.resize(entries);
+	for (int i = 0; i < entries; i++) {
+		scene.z_st2[i].z_1 = ReadString();
+		scene.z_st2[i].z_2 = ReadBool();
+	}
+
+	if (fgetc(bin_file) != EOF)
+		throw runtime_error("File size mismatch.");
 	printf("File parsed successfully!\n");
 }
 
