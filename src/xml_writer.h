@@ -18,7 +18,9 @@ private:
 	XMLDocument* main_xml;
 	XMLElement* scene;
 	XMLElement* props;
+	XMLElement* ropes;
 	XMLElement* scripts;
+	XMLElement* vehicles;
 	map<uint32_t, XMLElement*> element_mapping;
 public:
 	XML_Writer();
@@ -26,7 +28,9 @@ public:
 	void SaveFile(const char* filename);
 	XMLElement* getScene();
 	XMLElement* getDynamicGroup();
+	XMLElement* getRopesGroup();
 	XMLElement* getScriptsGroup();
+	XMLElement* getVehiclesGroup();
 	XMLElement* getNode(uint32_t handle);
 	XMLElement* CreateElement(const char* element_name);
 

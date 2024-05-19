@@ -280,6 +280,7 @@ Entity* TDBIN::ReadEntity() {
 		printf("[ERROR] Invalid Cow: %08X\n", entity->beef_beef);
 		exit(EXIT_FAILURE);
 	}
+	entity->parent = NULL;
 	return entity;
 }
 
@@ -787,9 +788,8 @@ void ParseFile(ConverterParams params) {
 	parser.WritePostProcessing();
 	progress = 0.5;
 	parser.WriteEntities();
-	progress = 0.75;
 	parser.SaveXML();
-	progress = 0.9;
+	progress = 0.75;
 	parser.SaveVoxFiles();
 	printf("Map successfully converted!\n");
 	progress = 1;

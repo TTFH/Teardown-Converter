@@ -12,23 +12,25 @@ double rad(double deg) {
 	return deg * (PI / 180.0);
 }
 
-float Vector::length() {
-	return sqrt(x * x + y * y + z * z);
-}
-
-bool Vector::nonZero() {
-	return x != 0 || y != 0 || z != 0;
-}
-
-static bool CompareFloat(float a, float b) {
+bool CompareFloat(float a, float b) {
 	return fabs(a - b) < 0.0001;
 }
 
-bool Vector::operator==(const Vector& v) {
-	return CompareFloat(x, v.x) && CompareFloat(y, v.y) && CompareFloat(z, v.z);
+float Vector::length() const {
+	return sqrt(x * x + y * y + z * z);
 }
 
-Vector Vector::operator+(const Vector& v) {
+bool Vector::isZero() const {
+	return CompareFloat(x, 0) && CompareFloat(y, 0) && CompareFloat(z, 0);
+}
+
+Vector Vector::normalize() const {
+	float len = length();
+	if (len == 0) return Vector(0, 0, 0);
+	return Vector(x / len, y / len, z / len);
+}
+
+Vector Vector::operator+(const Vector& v) const {
 	return Vector(x + v.x, y + v.y, z + v.z);
 }
 
@@ -36,7 +38,7 @@ Vector Vector::operator-(const Vector& v) const {
 	return Vector(x - v.x, y - v.y, z - v.z);
 }
 
-Vector Vector::operator*(float f) {
+Vector Vector::operator*(float f) const {
 	return Vector(x * f, y * f, z * f);
 }
 
@@ -103,6 +105,14 @@ void QuatToEuler(Quat q, float &bank, float &heading, float &attitude) {
 	attitude = deg(attitude);
 }
 
+Quat FromAxisAngle(Vector axis, float angle) {
+	axis = axis.normalize();
+	angle = rad(angle);
+	float s = sin(angle / 2.0);
+	float c = cos(angle / 2.0);
+	return Quat(axis.x * s, axis.y * s, axis.z * s, c);
+}
+
 // Transform one transform into the local space of another transform.
 Transform TransformToLocalTransform(const Transform& parent, const Transform& child) {
 	Transform local_tr;
@@ -110,6 +120,10 @@ Transform TransformToLocalTransform(const Transform& parent, const Transform& ch
 	local_tr.pos = inv_parent_rot * (child.pos - parent.pos);
 	local_tr.rot = inv_parent_rot * child.rot;
 	return local_tr;
+}
+
+bool Transform::isDefault() {
+	return pos.isZero() && CompareFloat(rot.x, 0) && CompareFloat(rot.y, 0) && CompareFloat(rot.z, 0) && CompareFloat(rot.w, 1);
 }
 
 Tensor3D::Tensor3D(int sizex, int sizey, int sizez) {

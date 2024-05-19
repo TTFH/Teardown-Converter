@@ -15,12 +15,12 @@ struct Vector {
 	Vector() : x(0), y(0), z(0) {}
 	Vector(float x, float y, float z) : x(x), y(y), z(z) {}
 	Vector(float v[3]) : x(v[0]), y(v[1]), z(v[2]) {}
-	float length();
-	bool nonZero();
-	bool operator==(const Vector& v);
-	Vector operator+(const Vector& v);
+	float length() const;
+	bool isZero() const;
+	Vector normalize() const;
+	Vector operator+(const Vector& v) const;
 	Vector operator-(const Vector& v) const;
-	Vector operator*(float f);
+	Vector operator*(float f) const;
 };
 
 struct Quat {
@@ -34,6 +34,7 @@ struct Transform {
 	Quat rot;
 	Transform() : pos(), rot() {}
 	Transform(Vector pos, Quat rot) : pos(pos), rot(rot) {}
+	bool isDefault();
 };
 
 class Tensor3D {
@@ -56,9 +57,11 @@ public:
 
 double deg(double rad);
 double rad(double deg);
+bool CompareFloat(float a, float b);
 Quat QuatEuler(double roll, double yaw, double pitch);
 Quat QuatEulerRad(double roll, double yaw, double pitch);
 void QuatToEuler(Quat q, float &bank, float &heading, float &attitude);
+Quat FromAxisAngle(Vector axis, float angle);
 Transform TransformToLocalTransform(const Transform& parent, const Transform& child);
 
 Quat operator*(const Quat& p, const Quat& q);

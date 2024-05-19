@@ -12,7 +12,7 @@ SOURCES += file_dialog/ImGuiFileDialog.cpp lib/tinyxml2.cpp
 OBJS = $(addprefix obj/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 
-CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -g -DNDEBUG -O3
+CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -O3 -g
 CXXFLAGS += -std=c++17 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog -Ilib
 CXXFLAGS += -Wno-missing-field-initializers
 LIBS = -lz -lstdc++fs -lpthread

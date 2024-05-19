@@ -32,8 +32,16 @@ XML_Writer::XML_Writer() {
 	main_xml->InsertFirstChild(scene);
 
 	props = main_xml->NewElement("group");
-	AddStrAttribute(props, "name", "Dynamic");
+	AddStrAttribute(props, "name", "Props");
 	AddElement(scene, props);
+
+	ropes = main_xml->NewElement("group");
+	AddStrAttribute(ropes, "name", "Ropes");
+	AddElement(scene, ropes);
+
+	vehicles = main_xml->NewElement("group");
+	AddStrAttribute(vehicles, "name", "Vehicles");
+	AddElement(scene, vehicles);
 
 	scripts = main_xml->NewElement("group");
 	AddStrAttribute(scripts, "name", "Scripts");
@@ -52,12 +60,20 @@ XMLElement* XML_Writer::getScene() {
 	return scene;
 }
 
+XMLElement* XML_Writer::getRopesGroup() {
+	return ropes;
+}
+
 XMLElement* XML_Writer::getDynamicGroup() {
 	return props;
 }
 
 XMLElement* XML_Writer::getScriptsGroup() {
 	return scripts;
+}
+
+XMLElement* XML_Writer::getVehiclesGroup() {
+	return vehicles;
 }
 
 XMLElement* XML_Writer::getNode(uint32_t handle) {
