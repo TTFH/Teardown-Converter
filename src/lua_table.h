@@ -28,9 +28,9 @@ union LuaValue {
 
 struct LuaTableEntry {
 	uint32_t key_type;
-	LuaValue key; // Only if key_type != NIL
-	uint32_t value_type; // Only if key_type != NIL
-	LuaValue value; // Only if key_type != NIL
+	LuaValue key;
+	uint32_t value_type;
+	LuaValue value;
 
 	LuaTableEntry();
 	LuaTableEntry(const LuaTableEntry& other);

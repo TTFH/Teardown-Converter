@@ -40,7 +40,7 @@ void WriteXML::WriteVertices(XMLElement* parent, const Vec<Vertex> &vertices) {
 	for (unsigned int i = 0; i < vertices.getSize(); i++) {
 		XMLElement* vertex = xml.CreateElement("vertex");
 		xml.AddElement(parent, vertex);
-		xml.AddFloatNAttribute(vertex, "pos", vertices[i].pos, 2);
+		xml.AddFloat2Attribute(vertex, "pos", vertices[i].x, vertices[i].y);
 	}
 }
 
@@ -543,13 +543,13 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			if (joint->type == _Rope) {
 				entity_element->SetName("rope");
 				xml.AddFloatAttribute(entity_element, "size", joint->size, "0.2");
-				xml.AddColorAttribute(entity_element, "color", joint->rope.color, "0 0 0");
+				xml.AddColorAttribute(entity_element, "color", joint->rope->color, "0 0 0");
 
-				int knot_count = joint->rope.knots.getSize();
+				int knot_count = joint->rope->segments.getSize();
 				if (knot_count > 0) {
 					XMLElement* location_from = xml.CreateElement("location");
-					Vector rope_start = joint->rope.knots[0].from;
-					Vector rope_end = joint->rope.knots[knot_count - 1].to;
+					Vector rope_start = joint->rope->segments[0].from;
+					Vector rope_end = joint->rope->segments[knot_count - 1].to;
 
 					xml.AddElement(entity_element, location_from);
 					xml.AddVectorAttribute(location_from, "pos", rope_start);
@@ -560,12 +560,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 					Vector rope_dir = rope_end - rope_start;
 					float rope_length = rope_dir.length();
-					float slack = joint->rope.slack - rope_length;
+					float slack = joint->rope->slack - rope_length;
 					xml.AddFloatAttribute(entity_element, "slack", slack, "0");
 				}
 
-				xml.AddFloatAttribute(entity_element, "strength", joint->rope.strength, "1");
-				xml.AddFloatAttribute(entity_element, "maxstretch", joint->rope.maxstretch, "0");
+				xml.AddFloatAttribute(entity_element, "strength", joint->rope->strength, "1");
+				xml.AddFloatAttribute(entity_element, "maxstretch", joint->rope->maxstretch, "0");
 
 				if (parent == xml.getScene())
 					parent = xml.getRopesGroup();
@@ -741,7 +741,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				XMLElement* vital = xml.CreateElement("location");
 				xml.AddElement(xml_body, vital);
 				xml.AddAttribute(vital, "tags", "vital");
-				xml.AddVectorAttribute(vital, "pos", vehicle->vitals[i].pos);
+				xml.AddVectorAttribute(vital, "pos", vehicle->vitals[i].position);
 			}
 		}
 	} else if (entity->type == KindJoint) {

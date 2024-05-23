@@ -54,9 +54,8 @@ Entity::~Entity() {
 			break;
 	}
 }
-/*
+
 Joint::~Joint() {
-	if (type == _Rope)
+	if (type == _Rope && rope != NULL)
 		delete rope;
 }
-*/

@@ -23,8 +23,9 @@ LIBS = -lz -lstdc++fs -lpthread
 
 ifeq ($(UNAME_S), Linux)
 	ECHO_MESSAGE = "Linux"
+	CXXFLAGS += -Wno-format-security -Wno-unused-result -Wno-unknown-pragmas
 	CXXFLAGS += `pkg-config --cflags glfw3`
-	LIBS + -lglfw `pkg-config --static --libs glfw3`
+	LIBS += -lglfw `pkg-config --static --libs glfw3`
 endif
 
 ifeq ($(OS), Windows_NT)

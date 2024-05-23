@@ -57,8 +57,8 @@ public:
 
 extern const char* EntityKindName[];
 
-struct Vertex {		// vertex
-	float pos[2];	// pos
+struct Vertex {	// vertex
+	float x, y;	// pos
 };
 
 struct Registry {
@@ -95,6 +95,20 @@ enum EntityKind { // uint8_t
 	KindTrigger,
 	KindScript,
 };
+
+/*
+		flags
+invisible	512
+interact	256
+nonav		128
+autobreak	64
+breakall	32
+nocull		16
+???			8
+unbreakable	4
+inherittags	2
+???			1
+*/
 
 struct Entity {
 	uint8_t type;
@@ -133,7 +147,7 @@ struct Voxels {
 
 struct Shape {
 	Transform transform;
-	uint16_t shape_flags;		// collide: 0x10
+	uint16_t shape_flags;		// collide: 0x10, default: 0x30
 	uint8_t collision_layer;
 	uint8_t collision_mask;
 	float density;				// density
@@ -154,7 +168,7 @@ struct Shape {
 	uint32_t z_u32_2[2]; // 8 bytes
 	bool is_disconnected;
 
-	uint8_t z3_u8;
+	uint8_t z3_u8;	// CreateShape: 4, default: 0
 
 	Transform old_transform;		// helper for screen positon
 };
@@ -211,7 +225,7 @@ enum JointType { // uint32_t
 	_Rope,
 };
 
-struct Knot {
+struct Segment {
 	Vector from;
 	Vector to;
 };
@@ -222,9 +236,9 @@ struct Rope {
 	float strength;		// strength
 	float maxstretch;	// maxstretch
 	float slack;		// slack
-	float z2_f32;
-	uint8_t z_u8;
-	Vec<Knot> knots;
+	float segment_length;
+	uint8_t active;
+	Vec<Segment> segments;
 };
 
 struct Joint {
@@ -236,14 +250,16 @@ struct Joint {
 	bool collide;				// collide
 	float rotstrength;			// rotstrength
 	float rotspring;			// rotspring
-	float ball_rot[4];
+	Quat hinge_rot;
 	float limits[2];			// limits (in degrees for hinge, meters for prismatic)
-	float z_f32_2[2];
+	float max_velocity;
+	float strength;
 	float size;					// size
 	bool sound;					// sound
 	bool autodisable;			// autodisable
-	float z_f32_4[2];
-	Rope rope;					// Only if type = Rope
+	float z_f32_2[2];			// TODO: for planks 3000, 0.8
+	Rope* rope;					// Only if type = Rope
+	~Joint();
 };
 
 struct VehicleSound {
@@ -263,7 +279,7 @@ struct VehicleProperties {
 	bool handbrake;
 	float antispin;		// antispin
 	float steerassist;	// steerassist
-	float z_f32;		// TODO: 1.5 ???
+	float z_f32;		// TODO: 1.5
 	float antiroll;		// antiroll
 	VehicleSound sound;	// sound
 };
@@ -275,9 +291,9 @@ struct Exhaust {
 
 struct Vital {
 	uint32_t body_handle;
-	Vector pos;
-	float z_f32;		// TODO: 0.5 ???
-	uint32_t shape_handle;
+	Vector position;
+	float z_f32;			// TODO: 0.5
+	uint32_t shape_handle;	// TODO: not a handle
 };
 
 struct Vehicle {
@@ -293,7 +309,7 @@ struct Vehicle {
 	float difflock;			// difflock
 	float health;
 	uint32_t main_voxel_count;
-	bool breaking;
+	bool braking;
 	float z1_f32;
 	Vec<uint32_t> refs;
 	Vec<Exhaust> exhausts;	// exhaust
@@ -301,7 +317,7 @@ struct Vehicle {
 	float bounds_dist;
 	bool noroll;
 	float brokenthreshold;
-	float z2_f32;
+	float smokeintensity;
 };
 
 struct Wheel {
@@ -309,18 +325,19 @@ struct Wheel {
 	uint32_t vehicle_body;
 	uint32_t body;
 	uint32_t shape;
-	uint32_t z_handle;
-	uint32_t z1_f32_3[3];
-	uint8_t z_u8;
-	Transform transform;
-	Transform empty_transform;
+	uint32_t ground_shape;
+	uint32_t ground_voxel_pos[3];
+	bool z_u8;
+	Transform transform;	// in the vehicle body local space
+	Transform transform2;	// in the wheel body local space
 	float steer;			// steer
 	float drive;			// drive
 	float travel[2];		// travel
 	float radius;
 	float width;
 	float angular_speed;
-	float z2_f32_2[2];
+	float z_f32_1;
+	float z_f32_2;
 };
 
 struct Screen {
@@ -380,8 +397,8 @@ struct Script {
 	Vec<Registry> params;	// param%d
 	float last_update;
 	float time;
-	uint32_t z_u32;
-	LuaTable table;
+	uint32_t variables_count;
+	LuaTable variables;
 	Vec<uint32_t> entity_handles;
 	Vec<ScriptSound> sounds;
 	Vec<ValueTransition> transitions;

@@ -143,21 +143,21 @@ Palette TDBIN::ReadPalette() {
 	return p;
 }
 
-Rope TDBIN::ReadRope() {
-	Rope rope;
-	rope.color = ReadColor();
-	rope.z_f32 = ReadFloat();
-	rope.strength = ReadFloat();
-	rope.maxstretch = ReadFloat();
-	rope.slack = ReadFloat();
-	rope.z2_f32 = ReadFloat();
-	rope.z_u8 = ReadByte();
+Rope* TDBIN::ReadRope() {
+	Rope* rope = new Rope();
+	rope->color = ReadColor();
+	rope->z_f32 = ReadFloat();
+	rope->strength = ReadFloat();
+	rope->maxstretch = ReadFloat();
+	rope->slack = ReadFloat();
+	rope->segment_length = ReadFloat();
+	rope->active = ReadByte();
 
-	int knot_count = ReadInt();
-	rope.knots.resize(knot_count);
-	for (int i = 0; i < knot_count; i++) {
-		rope.knots[i].from = ReadVector();
-		rope.knots[i].to = ReadVector();
+	int segments = ReadInt();
+	rope->segments.resize(segments);
+	for (int i = 0; i < segments; i++) {
+		rope->segments[i].from = ReadVector();
+		rope->segments[i].to = ReadVector();
 	}
 	return rope;
 }
@@ -373,8 +373,8 @@ Water* TDBIN::ReadWater() {
 	int vertex_count = ReadInt();
 	water->water_vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++) {
-		water->water_vertices[i].pos[0] = ReadFloat();
-		water->water_vertices[i].pos[1] = ReadFloat();
+		water->water_vertices[i].x = ReadFloat();
+		water->water_vertices[i].y = ReadFloat();
 	}
 	return water;
 }
@@ -392,8 +392,10 @@ Joint* TDBIN::ReadJoint() {
 	joint->collide = ReadBool();
 	joint->rotstrength = ReadFloat();
 	joint->rotspring = ReadFloat();
-	for (int i = 0; i < 4; i++)
-		joint->ball_rot[i] = ReadFloat();
+	joint->hinge_rot.x = ReadFloat();
+	joint->hinge_rot.y = ReadFloat();
+	joint->hinge_rot.z = ReadFloat();
+	joint->hinge_rot.w = ReadFloat();
 	for (int i = 0; i < 2; i++)
 		joint->limits[i] = ReadFloat();
 	for (int i = 0; i < 2; i++)
@@ -402,9 +404,11 @@ Joint* TDBIN::ReadJoint() {
 	joint->sound = ReadBool();
 	joint->autodisable = ReadBool();
 	for (int i = 0; i < 2; i++)
-		joint->z_f32_4[i] = ReadFloat();
+		joint->z_f32_2[i] = ReadFloat();
 	if (joint->type == _Rope)
 		joint->rope = ReadRope();
+	else
+		joint->rope = NULL;
 	return joint;
 }
 
@@ -428,7 +432,7 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->difflock = ReadFloat();
 	vehicle->health = ReadFloat();
 	vehicle->main_voxel_count = ReadInt();
-	vehicle->breaking = ReadBool();
+	vehicle->braking = ReadBool();
 	vehicle->z1_f32 = ReadFloat();
 
 	int ref_count = ReadInt();
@@ -447,14 +451,14 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->vitals.resize(vital_count);
 	for (int i = 0; i < vital_count; i++) {
 		vehicle->vitals[i].body_handle = ReadInt();
-		vehicle->vitals[i].pos = ReadVector();
+		vehicle->vitals[i].position = ReadVector();
 		vehicle->vitals[i].z_f32 = ReadFloat();
 		vehicle->vitals[i].shape_handle = ReadInt();
 	}
-	vehicle->z2_f32 = ReadFloat();
+	vehicle->bounds_dist = ReadFloat();
 	vehicle->noroll = ReadBool();
 	vehicle->brokenthreshold = ReadFloat();
-	vehicle->z2_f32 = ReadFloat();
+	vehicle->smokeintensity = ReadFloat();
 	return vehicle;
 }
 
@@ -464,12 +468,12 @@ Wheel* TDBIN::ReadWheel() {
 	wheel->vehicle_body = ReadInt();
 	wheel->body = ReadInt();
 	wheel->shape = ReadInt();
-	wheel->z_handle = ReadInt();
+	wheel->ground_shape = ReadInt();
 	for (int i = 0; i < 3; i++)
-		wheel->z1_f32_3[i] = ReadInt();
+		wheel->ground_voxel_pos[i] = ReadInt();
 	wheel->z_u8 = ReadByte();
 	wheel->transform = ReadTransform();
-	wheel->empty_transform = ReadTransform();
+	wheel->transform2 = ReadTransform();
 	wheel->steer = ReadFloat();
 	wheel->drive = ReadFloat();
 	for (int i = 0; i < 2; i++)
@@ -477,8 +481,8 @@ Wheel* TDBIN::ReadWheel() {
 	wheel->radius = ReadFloat();
 	wheel->width = ReadFloat();
 	wheel->angular_speed = ReadFloat();
-	for (int i = 0; i < 2; i++)
-		wheel->z2_f32_2[i] = ReadFloat();
+	wheel->z_f32_1 = ReadFloat();
+	wheel->z_f32_2 = ReadFloat();
 	return wheel;
 }
 
@@ -512,8 +516,8 @@ Trigger* TDBIN::ReadTrigger() {
 	int vertex_count = ReadInt();
 	trigger->polygon_vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++) {
-		trigger->polygon_vertices[i].pos[0] = ReadFloat();
-		trigger->polygon_vertices[i].pos[1] = ReadFloat();
+		trigger->polygon_vertices[i].x = ReadFloat();
+		trigger->polygon_vertices[i].y = ReadFloat();
 	}
 	trigger->sound.path = ReadString();
 	trigger->sound.soundramp = ReadFloat();
@@ -533,8 +537,8 @@ Script* TDBIN::ReadScript() {
 
 	script->last_update = ReadFloat();
 	script->time = ReadFloat();
-	script->z_u32 = ReadInt();
-	script->table = ReadLuaTable();
+	script->variables_count = ReadInt();
+	script->variables = ReadLuaTable();
 
 	int entities = ReadInt();
 	script->entity_handles.resize(entities);
@@ -710,8 +714,8 @@ void TDBIN::parse() {
 	int vertex_count = ReadInt();
 	boundary->vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++) {
-		boundary->vertices[i].pos[0] = ReadFloat();
-		boundary->vertices[i].pos[1] = ReadFloat();
+		boundary->vertices[i].x = ReadFloat();
+		boundary->vertices[i].y = ReadFloat();
 	}
 	boundary->padleft = ReadFloat();
 	boundary->padtop = ReadFloat();

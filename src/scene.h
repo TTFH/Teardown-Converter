@@ -8,7 +8,7 @@
 
 using namespace std;
 
-enum class MaterialKind : uint8_t {
+enum MaterialKind : uint8_t {
 	None,
 	Glass,
 	Wood,
@@ -27,8 +27,6 @@ enum class MaterialKind : uint8_t {
 };
 
 extern const char* MaterialKindName[];
-
-bool operator==(uint8_t lhs, const MaterialKind& rhs);
 
 struct PostProcessing {
 	float brightness;	// brightness
@@ -172,9 +170,11 @@ struct Scene {
 	string level_path;
 	string layers;
 	string mod;
+
 	uint32_t aaa1;
 	Vec<Registry> enabled_mods;
 	Vec<Registry> spawned_mods;
+
 	uint32_t driven_vehicle;	// driven
 	Vector shadow_volume;		// shadowVolume
 	Transform spawnpoint;		// spawnpoint

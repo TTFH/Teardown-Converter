@@ -53,7 +53,7 @@ private:
 
 	Fire ReadFire();
 	Palette ReadPalette();
-	Rope ReadRope();
+	Rope* ReadRope();
 	Tag ReadTag();
 	VehicleProperties ReadVehicleProperties();
 	Voxels ReadVoxels();
