@@ -182,7 +182,7 @@ VehicleProperties TDBIN::ReadVehicleProperties() {
 	properties.handbrake = ReadBool();
 	properties.antispin = ReadFloat();
 	properties.steerassist = ReadFloat();
-	properties.z_f32 = ReadFloat();
+	properties.z_f32_1 = ReadFloat();
 	properties.antiroll = ReadFloat();
 	properties.sound.name = ReadString();
 	properties.sound.pitch = ReadFloat();
@@ -207,7 +207,7 @@ Voxels TDBIN::ReadVoxels() {
 	return voxels;
 }
 
-LuaValue TDBIN::ReadLuaValue(uint32_t key_type) {
+LuaValue TDBIN::ReadLuaValue(LuaType key_type) {
 	LuaValue value;
 	switch (key_type) {
 		case Boolean:
@@ -232,6 +232,10 @@ LuaValue TDBIN::ReadLuaValue(uint32_t key_type) {
 		case Reference:
 			value.Reference = ReadInt();
 			break;
+		case NIL:
+			break;
+		default:
+			break;
 	}
 	return value;
 }
@@ -239,12 +243,12 @@ LuaValue TDBIN::ReadLuaValue(uint32_t key_type) {
 LuaTable TDBIN::ReadLuaTable() {
 	LuaTable table;
 	do {
-		LuaTableEntry table_entry;
-		table_entry.key_type = ReadInt();
-		if (table_entry.key_type == NIL) break;
-		table_entry.key = ReadLuaValue(table_entry.key_type);
-		table_entry.value_type = ReadInt();
-		table_entry.value = ReadLuaValue(table_entry.value_type);
+		LuaTableEntry* table_entry = new LuaTableEntry();
+		table_entry->key_type = (LuaType)ReadInt();
+		if (table_entry->key_type == NIL) break;
+		table_entry->key = ReadLuaValue(table_entry->key_type);
+		table_entry->value_type = (LuaType)ReadInt();
+		table_entry->value = ReadLuaValue(table_entry->value_type);
 		table.push_back(table_entry);
 	} while (true);
 	return table;
@@ -323,7 +327,7 @@ Shape* TDBIN::ReadShape() {
 	for (int i = 0; i < 2; i++)
 		shape->z_u32_2[i] = ReadInt();
 	shape->is_disconnected = ReadByte();
-	shape->z3_u8 = ReadByte();
+	shape->z_u8 = ReadByte();
 	return shape;
 }
 
@@ -433,7 +437,7 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->health = ReadFloat();
 	vehicle->main_voxel_count = ReadInt();
 	vehicle->braking = ReadBool();
-	vehicle->z1_f32 = ReadFloat();
+	vehicle->z_f32_2 = ReadFloat();
 
 	int ref_count = ReadInt();
 	vehicle->refs.resize(ref_count);
@@ -559,8 +563,8 @@ Script* TDBIN::ReadScript() {
 		script->transitions[i].kind = ReadByte();
 		script->transitions[i].transition_time = ReadFloat();
 		script->transitions[i].time = ReadFloat();
-		script->transitions[i].z1_f32 = ReadFloat();
-		script->transitions[i].z2_f32 = ReadFloat();
+		script->transitions[i].z_f32_1 = ReadFloat();
+		script->transitions[i].z_f32_2 = ReadFloat();
 	}
 	return script;
 }
@@ -785,6 +789,7 @@ void ParseFile(ConverterParams params) {
 		create_directories(params.map_folder + (params.legacy_format ? "custom" : "vox"));
 	}
 	progress = 0.25;
+	printf("Generating XML file...\n");
 	parser.WriteScene();
 	parser.WriteSpawnpoint();
 	parser.WriteEnvironment();
@@ -794,6 +799,7 @@ void ParseFile(ConverterParams params) {
 	parser.WriteEntities();
 	parser.SaveXML();
 	progress = 0.75;
+	printf("Saving vox files...\n");
 	parser.SaveVoxFiles();
 	printf("Map successfully converted!\n");
 	progress = 1;

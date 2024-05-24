@@ -54,6 +54,7 @@ public:
 };
 
 #define SmallVec Vec
+typedef uint32_t handle;
 
 extern const char* EntityKindName[];
 
@@ -168,7 +169,7 @@ struct Shape {
 	uint32_t z_u32_2[2]; // 8 bytes
 	bool is_disconnected;
 
-	uint8_t z3_u8;	// CreateShape: 4, default: 0
+	uint8_t z_u8;	// CreateShape: 4, default: 0
 
 	Transform old_transform;		// helper for screen positon
 };
@@ -279,7 +280,7 @@ struct VehicleProperties {
 	bool handbrake;
 	float antispin;		// antispin
 	float steerassist;	// steerassist
-	float z_f32;		// TODO: 1.5
+	float z_f32_1;		// TODO: 1.5
 	float antiroll;		// antiroll
 	VehicleSound sound;	// sound
 };
@@ -310,7 +311,7 @@ struct Vehicle {
 	float health;
 	uint32_t main_voxel_count;
 	bool braking;
-	float z1_f32;
+	float z_f32_2;
 	Vec<uint32_t> refs;
 	Vec<Exhaust> exhausts;	// exhaust
 	Vec<Vital> vitals;		// vital
@@ -388,13 +389,14 @@ struct ValueTransition {
 	uint8_t kind;
 	float transition_time;
 	float time;
-	float z1_f32;
-	float z2_f32;
+	float z_f32_1;
+	float z_f32_2;
 };
 
 struct Script {
 	string file;			// file
 	Vec<Registry> params;	// param%d
+
 	float last_update;
 	float time;
 	uint32_t variables_count;
@@ -402,6 +404,7 @@ struct Script {
 	Vec<uint32_t> entity_handles;
 	Vec<ScriptSound> sounds;
 	Vec<ValueTransition> transitions;
+	~Script();
 };
 
 #endif

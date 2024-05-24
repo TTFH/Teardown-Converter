@@ -6,7 +6,7 @@
 
 using namespace std;
 
-enum LuaType { // uint32_t
+enum LuaType : uint32_t {
 	NIL = 0,
 	Boolean = 1,
 	Number = 3,
@@ -16,24 +16,24 @@ enum LuaType { // uint32_t
 };
 
 struct LuaTableEntry;
-typedef vector<LuaTableEntry> LuaTable;
+typedef vector<LuaTableEntry*> LuaTable;
 
 union LuaValue {
 	bool Boolean;
 	double Number;
-	LuaTable* Table;
 	char* String;
+	LuaTable* Table;
 	uint32_t Reference;
 };
 
 struct LuaTableEntry {
-	uint32_t key_type;
+	LuaType key_type;
 	LuaValue key;
-	uint32_t value_type;
+	LuaType value_type;
 	LuaValue value;
 
 	LuaTableEntry();
-	LuaTableEntry(const LuaTableEntry& other);
+	LuaTableEntry(const LuaTableEntry& other) = delete;
 	LuaTableEntry& operator=(const LuaTableEntry& other) = delete;
 	~LuaTableEntry();
 };

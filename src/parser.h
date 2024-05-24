@@ -58,7 +58,7 @@ private:
 	VehicleProperties ReadVehicleProperties();
 	Voxels ReadVoxels();
 
-	LuaValue ReadLuaValue(uint32_t);
+	LuaValue ReadLuaValue(LuaType);
 	LuaTable ReadLuaTable();
 
 	Entity* ReadEntity();

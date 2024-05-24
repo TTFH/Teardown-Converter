@@ -30,6 +30,7 @@ endif
 
 ifeq ($(OS), Windows_NT)
 	ECHO_MESSAGE = "Windows"
+	CXXFLAGS += -Wno-stringop-overflow
 	CXXFLAGS += `pkg-config --cflags glfw3`
 	LIBS += -lglfw3 -lgdi32 -lopengl32 -limm32 -static icon.res
 endif

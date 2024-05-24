@@ -28,6 +28,8 @@ enum MaterialKind : uint8_t {
 
 extern const char* MaterialKindName[];
 
+bool operator==(uint8_t lhs, const MaterialKind& rhs);
+
 struct PostProcessing {
 	float brightness;	// brightness
 	Color colorbalance;	// colorbalance

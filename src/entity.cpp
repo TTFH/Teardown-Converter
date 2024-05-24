@@ -59,3 +59,8 @@ Joint::~Joint() {
 	if (type == _Rope && rope != NULL)
 		delete rope;
 }
+
+Script::~Script() {
+	for (LuaTable::iterator it = variables.begin(); it != variables.end(); it++)
+		delete *it;
+}

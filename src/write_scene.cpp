@@ -143,7 +143,6 @@ void WriteXML::SaveXML() {
 }
 
 void WriteXML::SaveVoxFiles() {
-	printf("Saving vox files...\n");
 	for (map<uint32_t, MV_FILE*>::iterator it = vox_files.begin(); it != vox_files.end(); it++)
 		it->second->SaveModel(params.compress_vox);
 	for (vector<MV_FILE*>::iterator it = compound_files.begin(); it != compound_files.end(); it++)
