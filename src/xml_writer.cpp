@@ -31,6 +31,7 @@ XML_Writer::XML_Writer() {
 	scene = main_xml->NewElement("scene");
 	main_xml->InsertFirstChild(scene);
 
+	// TODO: init after PostProcessing
 	props = main_xml->NewElement("group");
 	AddStrAttribute(props, "name", "Props");
 	AddElement(scene, props);

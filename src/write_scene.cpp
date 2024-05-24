@@ -758,6 +758,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			}
 			xml.AddStrAttribute(entity_element, "tags", tags);
 
+			// TODO: Fix rotation
 			uint32_t shape_handle = joint->shapes[0];
 			if (shape_handle == 0) return;
 			assert(entity_mapping.find(shape_handle) != entity_mapping.end());

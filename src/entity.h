@@ -146,6 +146,14 @@ struct Voxels {
 	RLE palette_indexes;
 };
 
+enum ShapeOrigin : uint8_t {
+	Tool = 1,
+	MapInit,
+	Debris,
+	CreateShape,
+	Spawn,
+};
+
 struct Shape {
 	Transform transform;
 	uint16_t shape_flags;		// collide: 0x10, default: 0x30
@@ -169,7 +177,7 @@ struct Shape {
 	uint32_t z_u32_2[2]; // 8 bytes
 	bool is_disconnected;
 
-	uint8_t z_u8;	// CreateShape: 4, default: 0
+	uint8_t origin;
 
 	Transform old_transform;		// helper for screen positon
 };
@@ -198,7 +206,7 @@ struct Light {
 	float capsule_size;	// size.x = 2.0 * this
 	Vector position;
 	uint8_t index;
-	float z_f32;
+	float flickering;
 	Sound sound;		// sound
 	float glare;		// glare
 };
@@ -276,7 +284,7 @@ struct VehicleProperties {
 	float acceleration;	// acceleration
 	float strength;		// strength
 	float friction;		// friction
-	float max_steering_angle; // in rad, always 30°
+	float max_steer_angle; // in rad, always 30°
 	bool handbrake;
 	float antispin;		// antispin
 	float steerassist;	// steerassist
@@ -311,7 +319,7 @@ struct Vehicle {
 	float health;
 	uint32_t main_voxel_count;
 	bool braking;
-	float z_f32_2;
+	float passive_brake;
 	Vec<uint32_t> refs;
 	Vec<Exhaust> exhausts;	// exhaust
 	Vec<Vital> vitals;		// vital
@@ -397,8 +405,8 @@ struct Script {
 	string file;			// file
 	Vec<Registry> params;	// param%d
 
-	float last_update;
-	float time;
+	float tick_time;
+	float update_time;
 	uint32_t variables_count;
 	LuaTable variables;
 	Vec<uint32_t> entity_handles;

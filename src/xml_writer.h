@@ -21,6 +21,7 @@ private:
 	XMLElement* ropes;
 	XMLElement* scripts;
 	XMLElement* vehicles;
+	// TODO: Water, Triggers
 	map<uint32_t, XMLElement*> element_mapping;
 public:
 	XML_Writer();

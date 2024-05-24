@@ -178,7 +178,7 @@ VehicleProperties TDBIN::ReadVehicleProperties() {
 	properties.acceleration = ReadFloat();
 	properties.strength = ReadFloat();
 	properties.friction = ReadFloat();
-	properties.max_steering_angle = ReadFloat();
+	properties.max_steer_angle = ReadFloat();
 	properties.handbrake = ReadBool();
 	properties.antispin = ReadFloat();
 	properties.steerassist = ReadFloat();
@@ -327,7 +327,7 @@ Shape* TDBIN::ReadShape() {
 	for (int i = 0; i < 2; i++)
 		shape->z_u32_2[i] = ReadInt();
 	shape->is_disconnected = ReadByte();
-	shape->z_u8 = ReadByte();
+	shape->origin = ReadByte();
 	return shape;
 }
 
@@ -351,7 +351,7 @@ Light* TDBIN::ReadLight() {
 	light->capsule_size = ReadFloat();
 	light->position = ReadVector();
 	light->index = ReadByte();
-	light->z_f32 = ReadFloat();
+	light->flickering = ReadFloat();
 	light->sound.path = ReadString();
 	light->sound.volume = ReadFloat();
 	light->glare = ReadFloat();
@@ -437,7 +437,7 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->health = ReadFloat();
 	vehicle->main_voxel_count = ReadInt();
 	vehicle->braking = ReadBool();
-	vehicle->z_f32_2 = ReadFloat();
+	vehicle->passive_brake = ReadFloat();
 
 	int ref_count = ReadInt();
 	vehicle->refs.resize(ref_count);
@@ -539,8 +539,8 @@ Script* TDBIN::ReadScript() {
 	for (int i = 0; i < entries; i++)
 		script->params[i] = ReadRegistry();
 
-	script->last_update = ReadFloat();
-	script->time = ReadFloat();
+	script->tick_time = ReadFloat();
+	script->update_time = ReadFloat();
 	script->variables_count = ReadInt();
 	script->variables = ReadLuaTable();
 
