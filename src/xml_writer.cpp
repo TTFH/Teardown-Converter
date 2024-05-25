@@ -30,11 +30,20 @@ XML_Writer::XML_Writer() {
 	main_xml = new XMLDocument();
 	scene = main_xml->NewElement("scene");
 	main_xml->InsertFirstChild(scene);
+}
 
-	// TODO: init after PostProcessing
+void XML_Writer::PostInit() {
 	props = main_xml->NewElement("group");
 	AddStrAttribute(props, "name", "Props");
 	AddElement(scene, props);
+
+	locations = main_xml->NewElement("group");
+	AddStrAttribute(locations, "name", "Locations");
+	AddElement(scene, locations);
+
+	water = main_xml->NewElement("group");
+	AddStrAttribute(water, "name", "Water");
+	AddElement(scene, water);
 
 	ropes = main_xml->NewElement("group");
 	AddStrAttribute(ropes, "name", "Ropes");
@@ -44,9 +53,30 @@ XML_Writer::XML_Writer() {
 	AddStrAttribute(vehicles, "name", "Vehicles");
 	AddElement(scene, vehicles);
 
+	triggers = main_xml->NewElement("group");
+	AddStrAttribute(triggers, "name", "Triggers");
+	AddElement(scene, triggers);
+
 	scripts = main_xml->NewElement("group");
 	AddStrAttribute(scripts, "name", "Scripts");
 	AddElement(scene, scripts);
+}
+
+void XML_Writer::ClearEmptyGroups() {
+	if (props->NoChildren())
+		scene->DeleteChild(props);
+	if (locations->NoChildren())
+		scene->DeleteChild(locations);
+	if (water->NoChildren())
+		scene->DeleteChild(water);
+	if (ropes->NoChildren())
+		scene->DeleteChild(ropes);
+	if (vehicles->NoChildren())
+		scene->DeleteChild(vehicles);
+	if (triggers->NoChildren())
+		scene->DeleteChild(triggers);
+	if (scripts->NoChildren())
+		scene->DeleteChild(scripts);
 }
 
 XML_Writer::~XML_Writer() {
@@ -57,27 +87,39 @@ void XML_Writer::SaveFile(const char* filename) {
 	main_xml->SaveFile(filename);
 }
 
-XMLElement* XML_Writer::getScene() {
+XMLElement* XML_Writer::GetScene() {
 	return scene;
 }
 
-XMLElement* XML_Writer::getRopesGroup() {
-	return ropes;
-}
-
-XMLElement* XML_Writer::getDynamicGroup() {
+XMLElement* XML_Writer::GetDynamicGroup() {
 	return props;
 }
 
-XMLElement* XML_Writer::getScriptsGroup() {
-	return scripts;
+XMLElement* XML_Writer::GetLocationsGroup() {
+	return locations;
 }
 
-XMLElement* XML_Writer::getVehiclesGroup() {
+XMLElement* XML_Writer::GetWaterGroup() {
+	return water;
+}
+
+XMLElement* XML_Writer::GetRopesGroup() {
+	return ropes;
+}
+
+XMLElement* XML_Writer::GetVehiclesGroup() {
 	return vehicles;
 }
 
-XMLElement* XML_Writer::getNode(uint32_t handle) {
+XMLElement* XML_Writer::GetTriggersGroup() {
+	return triggers;
+}
+
+XMLElement* XML_Writer::GetScriptsGroup() {
+	return scripts;
+}
+
+XMLElement* XML_Writer::GetNode(uint32_t handle) {
 	if (element_mapping.find(handle) != element_mapping.end())
 		return element_mapping[handle];
 	return NULL;

@@ -71,7 +71,7 @@ void UncompressFile(const char* input_file, const char* output_file) {
 	fread(compressed_data, sizeof(uint8_t), compressed_size, bin_file);
 	fclose(bin_file);
 
-	long int uncompressed_size = 2 << 27;
+	long int uncompressed_size = 2 << 27; // TODO: Dynamic allocation / Memory buffer
 	uint8_t* uncompressed_data = new uint8_t[uncompressed_size];
 	if (ZlibUncompress(compressed_data, compressed_size, uncompressed_data, uncompressed_size)) {
 		FILE* tdbin_file = fopen(output_file, "wb");

@@ -750,14 +750,14 @@ void TDBIN::parse() {
 	}
 
 	entries = ReadInt();
-	scene.z_st1.resize(entries);
+	scene.projectiles.resize(entries);
 	for (int i = 0; i < entries; i++) {
-		scene.z_st1[i].z_1 = ReadVector();
-		scene.z_st1[i].z_2 = ReadVector();
-		scene.z_st1[i].z_3 = ReadFloat();
-		scene.z_st1[i].z_4 = ReadFloat();
-		scene.z_st1[i].z_5 = ReadInt();
-		scene.z_st1[i].z_6 = ReadFloat();
+		scene.projectiles[i].origin = ReadVector();
+		scene.projectiles[i].direction = ReadVector();
+		scene.projectiles[i].dist = ReadFloat();
+		scene.projectiles[i].max_dist = ReadFloat();
+		scene.projectiles[i].type = ReadInt();
+		scene.projectiles[i].strength = ReadFloat();
 	}
 
 	scene.has_snow = ReadBool();
@@ -766,6 +766,11 @@ void TDBIN::parse() {
 	scene.z_st2.resize(entries);
 	for (int i = 0; i < entries; i++) {
 		scene.z_st2[i].z_1 = ReadString();
+		if (scene.z_st2[i].z_1 != "snd") {
+			printf("--------------------------------------------------------------------------------\n");
+			printf("Please share this quicksave on Github or Discord to help improve this converter.\n");
+			printf("--------------------------------------------------------------------------------\n");
+		}
 		scene.z_st2[i].z_2 = ReadBool();
 	}
 

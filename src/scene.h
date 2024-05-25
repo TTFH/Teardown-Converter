@@ -151,13 +151,19 @@ struct Palette {
 	uint8_t rgba_tint[4 * 256];
 };
 
-struct Unk1 {
-	Vector z_1;
-	Vector z_2;
-	float z_3;
-	float z_4;
-	uint32_t z_5;
-	float z_6;
+enum ProjectileType : uint32_t {
+	Gun = 0,
+	Rocket = 2,
+	Bullet = 5,
+};
+
+struct Projectile {
+	Vector origin;
+	Vector direction;
+	float dist;
+	float max_dist;
+	uint32_t type;
+	float strength;
 };
 
 struct Unk2 {
@@ -194,7 +200,7 @@ struct Scene {
 	Vec<Entity*> entities;
 	uint32_t entity_count;
 	uint32_t broken_voxels;
-	Vec<Unk1> z_st1;
+	Vec<Projectile> projectiles;
 	bool has_snow;
 	Vec<Unk2> z_st2;
 };

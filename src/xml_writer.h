@@ -18,21 +18,28 @@ private:
 	XMLDocument* main_xml;
 	XMLElement* scene;
 	XMLElement* props;
+	XMLElement* locations;
+	XMLElement* water;
 	XMLElement* ropes;
-	XMLElement* scripts;
 	XMLElement* vehicles;
-	// TODO: Water, Triggers
+	XMLElement* triggers;
+	XMLElement* scripts;
 	map<uint32_t, XMLElement*> element_mapping;
 public:
 	XML_Writer();
+	void PostInit();
+	void ClearEmptyGroups();
 	~XML_Writer();
 	void SaveFile(const char* filename);
-	XMLElement* getScene();
-	XMLElement* getDynamicGroup();
-	XMLElement* getRopesGroup();
-	XMLElement* getScriptsGroup();
-	XMLElement* getVehiclesGroup();
-	XMLElement* getNode(uint32_t handle);
+	XMLElement* GetScene();
+	XMLElement* GetDynamicGroup();
+	XMLElement* GetLocationsGroup();
+	XMLElement* GetWaterGroup();
+	XMLElement* GetRopesGroup();
+	XMLElement* GetVehiclesGroup();
+	XMLElement* GetTriggersGroup();
+	XMLElement* GetScriptsGroup();
+	XMLElement* GetNode(uint32_t handle);
 	XMLElement* CreateElement(const char* element_name);
 
 	void AddElement(XMLElement* parent, XMLElement* child, uint32_t handle = 0);
