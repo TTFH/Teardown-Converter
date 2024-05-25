@@ -167,6 +167,7 @@ void WriteXML::WriteEntities() {
 		WriteEntity2ndPass(scene.entities[i]);
 }
 
+// TODO: refactor
 void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_element, Entity* entity) {
 	assert(entity->type == KindShape);
 	Shape* shape = static_cast<Shape*>(entity->self);
@@ -216,8 +217,7 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 
 	bool is_prop = false;
 	if (shape->transform.isDefault()) {
-		assert(entity_mapping.find(handle) != entity_mapping.end());
-		Entity* parent_entity = entity_mapping[handle]->parent;
+		Entity* parent_entity = entity->parent;
 		assert(parent_entity != NULL);
 		assert(parent_entity->type == KindBody);
 		Body* parent_body = static_cast<Body*>(parent_entity->self);
@@ -257,8 +257,7 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 
 		bool is_wheel_shape = false;
 		if (params.remove_snow) {
-			Entity* this_entity = entity_mapping[handle];
-			Entity* vox_parent = this_entity->parent;
+			Entity* vox_parent = entity->parent;
 			if (vox_parent != NULL && vox_parent->type == KindBody) {
 				Entity* vox_grandparent = vox_parent->parent;
 				if (vox_grandparent != NULL && vox_grandparent->type == KindWheel)
@@ -764,28 +763,32 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			XMLElement* entity_element = xml.CreateElement("joint");
 			xml.AddStrAttribute(entity_element, "tags", ConcatTags(entity->tags));
 
-			// TODO: Fix Joint rotation
 			uint32_t shape_handle = joint->shapes[0];
 			if (shape_handle == 0) return;
 			assert(entity_mapping.find(shape_handle) != entity_mapping.end());
-			Entity* parent_entity = entity_mapping[shape_handle]->parent;
+			Entity* parent_entity = entity_mapping[shape_handle];
 			assert(parent_entity != NULL);
-			assert(parent_entity->type == KindBody);
-			XMLElement* parent_element = xml.GetNode(parent_entity->handle);
+			assert(parent_entity->type == KindShape);
+			Shape* shape = static_cast<Shape*>(parent_entity->self);
+			assert(parent_entity->parent != NULL);
+			assert(parent_entity->parent->type == KindBody);
+			XMLElement* parent_element = xml.GetNode(shape_handle);
 			assert(parent_element != NULL);
+
 			Vector relative_pos = joint->positions[0];
 			Quat relative_rot;
 			if (joint->type != Ball) {
 				Vector joint_axis(joint->axis[0]);
 				relative_rot = FromAxisAngle(joint_axis, 180);
-				if (joint->type == Hinge) {
-					//relative_rot = relative_rot * QuatEuler(0, 90, 0);
-					relative_rot = joint->hinge_rot;
-				} else {
+				if (joint->type == Hinge)
+					relative_rot = relative_rot * QuatEuler(0, 90, 0);
+				else
 					relative_rot = relative_rot * QuatEuler(-90, 0, 0);
-				}
 			}
-			WriteTransform(entity_element, Transform(relative_pos, relative_rot));
+			Transform joint_tr = Transform(relative_pos, relative_rot);
+			if (parent_element->Attribute("prop") == NULL) // TODO: check for xml body
+				joint_tr = TransformToLocalTransform(shape->transform, joint_tr);
+			WriteTransform(entity_element, joint_tr);
 
 			if (joint->type == Hinge)
 				xml.AddAttribute(entity_element, "type", "hinge");

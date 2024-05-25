@@ -14,6 +14,6 @@ LuaTableEntry::~LuaTableEntry() {
 		delete key.Table;
 	if (value_type == String)
 		delete[] value.String;
-	else if (value_type == Table)
+	else if (value_type == Table) // TODO: valgrind
 		delete value.Table;
 }

@@ -284,7 +284,6 @@ Entity* TDBIN::ReadEntity() {
 		printf("[ERROR] Invalid Cow: %08X\n", entity->beef_beef);
 		exit(EXIT_FAILURE);
 	}
-	entity->parent = NULL;
 	return entity;
 }
 
