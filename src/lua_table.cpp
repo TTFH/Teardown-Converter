@@ -10,10 +10,12 @@ LuaTableEntry::LuaTableEntry() {
 LuaTableEntry::~LuaTableEntry() {
 	if (key_type == String)
 		delete[] key.String;
-	else if (key_type == Table) // TODO: iterate?
-		delete key.Table;
+	else if (key_type == Table)
+		for (LuaTable::iterator it = key.Table->begin(); it != key.Table->end(); it++)
+			delete *it;
 	if (value_type == String)
 		delete[] value.String;
-	else if (value_type == Table) // TODO: valgrind
-		delete value.Table;
+	else if (value_type == Table)
+		for (LuaTable::iterator it = value.Table->begin(); it != value.Table->end(); it++)
+			delete *it;
 }

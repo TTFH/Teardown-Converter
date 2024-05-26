@@ -801,9 +801,10 @@ void ParseFile(ConverterParams params) {
 	parser.WritePostProcessing();
 	progress = 0.5;
 	parser.WriteEntities();
+	printf("Saving XML file...\n");
 	parser.SaveXML();
 	progress = 0.75;
-	printf("Saving vox files...\n");
+	printf("Saving VOX files...\n");
 	parser.SaveVoxFiles();
 	printf("Map successfully converted!\n");
 	progress = 1;

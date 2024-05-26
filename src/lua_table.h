@@ -33,8 +33,6 @@ struct LuaTableEntry {
 	LuaValue value;
 
 	LuaTableEntry();
-	LuaTableEntry(const LuaTableEntry& other) = delete;
-	LuaTableEntry& operator=(const LuaTableEntry& other) = delete;
 	~LuaTableEntry();
 };
 
