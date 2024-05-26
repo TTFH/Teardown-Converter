@@ -61,6 +61,7 @@ Joint::~Joint() {
 }
 
 Script::~Script() {
-	for (LuaTable::iterator it = variables.begin(); it != variables.end(); it++)
+	for (LuaTable::iterator it = variables->begin(); it != variables->end(); it++)
 		delete *it;
+	delete variables;
 }

@@ -222,12 +222,8 @@ LuaValue TDBIN::ReadLuaValue(LuaType key_type) {
 			strcpy(value.String, text.c_str());
 		}
 			break;
-		case Table: {
-			LuaTable table = ReadLuaTable();
-			value.Table = new LuaTable();
-			for (unsigned int i = 0; i < table.size(); i++)
-				value.Table->push_back(table[i]);
-		}
+		case Table:
+			value.Table = ReadLuaTable();
 			break;
 		case Reference:
 			value.Reference = ReadInt();
@@ -240,16 +236,19 @@ LuaValue TDBIN::ReadLuaValue(LuaType key_type) {
 	return value;
 }
 
-LuaTable TDBIN::ReadLuaTable() {
-	LuaTable table;
+LuaTable* TDBIN::ReadLuaTable() {
+	LuaTable* table = new LuaTable();
 	do {
 		LuaTableEntry* table_entry = new LuaTableEntry();
 		table_entry->key_type = (LuaType)ReadInt();
-		if (table_entry->key_type == NIL) break;
+		if (table_entry->key_type == NIL) {
+			table->push_back(table_entry);
+			break;
+		}
 		table_entry->key = ReadLuaValue(table_entry->key_type);
 		table_entry->value_type = (LuaType)ReadInt();
 		table_entry->value = ReadLuaValue(table_entry->value_type);
-		table.push_back(table_entry);
+		table->push_back(table_entry);
 	} while (true);
 	return table;
 }

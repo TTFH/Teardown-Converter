@@ -857,7 +857,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			uint32_t entity_handle = script->entity_handles[j];
 			XMLElement* entity_child = xml.GetNode(entity_handle);
 			if (entity_child != NULL && strcmp(entity_child->Name(), "joint") != 0) {
-				while (entity_child->Parent()->ToElement() != xml.GetScene() &&
+				while (entity_child->Parent() != NULL && entity_child->Parent()->ToElement() != xml.GetScene() &&
 					strcmp(entity_child->Parent()->ToElement()->Name(), "group") != 0) {
 					entity_child = entity_child->Parent()->ToElement();
 				}

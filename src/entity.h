@@ -408,7 +408,7 @@ struct Script {
 	float tick_time;
 	float update_time;
 	uint32_t variables_count;
-	LuaTable variables;
+	LuaTable* variables;
 	Vec<uint32_t> entity_handles;
 	Vec<ScriptSound> sounds;
 	Vec<ValueTransition> transitions;

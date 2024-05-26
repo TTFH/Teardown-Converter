@@ -59,7 +59,7 @@ private:
 	Voxels ReadVoxels();
 
 	LuaValue ReadLuaValue(LuaType);
-	LuaTable ReadLuaTable();
+	LuaTable* ReadLuaTable();
 
 	Entity* ReadEntity();
 	Body* ReadBody();
