@@ -18,6 +18,7 @@ struct Vector {
 	float length() const;
 	bool isZero() const;
 	Vector normalize() const;
+	bool operator==(const Vector& v) const;
 	Vector operator+(const Vector& v) const;
 	Vector operator-(const Vector& v) const;
 	Vector operator*(float f) const;

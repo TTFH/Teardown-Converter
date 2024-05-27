@@ -21,13 +21,17 @@ float Vector::length() const {
 }
 
 bool Vector::isZero() const {
-	return CompareFloat(x, 0) && CompareFloat(y, 0) && CompareFloat(z, 0);
+	return *this == Vector();
 }
 
 Vector Vector::normalize() const {
 	float len = length();
-	if (len == 0) return Vector(0, 0, 0);
+	if (len == 0) return Vector();
 	return Vector(x / len, y / len, z / len);
+}
+
+bool Vector::operator==(const Vector& v) const {
+	return CompareFloat(x, v.x) && CompareFloat(y, v.y) && CompareFloat(z, v.z);
 }
 
 Vector Vector::operator+(const Vector& v) const {

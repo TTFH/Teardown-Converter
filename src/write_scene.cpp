@@ -779,14 +779,32 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			Quat relative_rot;
 			if (joint->type != Ball) {
 				Vector joint_axis(joint->axis[0]);
-				relative_rot = FromAxisAngle(joint_axis, 180);
-				if (joint->type == Hinge)
-					relative_rot = relative_rot * QuatEuler(0, 90, 0);
-				else
-					relative_rot = relative_rot * QuatEuler(-90, 0, 0);
+				if (joint_axis == Vector(1, 0, 0))
+					relative_rot = QuatEuler(0, 90, 0);
+				else if (joint_axis == Vector(-1, 0, 0))
+					relative_rot = QuatEuler(0, -90, 0);
+				else if (joint_axis == Vector(0, 1, 0))
+					relative_rot = QuatEuler(-90, 0, 0);
+				else if (joint_axis == Vector(0, -1, 0))
+					relative_rot = QuatEuler(90, 0, 0);
+				else if (joint_axis == Vector(0, 0, 1))
+					relative_rot = Quat();
+				else if (joint_axis == Vector(0, 0, -1))
+					relative_rot = QuatEuler(0, 180, 0);
+				else {
+					double a = -asin(joint_axis.y);
+					double b = asin(joint_axis.x / cos(a));
+					//double b2 = acos(joint_axis.z / cos(a));
+					if (!isnan(a) && !isnan(b))
+						relative_rot = QuatEulerRad(a, b, 0);
+					else {
+						relative_rot = Quat();
+						xml.AddStrAttribute(entity_element, "name", "FIXROT");
+					}
+				}
 			}
 			Transform joint_tr = Transform(relative_pos, relative_rot);
-			if (parent_element->Attribute("prop") == NULL) // TODO: check for xml body
+			if (parent_element->Attribute("prop") == NULL)
 				joint_tr = TransformToLocalTransform(shape->transform, joint_tr);
 			WriteTransform(entity_element, joint_tr);
 
