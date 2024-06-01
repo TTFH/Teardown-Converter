@@ -281,7 +281,8 @@ struct Joint {
 	float size;					// size
 	bool sound;					// sound
 	bool autodisable;			// autodisable
-	float z_f32_2[2];			// TODO: for planks 3000, 0.8
+	float connection_strength;	// Used for planks 3000.0
+	float disconnect_dist;		// Used for planks 0.8
 	Rope* rope;					// Only if type = Rope
 	~Joint();
 };
@@ -303,7 +304,7 @@ struct VehicleProperties {
 	bool handbrake;
 	float antispin;		// antispin
 	float steerassist;	// steerassist
-	float z_f32_1;		// TODO: 1.5
+	float assist_multiplier;
 	float antiroll;		// antiroll
 	VehicleSound sound;	// sound
 };

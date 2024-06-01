@@ -182,7 +182,7 @@ VehicleProperties TDBIN::ReadVehicleProperties() {
 	properties.handbrake = ReadBool();
 	properties.antispin = ReadFloat();
 	properties.steerassist = ReadFloat();
-	properties.z_f32_1 = ReadFloat();
+	properties.assist_multiplier = ReadFloat();
 	properties.antiroll = ReadFloat();
 	properties.sound.name = ReadString();
 	properties.sound.pitch = ReadFloat();
@@ -400,13 +400,13 @@ Joint* TDBIN::ReadJoint() {
 	joint->hinge_rot.w = ReadFloat();
 	for (int i = 0; i < 2; i++)
 		joint->limits[i] = ReadFloat();
-	for (int i = 0; i < 2; i++)
-		joint->z_f32_2[i] = ReadFloat();
+	joint->max_velocity = ReadFloat();
+	joint->strength = ReadFloat();
 	joint->size = ReadFloat();
 	joint->sound = ReadBool();
 	joint->autodisable = ReadBool();
-	for (int i = 0; i < 2; i++)
-		joint->z_f32_2[i] = ReadFloat();
+	joint->connection_strength = ReadFloat();
+	joint->disconnect_dist = ReadFloat();
 	if (joint->type == JointType::Rope)
 		joint->rope = ReadRope();
 	else
