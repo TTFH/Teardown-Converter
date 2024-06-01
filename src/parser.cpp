@@ -124,9 +124,9 @@ Fire TDBIN::ReadFire() {
 Palette TDBIN::ReadPalette() {
 	Palette p;
 	for (int i = 0; i < 256; i++) {
-		p.materials[i].kind = ReadByte();
-		if (p.materials[i].kind > (uint8_t)MaterialKind::Unphysical) {
-			printf("[ERROR] Invalid Material %d at index %d\n", p.materials[i].kind, i);
+		p.materials[i].type = ReadByte();
+		if (p.materials[i].type > (uint8_t)MaterialType::Unphysical) {
+			printf("[ERROR] Invalid Material %d at index %d\n", p.materials[i].type, i);
 			exit(EXIT_FAILURE);
 		}
 		p.materials[i].rgba = ReadColor();
@@ -255,11 +255,11 @@ LuaTable* TDBIN::ReadLuaTable() {
 
 Entity* TDBIN::ReadEntity() {
 	Entity* entity = new Entity();
-	entity->type = ReadByte();
+	entity->type = (EntityType)ReadByte();
 
 	entity->handle = ReadInt();
 	entity_mapping[entity->handle] = entity;
-	//printf("Reading %s with handle %d\n", EntityKindName[entity->type], entity->handle);
+	//printf("Reading %s with handle %d\n", EntityName[entity->type], entity->handle);
 
 	uint8_t tag_count = ReadByte();
 	entity->tags.resize(tag_count);
@@ -267,9 +267,9 @@ Entity* TDBIN::ReadEntity() {
 		entity->tags[i] = ReadTag();
 
 	entity->desc = ReadString();
-	if (entity->type != KindLight && entity->type != KindJoint) // Ah, yes... consistency
+	if (entity->type != EntityType::Light && entity->type != EntityType::Joint) // Ah, yes... consistency
 		entity->flags = ReadWord();
-	entity->self = ReadEntityKind(entity->type);
+	entity->self = ReadEntityType(entity->type);
 
 	int childrens = ReadInt();
 	entity->children.resize(childrens);
@@ -383,7 +383,7 @@ Water* TDBIN::ReadWater() {
 
 Joint* TDBIN::ReadJoint() {
 	Joint* joint = new Joint();
-	joint->type = ReadInt();
+	joint->type = (JointType)ReadInt();
 	for (int i = 0; i < 2; i++)
 		joint->shapes[i] = ReadInt();
 	for (int i = 0; i < 2; i++)
@@ -407,7 +407,7 @@ Joint* TDBIN::ReadJoint() {
 	joint->autodisable = ReadBool();
 	for (int i = 0; i < 2; i++)
 		joint->z_f32_2[i] = ReadFloat();
-	if (joint->type == _Rope)
+	if (joint->type == JointType::Rope)
 		joint->rope = ReadRope();
 	else
 		joint->rope = NULL;
@@ -510,7 +510,7 @@ Screen* TDBIN::ReadScreen() {
 Trigger* TDBIN::ReadTrigger() {
 	Trigger* trigger = new Trigger();
 	trigger->transform = ReadTransform();
-	trigger->type = ReadInt();
+	trigger->type = (TriggerType)ReadInt();
 	trigger->sphere_size = ReadFloat();
 	for (int i = 0; i < 3; i++)
 		trigger->box_size[i] = ReadFloat();
@@ -550,7 +550,7 @@ Script* TDBIN::ReadScript() {
 	int sound_count = ReadInt();
 	script->sounds.resize(sound_count);
 	for (int i = 0; i < sound_count; i++) {
-		script->sounds[i].kind = ReadInt();
+		script->sounds[i].type = ReadInt();
 		script->sounds[i].name = ReadString();
 	}
 
@@ -558,41 +558,41 @@ Script* TDBIN::ReadScript() {
 	script->transitions.resize(transition_count);
 	for (int i = 0; i < transition_count; i++) {
 		script->transitions[i].variable = ReadString();
-		script->transitions[i].kind = ReadByte();
-		script->transitions[i].transition_time = ReadFloat();
-		script->transitions[i].time = ReadFloat();
-		script->transitions[i].z_f32_1 = ReadFloat();
-		script->transitions[i].z_f32_2 = ReadFloat();
+		script->transitions[i].transition = ReadByte();
+		script->transitions[i].target_time = ReadFloat();
+		script->transitions[i].current_time = ReadFloat();
+		script->transitions[i].current_value = ReadFloat();
+		script->transitions[i].target_value = ReadFloat();
 	}
 	return script;
 }
 
-void* TDBIN::ReadEntityKind(uint8_t type) {
+void* TDBIN::ReadEntityType(EntityType type) {
 	switch (type) {
-		case KindBody:
+		case EntityType::Body:
 			return ReadBody();
-		case KindShape:
+		case EntityType::Shape:
 			return ReadShape();
-		case KindLight:
+		case EntityType::Light:
 			return ReadLight();
-		case KindLocation:
+		case EntityType::Location:
 			return ReadLocation();
-		case KindWater:
+		case EntityType::Water:
 			return ReadWater();
-		case KindJoint:
+		case EntityType::Joint:
 			return ReadJoint();
-		case KindVehicle:
+		case EntityType::Vehicle:
 			return ReadVehicle();
-		case KindWheel:
+		case EntityType::Wheel:
 			return ReadWheel();
-		case KindScreen:
+		case EntityType::Screen:
 			return ReadScreen();
-		case KindTrigger:
+		case EntityType::Trigger:
 			return ReadTrigger();
-		case KindScript:
+		case EntityType::Script:
 			return ReadScript();
 		default:
-			printf("[ERROR] Invalid entity type: %d\n", type);
+			printf("[ERROR] Invalid entity type: %d\n", (uint8_t)type);
 			exit(EXIT_FAILURE);
 			return NULL;
 	}
@@ -761,15 +761,10 @@ void TDBIN::parse() {
 	scene.has_snow = ReadBool();
 
 	entries = ReadInt();
-	scene.z_st2.resize(entries);
+	scene.assets.resize(entries);
 	for (int i = 0; i < entries; i++) {
-		scene.z_st2[i].z_1 = ReadString();
-		if (scene.z_st2[i].z_1 != "snd") {
-			printf("--------------------------------------------------------------------------------\n");
-			printf("Please share this quicksave on Github or Discord to help improve this converter.\n");
-			printf("--------------------------------------------------------------------------------\n");
-		}
-		scene.z_st2[i].z_2 = ReadBool();
+		scene.assets[i].folder = ReadString();
+		scene.assets[i].do_override = ReadBool();
 	}
 
 	if (fgetc(bin_file) != EOF)

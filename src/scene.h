@@ -8,7 +8,7 @@
 
 using namespace std;
 
-enum MaterialKind : uint8_t {
+enum MaterialType : uint8_t {
 	None,
 	Glass,
 	Wood,
@@ -26,9 +26,7 @@ enum MaterialKind : uint8_t {
 	Unphysical
 };
 
-extern const char* MaterialKindName[];
-
-bool operator==(uint8_t lhs, const MaterialKind& rhs);
+extern const char* MaterialName[];
 
 struct PostProcessing {
 	float brightness;	// brightness
@@ -65,7 +63,7 @@ struct Skybox {
 	string texture;			// skybox
 	Color tint;				// skyboxtint
 	float brightness;		// skyboxbrightness
-	float rot;				// skyboxrot in radians
+	float rot;				// skyboxrot (in rad)
 	Sun sun;
 	bool auto_sun_dir;
 	Color constant;			// constant
@@ -134,7 +132,7 @@ struct Fire {
 };
 
 struct Material {
-	uint8_t kind; // MaterialKind
+	uint8_t type;
 	Color rgba;
 	float reflectivity;
 	float shinyness;
@@ -155,6 +153,7 @@ enum ProjectileType : uint32_t {
 	Gun = 0,
 	Rocket = 2,
 	Bullet = 5,
+	// Shotgun
 };
 
 struct Projectile {
@@ -166,9 +165,9 @@ struct Projectile {
 	float strength;
 };
 
-struct Unk2 {
-	string z_1;
-	bool z_2;
+struct Path {
+	string folder;
+	bool do_override;
 };
 
 struct Scene {
@@ -202,7 +201,7 @@ struct Scene {
 	uint32_t broken_voxels;
 	Vec<Projectile> projectiles;
 	bool has_snow;
-	Vec<Unk2> z_st2;
+	Vec<Path> assets;
 };
 
 #endif

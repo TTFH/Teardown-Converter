@@ -56,7 +56,7 @@ public:
 #define SmallVec Vec
 typedef uint32_t handle;
 
-extern const char* EntityKindName[];
+extern const char* EntityName[];
 
 struct Vertex {	// vertex
 	float x, y;	// pos
@@ -83,18 +83,18 @@ struct Sound {
 
 // ------------------------------------
 
-enum EntityKind { // uint8_t
-	KindBody = 1,
-	KindShape,
-	KindLight,
-	KindLocation,
-	KindWater,
-	KindJoint,
-	KindVehicle,
-	KindWheel,
-	KindScreen,
-	KindTrigger,
-	KindScript,
+enum class EntityType : uint8_t {
+	Body = 1,
+	Shape,
+	Light,
+	Location,
+	Water,
+	Joint,
+	Vehicle,
+	Wheel,
+	Screen,
+	Trigger,
+	Script,
 };
 
 /*
@@ -108,23 +108,28 @@ nocull		16
 ???			8
 unbreakable	4
 inherittags	2
-???			1
+has_tag		1
 */
 
 struct Entity {
-	uint8_t type;
+	EntityType type;
 	uint32_t handle;
 	SmallVec<Tag> tags;
 	string desc;		// desc
-
 	uint16_t flags;
 	void* self;
-
 	Vec<Entity*> children;
 	uint32_t beef_beef;
 
 	Entity* parent;		// helper for graph navigation
 	~Entity();
+};
+
+enum class FrictionMode : uint8_t {
+	Average = 1,
+	Minimum,
+	Multiply,
+	Maximum,
 };
 
 struct Body {
@@ -154,9 +159,19 @@ enum ShapeOrigin : uint8_t {
 	Spawn,
 };
 
+/*
+		flags
+static		1
+dynamic		2
+large		4
+small		8
+physical	16 0x10
+visible		32 0x20
+*/
+
 struct Shape {
 	Transform transform;
-	uint16_t shape_flags;		// collide: 0x10, default: 0x30
+	uint16_t shape_flags;		// collide: 0x10
 	uint8_t collision_layer;
 	uint8_t collision_mask;
 	float density;				// density
@@ -227,11 +242,11 @@ struct Water {
 	Vec<Vertex> water_vertices;
 };
 
-enum JointType { // uint32_t
+enum class JointType : uint32_t {
 	Ball = 1,
 	Hinge,
 	Prismatic,
-	_Rope,
+	Rope,
 };
 
 struct Segment {
@@ -251,7 +266,7 @@ struct Rope {
 };
 
 struct Joint {
-	uint32_t type;				// type
+	JointType type;				// type
 	uint32_t shapes[2];
 	Vector positions[2];
 	Vector axis[2];
@@ -364,10 +379,10 @@ struct Screen {
 	float fxglitch;			// fxglitch
 };
 
-enum TriggerKind { // uint32_t
-	TrSphere = 1,
-	TrBox,
-	TrPolygon,
+enum class TriggerType : uint32_t {
+	Sphere = 1,
+	Box,
+	Polygon,
 };
 
 struct TriggerSound {
@@ -379,26 +394,42 @@ struct TriggerSound {
 
 struct Trigger {
 	Transform transform;
-	uint32_t type;				// type
+	TriggerType type;			// type
 	float sphere_size;			// size
 	float box_size[3];			// size = 2.0 * this
 	float polygon_size;			// size
 	Vec<Vertex> polygon_vertices;
 	TriggerSound sound;
 };
-
+/*
+enum SoundType {
+	Sound = 1,
+	Loop = 2,
+	Music = ?,
+	UiSound = ?
+	UiLoop = ?
+}
+*/
 struct ScriptSound {
-	uint32_t kind;
+	uint32_t type;
 	string name;
+};
+
+enum TransitionType {
+	Linear = 1,
+	EaseIn = 2,
+	EaseOut = 3,
+	Cosine = 4,
+	Bounce = 5
 };
 
 struct ValueTransition {
 	string variable;
-	uint8_t kind;
-	float transition_time;
-	float time;
-	float z_f32_1;
-	float z_f32_2;
+	uint8_t transition;
+	float target_time;
+	float current_time;
+	float current_value;
+	float target_value;
 };
 
 struct Script {

@@ -37,7 +37,7 @@ struct MV_Entry {
 	uint8_t r, g, b, a;
 };
 
-enum MaterialType {
+enum MV_MaterialType {
 	DIFFUSE,
 	METAL,
 	GLASS,
@@ -47,7 +47,7 @@ enum MaterialType {
 struct MV_Material {
 	uint8_t material_index;
 	uint8_t material_type;
-	MaterialType render_type;
+	MV_MaterialType render_type;
 	union {
 		struct {
 			float roughness;
@@ -112,7 +112,7 @@ public:
 	void AddShape(MVShape shape);
 	bool GetShapeName(const MVShape& shape, string& name);
 	void SetColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
-	void SetMaterial(uint8_t index, uint8_t kind, float reflectivity, float shinyness, float metalness, float emissive, float alpha);
+	void SetMaterial(uint8_t index, uint8_t type, float reflectivity, float shinyness, float metalness, float emissive, float alpha);
 };
 
 #endif

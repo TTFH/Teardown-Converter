@@ -2,7 +2,7 @@
 
 #include "scene.h"
 
-const char* MaterialKindName[] = {
+const char* MaterialName[] = {
 	"none",
 	"glass",
 	"wood",
@@ -19,7 +19,3 @@ const char* MaterialKindName[] = {
 	"ice",
 	"unphysical"
 };
-
-bool operator==(uint8_t lhs, const MaterialKind& rhs) {
-	return lhs == static_cast<uint8_t>(rhs);
-}

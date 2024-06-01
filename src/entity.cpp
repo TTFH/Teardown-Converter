@@ -1,7 +1,7 @@
 #include "entity.h"
 
-const char* EntityKindName[] = {
-	"", // EntityKind enum starts at 1
+const char* EntityName[] = {
+	"",
 	"Body",
 	"Shape",
 	"Light",
@@ -19,44 +19,44 @@ Entity::~Entity() {
 	for (unsigned int i = 0; i < children.getSize(); i++)
 		delete children[i];
 	switch (type) {
-		case KindBody:
+		case EntityType::Body:
 			delete static_cast<Body*>(self);
 			break;
-		case KindShape:
+		case EntityType::Shape:
 			delete static_cast<Shape*>(self);
 			break;
-		case KindLight:
+		case EntityType::Light:
 			delete static_cast<Light*>(self);
 			break;
-		case KindLocation:
+		case EntityType::Location:
 			delete static_cast<Location*>(self);
 			break;
-		case KindWater:
+		case EntityType::Water:
 			delete static_cast<Water*>(self);
 			break;
-		case KindJoint:
+		case EntityType::Joint:
 			delete static_cast<Joint*>(self);
 			break;
-		case KindVehicle:
+		case EntityType::Vehicle:
 			delete static_cast<Vehicle*>(self);
 			break;
-		case KindWheel:
+		case EntityType::Wheel:
 			delete static_cast<Wheel*>(self);
 			break;
-		case KindScreen:
+		case EntityType::Screen:
 			delete static_cast<Screen*>(self);
 			break;
-		case KindTrigger:
+		case EntityType::Trigger:
 			delete static_cast<Trigger*>(self);
 			break;
-		case KindScript:
+		case EntityType::Script:
 			delete static_cast<Script*>(self);
 			break;
 	}
 }
 
 Joint::~Joint() {
-	if (type == _Rope && rope != NULL)
+	if (type == JointType::Rope && rope != NULL)
 		delete rope;
 }
 

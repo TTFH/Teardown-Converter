@@ -197,14 +197,14 @@ void MV_FILE::WriteRGBA() {
 }
 
 bool MV_FILE::IsSnow(uint8_t index, uint8_t type) {
-	return type == MaterialKind::Unphysical &&
+	return type == MaterialType::Unphysical &&
 			palette[palette_map[index]].r == 229 &&
 			palette[palette_map[index]].g == 229 &&
 			palette[palette_map[index]].b == 229;
 }
 
 bool MV_FILE::IsHole(uint8_t index, uint8_t type) {
-	return type == MaterialKind::Unphysical &&
+	return type == MaterialType::Unphysical &&
 			palette[palette_map[index]].r == 255 &&
 			palette[palette_map[index]].g == 0 &&
 			palette[palette_map[index]].b == 0;
@@ -214,37 +214,37 @@ static bool IsInRange(uint8_t index, uint8_t i_min, uint8_t i_max) {
 	return index >= i_min && index <= i_max;
 }
 
-static bool IsIndexCorrupted(uint8_t index, uint8_t kind) {
+static bool IsIndexCorrupted(uint8_t index, uint8_t type) {
 	bool corrupted = false;
-	if (kind == MaterialKind::Glass)
+	if (type == MaterialType::Glass)
 		corrupted = !IsInRange(index, 1, 8);
-	else if (kind == MaterialKind::Foliage)
+	else if (type == MaterialType::Foliage)
 		corrupted = !IsInRange(index, 9, 24);
-	else if (kind == MaterialKind::Dirt)
+	else if (type == MaterialType::Dirt)
 		corrupted = !IsInRange(index, 25, 40);
-	else if (kind == MaterialKind::Rock)
+	else if (type == MaterialType::Rock)
 		corrupted = !IsInRange(index, 41, 56);
-	else if (kind == MaterialKind::Wood)
+	else if (type == MaterialType::Wood)
 		corrupted = !IsInRange(index, 57, 72);
-	else if (kind == MaterialKind::Masonry)
+	else if (type == MaterialType::Masonry)
 		corrupted = !IsInRange(index, 73, 104);
-	else if (kind == MaterialKind::Plaster)
+	else if (type == MaterialType::Plaster)
 		corrupted = !IsInRange(index, 105, 120);
-	else if (kind == MaterialKind::Metal)
+	else if (type == MaterialType::Metal)
 		corrupted = !IsInRange(index, 121, 136);
-	else if (kind == MaterialKind::HeavyMetal)
+	else if (type == MaterialType::HeavyMetal)
 		corrupted = !IsInRange(index, 137, 152);
-	else if (kind == MaterialKind::Plastic)
+	else if (type == MaterialType::Plastic)
 		corrupted = !IsInRange(index, 153, 168);
-	else if (kind == MaterialKind::HardMetal)
+	else if (type == MaterialType::HardMetal)
 		corrupted = !IsInRange(index, 169, 176);
-	else if (kind == MaterialKind::HardMasonry)
+	else if (type == MaterialType::HardMasonry)
 		corrupted = !IsInRange(index, 177, 184);
-	else if (kind == MaterialKind::Ice)
+	else if (type == MaterialType::Ice)
 		corrupted = !IsInRange(index, 185, 192);
-	else if ( kind == MaterialKind::None)
+	else if ( type == MaterialType::None)
 		corrupted = !IsInRange(index, 193, 224) && !IsInRange(index, 241, 253);
-	else if (kind == MaterialKind::Unphysical)
+	else if (type == MaterialType::Unphysical)
 		corrupted = !IsInRange(index, 225, 240) && index != 254 && index != 255;
 	return corrupted;
 }
@@ -285,33 +285,33 @@ void MV_FILE::WriteIMAP() {
 	// Try to set every material to its correct index
 	for (int i = 0; i < FIX_ATTEMPTS; i++)
 	for (vector<MV_Material>::iterator it = materials.begin(); it != materials.end(); it++) {
-		if (it->material_type == MaterialKind::Glass)
+		if (it->material_type == MaterialType::Glass)
 			FixMapping(it->material_index, 1, 8);
-		else if (it->material_type == MaterialKind::Foliage)
+		else if (it->material_type == MaterialType::Foliage)
 			FixMapping(it->material_index, 9, 24);
-		else if (it->material_type == MaterialKind::Dirt)
+		else if (it->material_type == MaterialType::Dirt)
 			FixMapping(it->material_index, 25, 40);
-		else if (it->material_type == MaterialKind::Rock)
+		else if (it->material_type == MaterialType::Rock)
 			FixMapping(it->material_index, 41, 56);
-		else if (it->material_type == MaterialKind::Wood)
+		else if (it->material_type == MaterialType::Wood)
 			FixMapping(it->material_index, 57, 72);
-		else if (it->material_type == MaterialKind::Masonry)
+		else if (it->material_type == MaterialType::Masonry)
 			FixMapping(it->material_index, 73, 104);
-		else if (it->material_type == MaterialKind::Plaster)
+		else if (it->material_type == MaterialType::Plaster)
 			FixMapping(it->material_index, 105, 120);
-		else if (it->material_type == MaterialKind::Metal)
+		else if (it->material_type == MaterialType::Metal)
 			FixMapping(it->material_index, 121, 136);
-		else if (it->material_type == MaterialKind::HeavyMetal)
+		else if (it->material_type == MaterialType::HeavyMetal)
 			FixMapping(it->material_index, 137, 152);
-		else if (it->material_type == MaterialKind::Plastic)
+		else if (it->material_type == MaterialType::Plastic)
 			FixMapping(it->material_index, 153, 168);
-		else if (it->material_type == MaterialKind::HardMetal)
+		else if (it->material_type == MaterialType::HardMetal)
 			FixMapping(it->material_index, 169, 176);
-		else if (it->material_type == MaterialKind::HardMasonry)
+		else if (it->material_type == MaterialType::HardMasonry)
 			FixMapping(it->material_index, 177, 184);
-		else if (it->material_type == MaterialKind::Ice)
+		else if (it->material_type == MaterialType::Ice)
 			FixMapping(it->material_index, 185, 192);
-		else if (it->material_type == MaterialKind::None)
+		else if (it->material_type == MaterialType::None)
 			FixMapping(it->material_index, 193, 224);
 		else if (IsSnow(it->material_index, it->material_type))
 			FixMapping(it->material_index, 254, 254);
@@ -408,7 +408,7 @@ void MV_FILE::WriteNOTE() {
 			if (error) // Row has multiple materials
 				note = "corrupted";
 			else if (row_corrupted) // Row has a single material, but it's in the wrong place because overflow
-				note = string(MatOverridePrefix) + MaterialKindName[row_material];
+				note = string(MatOverridePrefix) + MaterialName[row_material];
 			else // Row is fine
 				note = td_notes[row - 1];
 			notes.push_back(note);
@@ -501,11 +501,11 @@ metalness = 0.0
 emissive = _emit * 10 ^ _flux
 alpha = 1.0
 */
-void MV_FILE::SetMaterial(uint8_t index, uint8_t kind, float reflectivity, float shinyness, float metalness, float emissive, float alpha) {
+void MV_FILE::SetMaterial(uint8_t index, uint8_t type, float reflectivity, float shinyness, float metalness, float emissive, float alpha) {
 	if (is_index_used[index]) return;
 	MV_Material mat;
 	mat.material_index = index;
-	mat.material_type = kind;
+	mat.material_type = type;
 
 	if (alpha != 1) {
 		mat.render_type = GLASS;

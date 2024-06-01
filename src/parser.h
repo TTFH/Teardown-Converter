@@ -58,7 +58,7 @@ private:
 	VehicleProperties ReadVehicleProperties();
 	Voxels ReadVoxels();
 
-	LuaValue ReadLuaValue(LuaType);
+	LuaValue ReadLuaValue(LuaType key_type);
 	LuaTable* ReadLuaTable();
 
 	Entity* ReadEntity();
@@ -76,7 +76,7 @@ private:
 
 	void ReadPlayer();
 	void ReadEnvironment();
-	void* ReadEntityKind(uint8_t);
+	void* ReadEntityType(EntityType type);
 public:
 	void init(const char* input);
 	~TDBIN();
