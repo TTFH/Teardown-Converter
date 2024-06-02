@@ -542,7 +542,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddFloatAttribute(entity_element, "foam", water->foam, "0.5");
 			xml.AddColorAttribute(entity_element, "color", water->color, "0.01 0.01 0.01");
 			xml.AddFloatAttribute(entity_element, "visibility", water->visibility, "3");
-			WriteVertices(entity_element, water->water_vertices);
+			WriteVertices(entity_element, water->vertices);
 
 			if (parent == xml.GetScene())
 				parent = xml.GetWaterGroup();
@@ -748,7 +748,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		Vehicle* vehicle = static_cast<Vehicle*>(entity->self);
 		int vital_count = vehicle->vitals.getSize();
 		for (int i = 0; i < vital_count; i++) {
-			uint32_t body_handle = vehicle->vitals[i].body_handle;
+			uint32_t body_handle = vehicle->vitals[i].body;
 			XMLElement* xml_body = xml.GetNode(body_handle);
 			if (xml_body != NULL) {
 				XMLElement* vital = xml.CreateElement("location");
@@ -871,8 +871,8 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			xml.AddStrAttribute(entity_element, param_index.c_str(), param);
 		}
 
-		for (unsigned int j = 0; j < script->entity_handles.getSize(); j++) {
-			uint32_t entity_handle = script->entity_handles[j];
+		for (unsigned int j = 0; j < script->entities.getSize(); j++) {
+			uint32_t entity_handle = script->entities[j];
 			XMLElement* entity_child = xml.GetNode(entity_handle);
 			if (entity_child != NULL && strcmp(entity_child->Name(), "joint") != 0) {
 				while (entity_child->Parent() != NULL && entity_child->Parent()->ToElement() != xml.GetScene() &&

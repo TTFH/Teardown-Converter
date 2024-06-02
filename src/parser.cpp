@@ -322,8 +322,8 @@ Shape* TDBIN::ReadShape() {
 	shape->palette = ReadInt();
 	shape->scale = ReadFloat();
 
-	for (int i = 0; i < 2; i++)
-		shape->z_u32_2[i] = ReadInt();
+	for (int i = 0; i < 8; i++)
+		shape->light_mask[i] = ReadByte();
 	shape->is_disconnected = ReadByte();
 	shape->origin = ReadByte();
 	return shape;
@@ -373,10 +373,10 @@ Water* TDBIN::ReadWater() {
 	water->color = ReadColor();
 	water->visibility = ReadFloat();
 	int vertex_count = ReadInt();
-	water->water_vertices.resize(vertex_count);
+	water->vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++) {
-		water->water_vertices[i].x = ReadFloat();
-		water->water_vertices[i].y = ReadFloat();
+		water->vertices[i].x = ReadFloat();
+		water->vertices[i].y = ReadFloat();
 	}
 	return water;
 }
@@ -416,14 +416,14 @@ Joint* TDBIN::ReadJoint() {
 
 Vehicle* TDBIN::ReadVehicle() {
 	Vehicle* vehicle = new Vehicle();
-	vehicle->body_handle = ReadInt();
+	vehicle->body = ReadInt();
 	vehicle->transform = ReadTransform();
 	vehicle->transform2 = ReadTransform();
 
 	int wheel_count = ReadInt();
-	vehicle->wheel_handles.resize(wheel_count);
+	vehicle->wheels.resize(wheel_count);
 	for (int i = 0; i < wheel_count; i++)
-		vehicle->wheel_handles[i] = ReadInt();
+		vehicle->wheels[i] = ReadInt();
 
 	vehicle->properties = ReadVehicleProperties();
 
@@ -452,10 +452,10 @@ Vehicle* TDBIN::ReadVehicle() {
 	int vital_count = ReadInt();
 	vehicle->vitals.resize(vital_count);
 	for (int i = 0; i < vital_count; i++) {
-		vehicle->vitals[i].body_handle = ReadInt();
+		vehicle->vitals[i].body = ReadInt();
 		vehicle->vitals[i].position = ReadVector();
 		vehicle->vitals[i].z_f32 = ReadFloat();
-		vehicle->vitals[i].shape_handle = ReadInt();
+		vehicle->vitals[i].nearby_voxels = ReadInt();
 	}
 	vehicle->bounds_dist = ReadFloat();
 	vehicle->noroll = ReadBool();
@@ -543,9 +543,9 @@ Script* TDBIN::ReadScript() {
 	script->variables = ReadLuaTable();
 
 	int entities = ReadInt();
-	script->entity_handles.resize(entities);
+	script->entities.resize(entities);
 	for (int i = 0; i < entities; i++)
-		script->entity_handles[i] = ReadInt();
+		script->entities[i] = ReadInt();
 
 	int sound_count = ReadInt();
 	script->sounds.resize(sound_count);

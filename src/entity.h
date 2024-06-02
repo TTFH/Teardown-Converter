@@ -54,7 +54,7 @@ public:
 };
 
 #define SmallVec Vec
-typedef uint32_t handle;
+typedef uint32_t Handle;
 
 extern const char* EntityName[];
 
@@ -96,21 +96,20 @@ enum class EntityType : uint8_t {
 	Trigger,
 	Script,
 };
-
 /*
-		flags
-invisible	512
-interact	256
-nonav		128
-autobreak	64
-breakall	32
-nocull		16
-???			8
-unbreakable	4
-inherittags	2
-has_tag		1
+enum Flags : uint16_t {
+	Invisible	= 1 << 9,
+	Interact	= 1 << 8,
+	NoNav		= 1 << 7,
+	AutoBreak	= 1 << 6,
+	BreakAll	= 1 << 5,
+	NoCull		= 1 << 4,
+	???
+	Unbreakable	= 1 << 2,
+	InheritTags	= 1 << 1,
+	HasTag		= 1 << 0,
+};
 */
-
 struct Entity {
 	EntityType type;
 	uint32_t handle;
@@ -124,14 +123,14 @@ struct Entity {
 	Entity* parent;		// helper for graph navigation
 	~Entity();
 };
-
-enum class FrictionMode : uint8_t {
+/*
+enum class BodyMode : uint8_t {
 	Average = 1,
 	Minimum,
 	Multiply,
 	Maximum,
 };
-
+*/
 struct Body {
 	Transform transform;
 	Vector velocity;
@@ -143,31 +142,30 @@ struct Body {
 	float restitution;
 	uint8_t restitution_mode;
 };
+/*
+enum ShapeFlags {
+	Visible		= 1 << 5,
+	Physical	= 1 << 4,
+	Small		= 1 << 3,
+	Large		= 1 << 2,
+	Dynamic		= 1 << 1,
+	Static		= 1 << 0,
+}
 
-struct Voxels {
-	uint32_t size[3];
-	// if the shape volume is not empty, voxels are stored using run length encoding
-	// with pairs (n-1, i) in xyz order
-	RLE palette_indexes;
-};
-
-enum ShapeOrigin : uint8_t {
+enum class ShapeOrigin : uint8_t {
 	Tool = 1,
 	MapInit,
 	Debris,
 	CreateShape,
 	Spawn,
 };
-
-/*
-		flags
-static		1
-dynamic		2
-large		4
-small		8
-physical	16 0x10
-visible		32 0x20
 */
+struct Voxels {
+	uint32_t size[3];
+	// if the shape volume is not empty, voxels are stored using run length encoding
+	// with pairs (n-1, i) in xyz order
+	RLE palette_indexes;
+};
 
 struct Shape {
 	Transform transform;
@@ -184,20 +182,17 @@ struct Shape {
 	float emissive_scale;
 	bool is_broken;
 	uint8_t has_voxels;
-
 	Voxels voxels;
 	uint32_t palette;
 	float scale;				// scale = 10.0 * this
-	// 0xFFFFFFFF 0xFFFFFFFF
-	uint32_t z_u32_2[2]; // 8 bytes
+	uint8_t light_mask[8];		// - - - - | f r b -
 	bool is_disconnected;
-
 	uint8_t origin;
 
-	Transform old_transform;		// helper for screen positon
+	Transform old_transform;	// helper for screen positon
 };
 
-enum LightType { // uint8_t
+enum LightType : uint8_t {
 	Sphere = 1,
 	Capsule,
 	Cone,
@@ -239,14 +234,7 @@ struct Water {
 	float foam;			// foam
 	Color color; 		// color
 	float visibility;	// visibility
-	Vec<Vertex> water_vertices;
-};
-
-enum class JointType : uint32_t {
-	Ball = 1,
-	Hinge,
-	Prismatic,
-	Rope,
+	Vec<Vertex> vertices;
 };
 
 struct Segment {
@@ -263,6 +251,13 @@ struct Rope {
 	float segment_length;
 	uint8_t active;
 	Vec<Segment> segments;
+};
+
+enum class JointType : uint32_t {
+	Ball = 1,
+	Hinge,
+	Prismatic,
+	Rope,
 };
 
 struct Joint {
@@ -315,17 +310,17 @@ struct Exhaust {
 };
 
 struct Vital {
-	uint32_t body_handle;
+	uint32_t body;
 	Vector position;
 	float z_f32;			// TODO: 0.5
-	uint32_t shape_handle;	// TODO: not a handle
+	uint32_t nearby_voxels;
 };
 
 struct Vehicle {
-	uint32_t body_handle;
+	uint32_t body;
 	Transform transform;
 	Transform transform2;
-	Vec<uint32_t> wheel_handles;
+	Vec<uint32_t> wheels;
 	VehicleProperties properties;
 	Vector camera;			// camera
 	Vector player;			// player
@@ -389,7 +384,7 @@ enum class TriggerType : uint32_t {
 struct TriggerSound {
 	string path;		// sound
 	float soundramp;	// soundramp
-	uint8_t z_u8;
+	uint8_t z_u8;		// TODO: sound type 0,1,2
 	float volume;		// sound
 };
 
@@ -403,27 +398,27 @@ struct Trigger {
 	TriggerSound sound;
 };
 /*
-enum SoundType {
+enum SoundType : uint32_t {
 	Sound = 1,
 	Loop = 2,
 	Music = ?,
 	UiSound = ?
 	UiLoop = ?
-}
+};
 */
 struct ScriptSound {
 	uint32_t type;
 	string name;
 };
-
-enum TransitionType {
+/*
+enum TransitionType : uint8_t {
 	Linear = 1,
 	EaseIn = 2,
 	EaseOut = 3,
 	Cosine = 4,
 	Bounce = 5
 };
-
+*/
 struct ValueTransition {
 	string variable;
 	uint8_t transition;
@@ -436,12 +431,11 @@ struct ValueTransition {
 struct Script {
 	string file;			// file
 	Vec<Registry> params;	// param%d
-
 	float tick_time;
 	float update_time;
 	uint32_t variables_count;
 	LuaTable* variables;
-	Vec<uint32_t> entity_handles;
+	Vec<uint32_t> entities;
 	Vec<ScriptSound> sounds;
 	Vec<ValueTransition> transitions;
 	~Script();

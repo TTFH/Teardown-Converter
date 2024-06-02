@@ -114,11 +114,11 @@ struct Environment {
 
 struct Boundary {
 	Vec<Vertex> vertices;
-	float padleft;		// negative
-	float padtop;		// negative
-	float padright;
-	float padbottom;
-	float maxheight;
+	float padleft;		// -padleft
+	float padtop;		// -padtop
+	float padright;		// padright
+	float padbottom;	// padbottom
+	float maxheight;	// maxheight
 };
 
 struct Fire {
@@ -189,6 +189,7 @@ struct Scene {
 	uint32_t flashlight;
 	uint32_t explosion_lua;
 	uint32_t achievements_lua;
+
 	PostProcessing postpro;
 	Player player;
 	Environment environment;
@@ -197,6 +198,7 @@ struct Scene {
 	Vec<Palette> palettes;
 	Vec<Registry> registry;
 	Vec<Entity*> entities;
+
 	uint32_t entity_count;
 	uint32_t broken_voxels;
 	Vec<Projectile> projectiles;
