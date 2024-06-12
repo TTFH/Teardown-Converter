@@ -136,7 +136,7 @@ Palette TDBIN::ReadPalette() {
 		p.materials[i].emissive = ReadFloat();
 		p.materials[i].is_tint = ReadBool();
 	}
-	p.z_u8 = ReadBool();
+	p.has_transparent = ReadBool();
 	fread(&p.black_tint, sizeof(uint8_t), 4 * 256, bin_file);
 	fread(&p.yellow_tint, sizeof(uint8_t), 4 * 256, bin_file);
 	fread(&p.rgba_tint, sizeof(uint8_t), 4 * 256, bin_file);

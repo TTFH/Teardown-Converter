@@ -46,6 +46,7 @@ private:
 	double ReadDouble();
 	string ReadString();
 
+	Tag ReadTag();
 	Registry ReadRegistry();
 	Color ReadColor();
 	Vector ReadVector();
@@ -54,7 +55,6 @@ private:
 	Fire ReadFire();
 	Palette ReadPalette();
 	Rope* ReadRope();
-	Tag ReadTag();
 	VehicleProperties ReadVehicleProperties();
 	Voxels ReadVoxels();
 

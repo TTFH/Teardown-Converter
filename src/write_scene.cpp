@@ -478,7 +478,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddFloatAttribute(entity_element, "unshadowed", light->unshadowed, "0");
 			xml.AddFloatAttribute(entity_element, "fogscale", light->fogscale, "1");
 			xml.AddFloatAttribute(entity_element, "fogiter", light->fogiter, "1");
-			xml.AddStrFloatAttribute(entity_element, "sound",  light->sound.path, light->sound.volume);
+			xml.AddStrFloatAttribute(entity_element, "sound", light->sound.path, light->sound.volume);
 			xml.AddFloatAttribute(entity_element, "glare", light->glare, "0");
 
 			if (entity->parent == NULL || entity->handle == scene.flashlight)

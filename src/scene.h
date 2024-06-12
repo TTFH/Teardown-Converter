@@ -143,19 +143,20 @@ struct Material {
 
 struct Palette {
 	Material materials[256];
-	bool z_u8;
+	bool has_transparent;
 	uint8_t black_tint[4 * 256];
 	uint8_t yellow_tint[4 * 256];
 	uint8_t rgba_tint[4 * 256];
 };
-
+/*
 enum ProjectileType : uint32_t {
 	Gun = 0,
 	Rocket = 2,
+	??? = 4,
 	Bullet = 5,
 	// Shotgun
 };
-
+*/
 struct Projectile {
 	Vector origin;
 	Vector direction;
