@@ -8,24 +8,6 @@
 
 using namespace std;
 
-enum MaterialType : uint8_t {
-	None,
-	Glass,
-	Wood,
-	Masonry,
-	Plaster,
-	Metal,
-	HeavyMetal,
-	Rock,
-	Dirt,
-	Foliage,
-	Plastic,
-	HardMetal,
-	HardMasonry,
-	Ice,
-	Unphysical
-};
-
 extern const char* MaterialName[];
 
 struct PostProcessing {
@@ -44,7 +26,7 @@ struct Player {
 	float health;
 	float transition_timer;
 	float time_underwater;
-	float bluetide_timer;
+	float bluetide_timer;	// game.player.steroid
 	float bluetide_power;
 };
 
@@ -80,15 +62,6 @@ struct Fog {
 	float exponent;
 };
 
-namespace Env {
-	struct Water {
-		float wetness;		// wetness
-		float puddleamount;	// puddleamount
-		float puddlesize;	// puddlesize = 0.01 / this
-		float rain;			// rain
-	};
-}
-
 struct Snow {
 	Vector dir;		// snowdir x y z
 	float spread;	// snowdir spread
@@ -98,11 +71,18 @@ struct Snow {
 };
 
 struct Environment {
+	struct Water {
+		float wetness;		// wetness
+		float puddleamount;	// puddleamount
+		float puddlesize;	// puddlesize = 0.01 / this
+		float rain;			// rain
+	};
+
 	Skybox skybox;
 	float exposure[2];	// exposure
 	float brightness;	// brightness
 	Fog fog;
-	Env::Water water;
+	Water water;
 	bool nightlight;	// nightlight
 	Sound ambience;		// ambience
 	float slippery;		// slippery
@@ -132,6 +112,22 @@ struct Fire {
 };
 
 struct Material {
+	static const uint8_t None = 0;
+	static const uint8_t Glass = 1;
+	static const uint8_t Wood = 2;
+	static const uint8_t Masonry = 3;
+	static const uint8_t Plaster = 4;
+	static const uint8_t Metal = 5;
+	static const uint8_t HeavyMetal = 6;
+	static const uint8_t Rock = 7;
+	static const uint8_t Dirt = 8;
+	static const uint8_t Foliage = 9;
+	static const uint8_t Plastic = 10;
+	static const uint8_t HardMetal = 11;
+	static const uint8_t HardMasonry = 12;
+	static const uint8_t Ice = 13;
+	static const uint8_t Unphysical = 14;
+
 	uint8_t type;
 	Color rgba;
 	float reflectivity;

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdexcept>
@@ -61,7 +62,9 @@ public:
 // Too much overhead???
 
 bool Reader::ReadBool() {
-	return ReadByte() != 0;
+	uint8_t b = ReadByte();
+	assert(b == 0 || b == 1);
+	return b != 0;
 }
 
 string Reader::ReadString() {

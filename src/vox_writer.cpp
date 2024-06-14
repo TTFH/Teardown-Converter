@@ -197,14 +197,14 @@ void MV_FILE::WriteRGBA() {
 }
 
 bool MV_FILE::IsSnow(uint8_t index, uint8_t type) {
-	return type == MaterialType::Unphysical &&
+	return type == Material::Unphysical &&
 			palette[palette_map[index]].r == 229 &&
 			palette[palette_map[index]].g == 229 &&
 			palette[palette_map[index]].b == 229;
 }
 
 bool MV_FILE::IsHole(uint8_t index, uint8_t type) {
-	return type == MaterialType::Unphysical &&
+	return type == Material::Unphysical &&
 			palette[palette_map[index]].r == 255 &&
 			palette[palette_map[index]].g == 0 &&
 			palette[palette_map[index]].b == 0;
@@ -216,35 +216,35 @@ static bool IsInRange(uint8_t index, uint8_t i_min, uint8_t i_max) {
 
 static bool IsIndexCorrupted(uint8_t index, uint8_t type) {
 	bool corrupted = false;
-	if (type == MaterialType::Glass)
+	if (type == Material::Glass)
 		corrupted = !IsInRange(index, 1, 8);
-	else if (type == MaterialType::Foliage)
+	else if (type == Material::Foliage)
 		corrupted = !IsInRange(index, 9, 24);
-	else if (type == MaterialType::Dirt)
+	else if (type == Material::Dirt)
 		corrupted = !IsInRange(index, 25, 40);
-	else if (type == MaterialType::Rock)
+	else if (type == Material::Rock)
 		corrupted = !IsInRange(index, 41, 56);
-	else if (type == MaterialType::Wood)
+	else if (type == Material::Wood)
 		corrupted = !IsInRange(index, 57, 72);
-	else if (type == MaterialType::Masonry)
+	else if (type == Material::Masonry)
 		corrupted = !IsInRange(index, 73, 104);
-	else if (type == MaterialType::Plaster)
+	else if (type == Material::Plaster)
 		corrupted = !IsInRange(index, 105, 120);
-	else if (type == MaterialType::Metal)
+	else if (type == Material::Metal)
 		corrupted = !IsInRange(index, 121, 136);
-	else if (type == MaterialType::HeavyMetal)
+	else if (type == Material::HeavyMetal)
 		corrupted = !IsInRange(index, 137, 152);
-	else if (type == MaterialType::Plastic)
+	else if (type == Material::Plastic)
 		corrupted = !IsInRange(index, 153, 168);
-	else if (type == MaterialType::HardMetal)
+	else if (type == Material::HardMetal)
 		corrupted = !IsInRange(index, 169, 176);
-	else if (type == MaterialType::HardMasonry)
+	else if (type == Material::HardMasonry)
 		corrupted = !IsInRange(index, 177, 184);
-	else if (type == MaterialType::Ice)
+	else if (type == Material::Ice)
 		corrupted = !IsInRange(index, 185, 192);
-	else if ( type == MaterialType::None)
+	else if ( type == Material::None)
 		corrupted = !IsInRange(index, 193, 224) && !IsInRange(index, 241, 253);
-	else if (type == MaterialType::Unphysical)
+	else if (type == Material::Unphysical)
 		corrupted = !IsInRange(index, 225, 240) && index != 254 && index != 255;
 	return corrupted;
 }
@@ -285,33 +285,33 @@ void MV_FILE::WriteIMAP() {
 	// Try to set every material to its correct index
 	for (int i = 0; i < FIX_ATTEMPTS; i++)
 	for (vector<MV_Material>::iterator it = materials.begin(); it != materials.end(); it++) {
-		if (it->material_type == MaterialType::Glass)
+		if (it->material_type == Material::Glass)
 			FixMapping(it->material_index, 1, 8);
-		else if (it->material_type == MaterialType::Foliage)
+		else if (it->material_type == Material::Foliage)
 			FixMapping(it->material_index, 9, 24);
-		else if (it->material_type == MaterialType::Dirt)
+		else if (it->material_type == Material::Dirt)
 			FixMapping(it->material_index, 25, 40);
-		else if (it->material_type == MaterialType::Rock)
+		else if (it->material_type == Material::Rock)
 			FixMapping(it->material_index, 41, 56);
-		else if (it->material_type == MaterialType::Wood)
+		else if (it->material_type == Material::Wood)
 			FixMapping(it->material_index, 57, 72);
-		else if (it->material_type == MaterialType::Masonry)
+		else if (it->material_type == Material::Masonry)
 			FixMapping(it->material_index, 73, 104);
-		else if (it->material_type == MaterialType::Plaster)
+		else if (it->material_type == Material::Plaster)
 			FixMapping(it->material_index, 105, 120);
-		else if (it->material_type == MaterialType::Metal)
+		else if (it->material_type == Material::Metal)
 			FixMapping(it->material_index, 121, 136);
-		else if (it->material_type == MaterialType::HeavyMetal)
+		else if (it->material_type == Material::HeavyMetal)
 			FixMapping(it->material_index, 137, 152);
-		else if (it->material_type == MaterialType::Plastic)
+		else if (it->material_type == Material::Plastic)
 			FixMapping(it->material_index, 153, 168);
-		else if (it->material_type == MaterialType::HardMetal)
+		else if (it->material_type == Material::HardMetal)
 			FixMapping(it->material_index, 169, 176);
-		else if (it->material_type == MaterialType::HardMasonry)
+		else if (it->material_type == Material::HardMasonry)
 			FixMapping(it->material_index, 177, 184);
-		else if (it->material_type == MaterialType::Ice)
+		else if (it->material_type == Material::Ice)
 			FixMapping(it->material_index, 185, 192);
-		else if (it->material_type == MaterialType::None)
+		else if (it->material_type == Material::None)
 			FixMapping(it->material_index, 193, 224);
 		else if (IsSnow(it->material_index, it->material_type))
 			FixMapping(it->material_index, 254, 254);

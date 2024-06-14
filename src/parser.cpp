@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -125,10 +126,6 @@ Palette TDBIN::ReadPalette() {
 	Palette p;
 	for (int i = 0; i < 256; i++) {
 		p.materials[i].type = ReadByte();
-		if (p.materials[i].type > (uint8_t)MaterialType::Unphysical) {
-			printf("[ERROR] Invalid Material %d at index %d\n", p.materials[i].type, i);
-			exit(EXIT_FAILURE);
-		}
 		p.materials[i].rgba = ReadColor();
 		p.materials[i].reflectivity = ReadFloat();
 		p.materials[i].shinyness = ReadFloat();
@@ -147,6 +144,7 @@ Rope* TDBIN::ReadRope() {
 	Rope* rope = new Rope();
 	rope->color = ReadColor();
 	rope->z_f32 = ReadFloat();
+	assert(rope->z_f32 == 0.0f);
 	rope->strength = ReadFloat();
 	rope->maxstretch = ReadFloat();
 	rope->slack = ReadFloat();
@@ -255,7 +253,7 @@ LuaTable* TDBIN::ReadLuaTable() {
 
 Entity* TDBIN::ReadEntity() {
 	Entity* entity = new Entity();
-	entity->type = (EntityType)ReadByte();
+	entity->type = ReadByte();
 
 	entity->handle = ReadInt();
 	entity_mapping[entity->handle] = entity;
@@ -267,7 +265,7 @@ Entity* TDBIN::ReadEntity() {
 		entity->tags[i] = ReadTag();
 
 	entity->desc = ReadString();
-	if (entity->type != EntityType::Light && entity->type != EntityType::Joint) // Ah, yes... consistency
+	if (entity->type != Entity::Light && entity->type != Entity::Joint) // Ah, yes... consistency
 		entity->flags = ReadWord();
 	entity->self = ReadEntityType(entity->type);
 
@@ -331,7 +329,7 @@ Shape* TDBIN::ReadShape() {
 
 Light* TDBIN::ReadLight() {
 	Light* light = new Light();
-	light->is_on = ReadBool();
+	light->enabled = ReadBool();
 	light->type = ReadByte();
 
 	light->transform = ReadTransform();
@@ -383,7 +381,7 @@ Water* TDBIN::ReadWater() {
 
 Joint* TDBIN::ReadJoint() {
 	Joint* joint = new Joint();
-	joint->type = (JointType)ReadInt();
+	joint->type = ReadInt();
 	for (int i = 0; i < 2; i++)
 		joint->shapes[i] = ReadInt();
 	for (int i = 0; i < 2; i++)
@@ -407,7 +405,7 @@ Joint* TDBIN::ReadJoint() {
 	joint->autodisable = ReadBool();
 	joint->connection_strength = ReadFloat();
 	joint->disconnect_dist = ReadFloat();
-	if (joint->type == JointType::Rope)
+	if (joint->type == Joint::_Rope)
 		joint->rope = ReadRope();
 	else
 		joint->rope = NULL;
@@ -438,9 +436,9 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->passive_brake = ReadFloat();
 
 	int ref_count = ReadInt();
-	vehicle->refs.resize(ref_count);
+	vehicle->bodies.resize(ref_count);
 	for (int i = 0; i < ref_count; i++)
-		vehicle->refs[i] = ReadInt();
+		vehicle->bodies[i] = ReadInt();
 
 	int exhaust_count = ReadInt();
 	vehicle->exhausts.resize(exhaust_count);
@@ -455,6 +453,7 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->vitals[i].body = ReadInt();
 		vehicle->vitals[i].position = ReadVector();
 		vehicle->vitals[i].z_f32 = ReadFloat();
+		assert(vehicle->vitals[i].z_f32 == 0.5f);
 		vehicle->vitals[i].nearby_voxels = ReadInt();
 	}
 	vehicle->bounds_dist = ReadFloat();
@@ -473,7 +472,7 @@ Wheel* TDBIN::ReadWheel() {
 	wheel->ground_shape = ReadInt();
 	for (int i = 0; i < 3; i++)
 		wheel->ground_voxel_pos[i] = ReadInt();
-	wheel->z_u8 = ReadByte();
+	wheel->on_ground = ReadByte();
 	wheel->transform = ReadTransform();
 	wheel->transform2 = ReadTransform();
 	wheel->steer = ReadFloat();
@@ -483,8 +482,8 @@ Wheel* TDBIN::ReadWheel() {
 	wheel->radius = ReadFloat();
 	wheel->width = ReadFloat();
 	wheel->angular_speed = ReadFloat();
-	wheel->z_f32_1 = ReadFloat();
-	wheel->z_f32_2 = ReadFloat();
+	wheel->stance = ReadFloat();
+	wheel->vertical_offset = ReadFloat();
 	return wheel;
 }
 
@@ -510,7 +509,7 @@ Screen* TDBIN::ReadScreen() {
 Trigger* TDBIN::ReadTrigger() {
 	Trigger* trigger = new Trigger();
 	trigger->transform = ReadTransform();
-	trigger->type = (TriggerType)ReadInt();
+	trigger->type = ReadInt();
 	trigger->sphere_size = ReadFloat();
 	for (int i = 0; i < 3; i++)
 		trigger->box_size[i] = ReadFloat();
@@ -522,8 +521,8 @@ Trigger* TDBIN::ReadTrigger() {
 		trigger->polygon_vertices[i].y = ReadFloat();
 	}
 	trigger->sound.path = ReadString();
-	trigger->sound.soundramp = ReadFloat();
-	trigger->sound.z_u8 = ReadByte();
+	trigger->sound.ramp = ReadFloat();
+	trigger->sound.type = ReadByte();
 	trigger->sound.volume = ReadFloat();
 	return trigger;
 };
@@ -567,29 +566,29 @@ Script* TDBIN::ReadScript() {
 	return script;
 }
 
-void* TDBIN::ReadEntityType(EntityType type) {
+void* TDBIN::ReadEntityType(uint8_t type) {
 	switch (type) {
-		case EntityType::Body:
+		case Entity::Body:
 			return ReadBody();
-		case EntityType::Shape:
+		case Entity::Shape:
 			return ReadShape();
-		case EntityType::Light:
+		case Entity::Light:
 			return ReadLight();
-		case EntityType::Location:
+		case Entity::Location:
 			return ReadLocation();
-		case EntityType::Water:
+		case Entity::Water:
 			return ReadWater();
-		case EntityType::Joint:
+		case Entity::Joint:
 			return ReadJoint();
-		case EntityType::Vehicle:
+		case Entity::Vehicle:
 			return ReadVehicle();
-		case EntityType::Wheel:
+		case Entity::Wheel:
 			return ReadWheel();
-		case EntityType::Screen:
+		case Entity::Screen:
 			return ReadScreen();
-		case EntityType::Trigger:
+		case Entity::Trigger:
 			return ReadTrigger();
-		case EntityType::Script:
+		case Entity::Script:
 			return ReadScript();
 		default:
 			printf("[ERROR] Invalid entity type: %d\n", (uint8_t)type);
@@ -644,7 +643,7 @@ void TDBIN::ReadEnvironment() {
 	fog->amount = ReadFloat();
 	fog->exponent = ReadFloat();
 
-	Env::Water* water = &environment->water;
+	Environment::Water* water = &environment->water;
 	water->wetness = ReadFloat();
 	water->puddleamount = ReadFloat();
 	water->puddlesize = ReadFloat();

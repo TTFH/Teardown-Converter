@@ -54,7 +54,7 @@ void WriteXML::WriteSpawnpoint() {
 void WriteXML::WriteEnvironment() {
 	Skybox* skybox = &scene.environment.skybox;
 	Fog* fog = &scene.environment.fog;
-	Env::Water* water = &scene.environment.water;
+	Environment::Water* water = &scene.environment.water;
 	Snow* snow = &scene.environment.snow;
 
 	XMLElement* environment = xml.CreateElement("environment");
@@ -169,7 +169,7 @@ void WriteXML::WriteEntities() {
 
 // TODO: refactor
 void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_element, Entity* entity) {
-	assert(entity->type == EntityType::Shape);
+	assert(entity->type == Entity::Shape);
 	Shape* shape = static_cast<Shape*>(entity->self);
 	uint32_t handle = entity->handle;
 
@@ -219,7 +219,7 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 	if (shape->transform.isDefault()) {
 		Entity* parent_entity = entity->parent;
 		assert(parent_entity != NULL);
-		assert(parent_entity->type == EntityType::Body);
+		assert(parent_entity->type == Entity::Body);
 		Body* parent_body = static_cast<Body*>(parent_entity->self);
 		if (parent_body->dynamic && parent_entity->children.getSize() == 1 && parent_entity->tags.getSize() == 0) {
 			XMLElement* grandparent_element = parent_element->Parent()->ToElement();
@@ -258,9 +258,9 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 		bool is_wheel_shape = false;
 		if (params.remove_snow) {
 			Entity* vox_parent = entity->parent;
-			if (vox_parent != NULL && vox_parent->type == EntityType::Body) {
+			if (vox_parent != NULL && vox_parent->type == Entity::Body) {
 				Entity* vox_grandparent = vox_parent->parent;
-				if (vox_grandparent != NULL && vox_grandparent->type == EntityType::Wheel)
+				if (vox_grandparent != NULL && vox_grandparent->type == Entity::Wheel)
 					is_wheel_shape = true;
 			}
 		}
@@ -271,7 +271,7 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 					uint8_t index = voxels.Get(x, y, z);
 					if (index != 0) {
 						Material palette_entry = palette.materials[index];
-						if (params.remove_snow && palette_entry.type == MaterialType::Unphysical &&
+						if (params.remove_snow && palette_entry.type == Material::Unphysical &&
 							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
 							mvshape.voxels.Set(x, y, z, 0);
 
@@ -358,7 +358,7 @@ void WriteXML::WriteCompound(uint32_t handle, const Tensor3D &voxels, MV_FILE* c
 				uint8_t index = voxels.Get(x, y, z);
 				if (index != 0) {
 					Material palette_entry = palette.materials[index];
-					if (params.remove_snow && palette_entry.type == MaterialType::Unphysical &&
+					if (params.remove_snow && palette_entry.type == Material::Unphysical &&
 						int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
 						mvshape.voxels.Set(x - offsetx, y - offsety, z - offsetz, 0);
 					else
@@ -401,12 +401,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 	xml.AddStrAttribute(entity_element, "desc", entity->desc);
 
 	switch (entity->type) {
-		case EntityType::Body: {
+		case Entity::Body: {
 			Body* body = static_cast<Body*>(entity->self);
 			entity_element->SetName("body");
 
 			Entity* body_parent = entity->parent;
-			if (body_parent != NULL && body_parent->type == EntityType::Vehicle) {
+			if (body_parent != NULL && body_parent->type == Entity::Vehicle) {
 				Vehicle* parent_vehicle = static_cast<Vehicle*>(body_parent->self);
 				body->transform = TransformToLocalTransform(parent_vehicle->transform, body->transform);
 			}
@@ -433,43 +433,43 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				entity_element = NULL; // Ignore empty bodies with no tags
 		}
 			break;
-		case EntityType::Shape:
+		case Entity::Shape:
 			WriteShape(parent, entity_element, entity);
 			break;
-		case EntityType::Light: {
+		case Entity::Light: {
 			Light* light = static_cast<Light*>(entity->self);
 			entity_element->SetName("light");
 
 			Entity* light_parent = entity->parent;
-			if (light_parent != NULL && light_parent->type == EntityType::Shape) {
+			if (light_parent != NULL && light_parent->type == Entity::Shape) {
 				Shape* parent_shape = static_cast<Shape*>(light_parent->self);
 				Transform light_tr = TransformToLocalTransform(parent_shape->transform, light->transform);
 				WriteTransform(entity_element, light_tr);
-			} else if (light_parent != NULL && light_parent->type == EntityType::Location) {
+			} else if (light_parent != NULL && light_parent->type == Entity::Location) {
 				Location* parent_location = static_cast<Location*>(light_parent->self);
 				Transform light_tr = TransformToLocalTransform(parent_location->transform, light->transform);
 				WriteTransform(entity_element, light_tr);
-			} else if (light_parent != NULL && light_parent->type != EntityType::Screen && light_parent->type != EntityType::Light)
+			} else if (light_parent != NULL && light_parent->type != Entity::Screen && light_parent->type != Entity::Light)
 				WriteTransform(entity_element, light->transform);
 
-			if (light->type == Capsule)
+			if (light->type == Light::Capsule)
 				xml.AddAttribute(entity_element, "type", "capsule");
-			else if (light->type == Cone)
+			else if (light->type == Light::Cone)
 				xml.AddAttribute(entity_element, "type", "cone");
-			else if (light->type == Area)
+			else if (light->type == Light::Area)
 				xml.AddAttribute(entity_element, "type", "area");
 
 			xml.AddFloat4Attribute(entity_element, "color", pow(light->color.r, 1 / 2.2f), pow(light->color.g, 1 / 2.2f), pow(light->color.b, 1 / 2.2f), light->color.a, "1 1 1 1");
 			xml.AddFloatAttribute(entity_element, "scale", light->scale, "1");
 
-			if (light->type == Cone) {
+			if (light->type == Light::Cone) {
 				xml.AddFloatAttribute(entity_element, "angle", 2.0 * deg(acos(light->angle)), "90");
 				xml.AddFloatAttribute(entity_element, "penumbra", 2.0 * deg(acos(light->angle) - acos(light->penumbra)), "10");
 			}
 
-			if (light->type == Area)
+			if (light->type == Light::Area)
 				xml.AddFloat2Attribute(entity_element, "size", 2.0 * light->area_size[0], 2.0 * light->area_size[1]);
-			else if (light->type == Capsule)
+			else if (light->type == Light::Capsule)
 				xml.AddFloat2Attribute(entity_element, "size", 2.0 * light->capsule_size, light->size);
 			else
 				xml.AddFloatAttribute(entity_element, "size", light->size, "0.1");
@@ -485,12 +485,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				entity_element = NULL; // Ignore player flashlight
 		}
 			break;
-		case EntityType::Location: {
+		case Entity::Location: {
 			Location* location = static_cast<Location*>(entity->self);
 			entity_element->SetName("location");
 
 			Entity* location_parent = entity->parent;
-			while (location_parent != NULL && location_parent->type != EntityType::Vehicle)
+			while (location_parent != NULL && location_parent->type != Entity::Vehicle)
 				location_parent = location_parent->parent;
 			if (location_parent != NULL) {
 				// Location is inside a vehicle
@@ -499,7 +499,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			}
 
 			location_parent = entity->parent;
-			if (location_parent != NULL && location_parent->type == EntityType::Shape) {
+			if (location_parent != NULL && location_parent->type == Entity::Shape) {
 				// The location is inside a static shape
 				Shape* parent_shape = static_cast<Shape*>(location_parent->self);
 				Transform loc_tr = TransformToLocalTransform(parent_shape->transform, location->transform);
@@ -507,7 +507,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 
 				// The location is inside a dynamic body
 				Entity* location_grandparent = location_parent->parent;
-				if (location_grandparent != NULL && location_grandparent->type == EntityType::Body) {
+				if (location_grandparent != NULL && location_grandparent->type == Entity::Body) {
 					Body* grandparent_body = static_cast<Body*>(location_grandparent->self);
 					if (grandparent_body->dynamic) {
 						Transform location_tr = TransformToLocalTransform(grandparent_body->transform, location->transform);
@@ -515,11 +515,11 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 						WriteTransform(entity_element, location_tr);
 					}
 				}
-			} else if (location_parent != NULL && location_parent->type == EntityType::Body) {
+			} else if (location_parent != NULL && location_parent->type == Entity::Body) {
 				Body* parent_body = static_cast<Body*>(location_parent->self);
 				Transform loc_tr = TransformToLocalTransform(parent_body->transform, location->transform);
 				WriteTransform(entity_element, loc_tr);
-			} else if (location_parent != NULL && location_parent->type == EntityType::Trigger) {
+			} else if (location_parent != NULL && location_parent->type == Entity::Trigger) {
 				Trigger* parent_trigger = static_cast<Trigger*>(location_parent->self);
 				Transform loc_tr = TransformToLocalTransform(parent_trigger->transform, location->transform);
 				WriteTransform(entity_element, loc_tr);
@@ -530,7 +530,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				parent = xml.GetLocationsGroup();
 		}
 			break;
-		case EntityType::Water: {
+		case Entity::Water: {
 			Water* water = static_cast<Water*>(entity->self);
 			entity_element->SetName("water");
 			WriteTransform(entity_element, water->transform);
@@ -548,9 +548,9 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				parent = xml.GetWaterGroup();
 		}
 			break;
-		case EntityType::Joint: {
+		case Entity::Joint: {
 			Joint* joint = static_cast<Joint*>(entity->self);
-			if (joint->type == JointType::Rope) {
+			if (joint->type == Joint::_Rope) {
 				entity_element->SetName("rope");
 				xml.AddFloatAttribute(entity_element, "size", joint->size, "0.2");
 				xml.AddColorAttribute(entity_element, "color", joint->rope->color, "0 0 0");
@@ -583,7 +583,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				entity_element = NULL; // Process joints on a second pass
 		}
 			break;
-		case EntityType::Vehicle: {
+		case Entity::Vehicle: {
 			Vehicle* vehicle = static_cast<Vehicle*>(entity->self);
 			entity_element->SetName("vehicle");
 			WriteTransform(entity_element, vehicle->transform);
@@ -646,12 +646,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				parent = xml.GetVehiclesGroup();
 		}
 			break;
-		case EntityType::Wheel: {
+		case Entity::Wheel: {
 			Wheel* wheel = static_cast<Wheel*>(entity->self);
 			entity_element->SetName("wheel");
 
 			Entity* wheel_parent = entity->parent;
-			if (wheel_parent != NULL && wheel_parent->type == EntityType::Shape) {
+			if (wheel_parent != NULL && wheel_parent->type == Entity::Shape) {
 				Shape* parent_shape = static_cast<Shape*>(wheel_parent->self);
 				Transform wheel_tr = TransformToLocalTransform(parent_shape->transform, wheel->transform);
 				WriteTransform(entity_element, wheel_tr);
@@ -663,12 +663,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddFloatNAttribute(entity_element, "travel", wheel->travel, 2, "-0.1 0.1");
 		}
 			break;
-		case EntityType::Screen: {
+		case Entity::Screen: {
 			Screen* screen = static_cast<Screen*>(entity->self);
 			entity_element->SetName("screen");
 
 			Entity* screen_parent = entity->parent;
-			if (screen_parent != NULL && screen_parent->type == EntityType::Shape) {
+			if (screen_parent != NULL && screen_parent->type == Entity::Shape) {
 				Shape* parent_shape = static_cast<Shape*>(screen_parent->self);
 				// Revert applied transform
 				Transform parent_shape_tr = TransformToLocalTransform(parent_shape->old_transform, parent_shape->transform);
@@ -703,33 +703,33 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			xml.AddFloatAttribute(entity_element, "fxglitch", screen->fxglitch, "0");
 		}
 			break;
-		case EntityType::Trigger: {
+		case Entity::Trigger: {
 			Trigger* trigger = static_cast<Trigger*>(entity->self);
 			entity_element->SetName("trigger");
-			if (trigger->type == TriggerType::Box) {
+			if (trigger->type == Trigger::Box) {
 				Vector offset = Vector(0, trigger->box_size[1], 0);
 				trigger->transform.pos = trigger->transform.pos - trigger->transform.rot * offset;
 			}
 			WriteTransform(entity_element, trigger->transform);
 
-			if (trigger->type == TriggerType::Sphere)
+			if (trigger->type == Trigger::Sphere)
 				xml.AddFloatAttribute(entity_element, "size", trigger->sphere_size, "10");
-			else if (trigger->type == TriggerType::Box) {
+			else if (trigger->type == Trigger::Box) {
 				xml.AddAttribute(entity_element, "type", "box");
 				xml.AddFloat3Attribute(entity_element, "size", 2.0 * trigger->box_size[0], 2.0 * trigger->box_size[1], 2.0 * trigger->box_size[2]);
-			} else if (trigger->type == TriggerType::Polygon) {
+			} else if (trigger->type == Trigger::Polygon) {
 				xml.AddAttribute(entity_element, "type", "polygon");
 				xml.AddFloatAttribute(entity_element, "size", trigger->polygon_size, "10");
 				WriteVertices(entity_element, trigger->polygon_vertices);
 			}
 			xml.AddStrFloatAttribute(entity_element, "sound", trigger->sound.path, trigger->sound.volume);
-			xml.AddFloatAttribute(entity_element, "soundramp", trigger->sound.soundramp, "2");
+			xml.AddFloatAttribute(entity_element, "soundramp", trigger->sound.ramp, "2");
 
 			if (parent == xml.GetScene())
 				parent = xml.GetTriggersGroup();
 		}
 			break;
-		case EntityType::Script:
+		case Entity::Script:
 			entity_element = NULL; // Process scripts on a second pass
 			break;
 	}
@@ -744,7 +744,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 }
 
 void WriteXML::WriteEntity2ndPass(Entity* entity) {
-	if (entity->type == EntityType::Vehicle) {
+	if (entity->type == Entity::Vehicle) {
 		Vehicle* vehicle = static_cast<Vehicle*>(entity->self);
 		int vital_count = vehicle->vitals.getSize();
 		for (int i = 0; i < vital_count; i++) {
@@ -757,9 +757,9 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				xml.AddVectorAttribute(vital, "pos", vehicle->vitals[i].position);
 			}
 		}
-	} else if (entity->type == EntityType::Joint) {
+	} else if (entity->type == Entity::Joint) {
 		Joint* joint = static_cast<Joint*>(entity->self);
-		if (joint->type != JointType::Rope) {
+		if (joint->type != Joint::_Rope) {
 			XMLElement* entity_element = xml.CreateElement("joint");
 			xml.AddStrAttribute(entity_element, "tags", ConcatTags(entity->tags));
 
@@ -768,16 +768,16 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			assert(entity_mapping.find(shape_handle) != entity_mapping.end());
 			Entity* parent_entity = entity_mapping[shape_handle];
 			assert(parent_entity != NULL);
-			assert(parent_entity->type == EntityType::Shape);
+			assert(parent_entity->type == Entity::Shape);
 			Shape* shape = static_cast<Shape*>(parent_entity->self);
 			assert(parent_entity->parent != NULL);
-			assert(parent_entity->parent->type == EntityType::Body);
+			assert(parent_entity->parent->type == Entity::Body);
 			XMLElement* parent_element = xml.GetNode(shape_handle);
 			assert(parent_element != NULL);
 
 			Vector relative_pos = joint->positions[0];
 			Quat relative_rot;
-			if (joint->type != JointType::Ball) {
+			if (joint->type != Joint::Ball) {
 				Vector joint_axis(joint->axis[0]);
 				if (joint_axis == Vector(1, 0, 0))
 					relative_rot = QuatEuler(0, 90, 0);
@@ -808,29 +808,29 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				joint_tr = TransformToLocalTransform(shape->transform, joint_tr);
 			WriteTransform(entity_element, joint_tr);
 
-			if (joint->type == JointType::Hinge)
+			if (joint->type == Joint::Hinge)
 				xml.AddAttribute(entity_element, "type", "hinge");
-			else if (joint->type == JointType::Prismatic)
+			else if (joint->type == Joint::Prismatic)
 				xml.AddAttribute(entity_element, "type", "prismatic");
 
 			xml.AddFloatAttribute(entity_element, "size", joint->size, "0.1");
-			if (joint->type != JointType::Prismatic) {
+			if (joint->type != Joint::Prismatic) {
 				xml.AddFloatAttribute(entity_element, "rotstrength", joint->rotstrength, "0");
 				xml.AddFloatAttribute(entity_element, "rotspring", joint->rotspring, "0.5");
 			}
 			xml.AddBoolAttribute(entity_element, "collide", joint->collide, false);
-			if (joint->type == JointType::Hinge) {
+			if (joint->type == Joint::Hinge) {
 				if (joint->limits[0] != 0.0 || joint->limits[1] != 0.0)
 					xml.AddFloat2Attribute(entity_element, "limits", deg(joint->limits[0]), deg(joint->limits[1]));
-			} else if (joint->type == JointType::Prismatic)
+			} else if (joint->type == Joint::Prismatic)
 				xml.AddFloatNAttribute(entity_element, "limits", joint->limits, 2, "0 0");
 			xml.AddBoolAttribute(entity_element, "sound", joint->sound, false);
-			if (joint->type == JointType::Prismatic)
+			if (joint->type == Joint::Prismatic)
 				xml.AddBoolAttribute(entity_element, "autodisable", joint->autodisable, false);
 			if (parent_element != NULL)
 				xml.AddElement(parent_element, entity_element, entity->handle);
 		}
-	} else if (entity->type == EntityType::Script) {
+	} else if (entity->type == Entity::Script) {
 		Script* script = static_cast<Script*>(entity->self);
 		XMLElement* entity_element = xml.CreateElement("script");
 

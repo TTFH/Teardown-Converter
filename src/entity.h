@@ -54,7 +54,7 @@ public:
 };
 
 #define SmallVec Vec
-typedef uint32_t Handle;
+//typedef uint32_t Handle;
 
 extern const char* EntityName[];
 
@@ -82,20 +82,6 @@ struct Sound {
 };
 
 // ------------------------------------
-
-enum class EntityType : uint8_t {
-	Body = 1,
-	Shape,
-	Light,
-	Location,
-	Water,
-	Joint,
-	Vehicle,
-	Wheel,
-	Screen,
-	Trigger,
-	Script,
-};
 /*
 enum Flags : uint16_t {
 	Invisible	= 1 << 9,
@@ -111,7 +97,19 @@ enum Flags : uint16_t {
 };
 */
 struct Entity {
-	EntityType type;
+	static const uint8_t Body = 1;
+	static const uint8_t Shape = 2;
+	static const uint8_t Light = 3;
+	static const uint8_t Location = 4;
+	static const uint8_t Water = 5;
+	static const uint8_t Joint = 6;
+	static const uint8_t Vehicle = 7;
+	static const uint8_t Wheel = 8;
+	static const uint8_t Screen = 9;
+	static const uint8_t Trigger = 10;
+	static const uint8_t Script = 11;
+
+	uint8_t type;
 	uint32_t handle;
 	SmallVec<Tag> tags;
 	string desc;		// desc
@@ -124,7 +122,7 @@ struct Entity {
 	~Entity();
 };
 /*
-enum class BodyMode : uint8_t {
+enum BodyMode : uint8_t {
 	Average = 1,
 	Minimum,
 	Multiply,
@@ -152,7 +150,7 @@ enum ShapeFlags {
 	Static		= 1 << 0,
 }
 
-enum class ShapeOrigin : uint8_t {
+enum ShapeOrigin : uint8_t {
 	Tool = 1,
 	MapInit,
 	Debris,
@@ -192,15 +190,13 @@ struct Shape {
 	Transform old_transform;	// helper for screen positon
 };
 
-enum LightType : uint8_t {
-	Sphere = 1,
-	Capsule,
-	Cone,
-	Area,
-};
-
 struct Light {
-	bool is_on;
+	static const uint8_t Sphere = 1;
+	static const uint8_t Capsule = 2;
+	static const uint8_t Cone = 3;
+	static const uint8_t Area = 4;
+
+	bool enabled;
 	uint8_t type;		// type
 	Transform transform;
 	Color color;		// color = pow(this, 1 / 2.2)
@@ -253,15 +249,13 @@ struct Rope {
 	Vec<Segment> segments;
 };
 
-enum class JointType : uint32_t {
-	Ball = 1,
-	Hinge,
-	Prismatic,
-	Rope,
-};
-
 struct Joint {
-	JointType type;				// type
+	static const uint32_t Ball = 1;
+	static const uint32_t Hinge = 2;
+	static const uint32_t Prismatic = 3;
+	static const uint32_t _Rope = 4;
+
+	uint32_t type;				// type
 	uint32_t shapes[2];
 	Vector positions[2];
 	Vector axis[2];
@@ -278,7 +272,7 @@ struct Joint {
 	bool autodisable;			// autodisable
 	float connection_strength;	// Used for planks 3000.0
 	float disconnect_dist;		// Used for planks 0.8
-	Rope* rope;					// Only if type = Rope
+	Rope* rope;			// Only if type = Rope
 	~Joint();
 };
 
@@ -312,7 +306,7 @@ struct Exhaust {
 struct Vital {
 	uint32_t body;
 	Vector position;
-	float z_f32;			// TODO: 0.5
+	float z_f32;
 	uint32_t nearby_voxels;
 };
 
@@ -331,7 +325,7 @@ struct Vehicle {
 	uint32_t main_voxel_count;
 	bool braking;
 	float passive_brake;
-	Vec<uint32_t> refs;
+	Vec<uint32_t> bodies;
 	Vec<Exhaust> exhausts;	// exhaust
 	Vec<Vital> vitals;		// vital
 	float bounds_dist;
@@ -347,7 +341,7 @@ struct Wheel {
 	uint32_t shape;
 	uint32_t ground_shape;
 	uint32_t ground_voxel_pos[3];
-	bool z_u8;
+	bool on_ground;
 	Transform transform;	// in the vehicle body local space
 	Transform transform2;	// in the wheel body local space
 	float steer;			// steer
@@ -356,8 +350,8 @@ struct Wheel {
 	float radius;
 	float width;
 	float angular_speed;
-	float z_f32_1;
-	float z_f32_2;
+	float stance;			// wheel width * side (-1, 0, 1), right is positive
+	float vertical_offset;	// vertical distance to vehicle body, down is positive
 };
 
 struct Screen {
@@ -374,23 +368,27 @@ struct Screen {
 	float fxnoise;			// fxnoise
 	float fxglitch;			// fxglitch
 };
-
-enum class TriggerType : uint32_t {
-	Sphere = 1,
-	Box,
-	Polygon,
+/*
+enum TriggerSoundType : uint8_t {
+	Default = 0,
+	Outdoor = 1,
+	Music = 2
 };
-
+*/
 struct TriggerSound {
 	string path;		// sound
-	float soundramp;	// soundramp
-	uint8_t z_u8;		// TODO: sound type 0,1,2
+	float ramp;			// soundramp
+	uint8_t type;
 	float volume;		// sound
 };
 
 struct Trigger {
+	static const uint32_t Sphere = 1;
+	static const uint32_t Box = 2;
+	static const uint32_t Polygon = 3;
+
 	Transform transform;
-	TriggerType type;			// type
+	uint32_t type;				// type
 	float sphere_size;			// size
 	float box_size[3];			// size = 2.0 * this
 	float polygon_size;			// size

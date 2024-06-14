@@ -15,49 +15,52 @@ const char* EntityName[] = {
 	"Script"
 };
 
-Entity::~Entity() {
-	for (unsigned int i = 0; i < children.getSize(); i++)
-		delete children[i];
+static void DeleteEntity(uint8_t type, void* entity) {
 	switch (type) {
-		case EntityType::Body:
-			delete static_cast<Body*>(self);
+		case Entity::Body:
+			delete static_cast<Body*>(entity);
 			break;
-		case EntityType::Shape:
-			delete static_cast<Shape*>(self);
+		case Entity::Shape:
+			delete static_cast<Shape*>(entity);
 			break;
-		case EntityType::Light:
-			delete static_cast<Light*>(self);
+		case Entity::Light:
+			delete static_cast<Light*>(entity);
 			break;
-		case EntityType::Location:
-			delete static_cast<Location*>(self);
+		case Entity::Location:
+			delete static_cast<Location*>(entity);
 			break;
-		case EntityType::Water:
-			delete static_cast<Water*>(self);
+		case Entity::Water:
+			delete static_cast<Water*>(entity);
 			break;
-		case EntityType::Joint:
-			delete static_cast<Joint*>(self);
+		case Entity::Joint:
+			delete static_cast<Joint*>(entity);
 			break;
-		case EntityType::Vehicle:
-			delete static_cast<Vehicle*>(self);
+		case Entity::Vehicle:
+			delete static_cast<Vehicle*>(entity);
 			break;
-		case EntityType::Wheel:
-			delete static_cast<Wheel*>(self);
+		case Entity::Wheel:
+			delete static_cast<Wheel*>(entity);
 			break;
-		case EntityType::Screen:
-			delete static_cast<Screen*>(self);
+		case Entity::Screen:
+			delete static_cast<Screen*>(entity);
 			break;
-		case EntityType::Trigger:
-			delete static_cast<Trigger*>(self);
+		case Entity::Trigger:
+			delete static_cast<Trigger*>(entity);
 			break;
-		case EntityType::Script:
-			delete static_cast<Script*>(self);
+		case Entity::Script:
+			delete static_cast<Script*>(entity);
 			break;
 	}
 }
 
+Entity::~Entity() {
+	for (unsigned int i = 0; i < children.getSize(); i++)
+		delete children[i];
+	DeleteEntity(type, self);
+}
+
 Joint::~Joint() {
-	if (type == JointType::Rope && rope != NULL)
-		delete rope;
+	delete rope;
 }
 
 Script::~Script() {

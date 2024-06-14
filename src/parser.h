@@ -76,7 +76,7 @@ private:
 
 	void ReadPlayer();
 	void ReadEnvironment();
-	void* ReadEntityType(EntityType type);
+	void* ReadEntityType(uint8_t type);
 public:
 	void init(const char* input);
 	~TDBIN();
