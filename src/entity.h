@@ -124,9 +124,9 @@ struct Entity {
 /*
 enum BodyMode : uint8_t {
 	Average = 1,
-	Minimum,
-	Multiply,
-	Maximum,
+	Minimum = 2,
+	Multiply = 3,
+	Maximum = 4,
 };
 */
 struct Body {
@@ -152,10 +152,10 @@ enum ShapeFlags {
 
 enum ShapeOrigin : uint8_t {
 	Tool = 1,
-	MapInit,
-	Debris,
-	CreateShape,
-	Spawn,
+	MapInit = 2,
+	Debris = 3,
+	CreateShape = 4,
+	Spawn = 5,
 };
 */
 struct Voxels {
@@ -240,7 +240,7 @@ struct Segment {
 
 struct Rope {
 	Color color;		// color
-	float z_f32;
+	float zero;
 	float strength;		// strength
 	float maxstretch;	// maxstretch
 	float slack;		// slack
@@ -272,7 +272,7 @@ struct Joint {
 	bool autodisable;			// autodisable
 	float connection_strength;	// Used for planks 3000.0
 	float disconnect_dist;		// Used for planks 0.8
-	Rope* rope;			// Only if type = Rope
+	Rope* rope;
 	~Joint();
 };
 
@@ -306,7 +306,7 @@ struct Exhaust {
 struct Vital {
 	uint32_t body;
 	Vector position;
-	float z_f32;
+	float radius;
 	uint32_t nearby_voxels;
 };
 
@@ -400,7 +400,7 @@ enum SoundType : uint32_t {
 	Sound = 1,
 	Loop = 2,
 	Music = ?,
-	UiSound = ?
+	UiSound = ?,
 	UiLoop = ?
 };
 */

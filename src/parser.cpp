@@ -42,7 +42,9 @@ TDBIN::~TDBIN() {
 }
 
 bool TDBIN::ReadBool() {
-	return ReadByte() != 0;
+	uint8_t b = ReadByte();
+	assert(b == 0 || b == 1);
+	return b != 0;
 }
 
 uint8_t TDBIN::ReadByte() {
@@ -143,8 +145,7 @@ Palette TDBIN::ReadPalette() {
 Rope* TDBIN::ReadRope() {
 	Rope* rope = new Rope();
 	rope->color = ReadColor();
-	rope->z_f32 = ReadFloat();
-	assert(rope->z_f32 == 0.0f);
+	rope->zero = ReadFloat();
 	rope->strength = ReadFloat();
 	rope->maxstretch = ReadFloat();
 	rope->slack = ReadFloat();
@@ -452,8 +453,7 @@ Vehicle* TDBIN::ReadVehicle() {
 	for (int i = 0; i < vital_count; i++) {
 		vehicle->vitals[i].body = ReadInt();
 		vehicle->vitals[i].position = ReadVector();
-		vehicle->vitals[i].z_f32 = ReadFloat();
-		assert(vehicle->vitals[i].z_f32 == 0.5f);
+		vehicle->vitals[i].radius = ReadFloat();
 		vehicle->vitals[i].nearby_voxels = ReadInt();
 	}
 	vehicle->bounds_dist = ReadFloat();
