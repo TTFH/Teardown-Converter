@@ -312,10 +312,11 @@ vector<LevelInfo> LoadLevels(string filter) {
 
 string GetFilename(const char* path) {
 	string filename = path;
-	size_t pos = filename.find_last_of("\\/");
-	if (pos != string::npos)
-		filename = filename.substr(pos + 1);
-	filename = filename.substr(0, filename.find_last_of("."));
+	size_t slash = filename.find_last_of("\\/");
+	if (slash != string::npos)
+		filename = filename.substr(slash + 1);
+	size_t dot = filename.find_last_of(".");
+	filename = filename.substr(0, dot);
 	return filename;
 }
 
@@ -398,6 +399,8 @@ int main(int argc, char* argv[]) {
 	ImGui_ImplOpenGL3_Init("#version 410");
 	ImVec4 clear_color = ImVec4(0.27f, 0.57f, 0.72f, 1.00f);
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
 
 	ImGuiWindowFlags dialog_flags = 0;
 	dialog_flags |= ImGuiWindowFlags_NoResize;

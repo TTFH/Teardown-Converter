@@ -146,8 +146,6 @@ void WriteXML::SaveXML() {
 void WriteXML::SaveVoxFiles() {
 	for (map<uint32_t, MV_FILE*>::iterator it = vox_files.begin(); it != vox_files.end(); it++)
 		it->second->SaveModel(params.compress_vox);
-	for (vector<MV_FILE*>::iterator it = compound_files.begin(); it != compound_files.end(); it++)
-		(*it)->SaveModel(params.compress_vox);
 }
 
 void WriteXML::WriteEntities() {
@@ -167,7 +165,6 @@ void WriteXML::WriteEntities() {
 		WriteEntity2ndPass(scene.entities[i]);
 }
 
-// TODO: refactor
 void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_element, Entity* entity) {
 	assert(entity->type == Entity::Shape);
 	Shape* shape = static_cast<Shape*>(entity->self);
@@ -239,20 +236,20 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 	xml.AddBoolAttribute(entity_element, "collide", collide, true);
 	xml.AddBoolAttribute(entity_element, "prop", is_prop, false);
 
+	string vox_folder = params.legacy_format ? "custom/" : "vox/";
+	string vox_filename = params.map_folder + vox_folder + "palette" + to_string(shape->palette) + ".vox";
+	string path_prefix = params.legacy_format ? "LEVEL/" : "MOD/vox/";
+	string vox_path = path_prefix + "palette" + to_string(shape->palette) + ".vox";
+	string vox_object = "shape" + to_string(handle);
+
+	MV_FILE* vox_file;
+	if (vox_files.find(shape->palette) == vox_files.end()) {
+		vox_file = new MV_FILE(vox_filename.c_str());
+		vox_files[shape->palette] = vox_file;
+	} else
+		vox_file = vox_files[shape->palette];
+
 	if (volume > 0 && sizex <= 256 && sizey <= 256 && sizez <= 256) {
-		string vox_folder = params.legacy_format ? "custom/" : "vox/";
-		string vox_filename = params.map_folder + vox_folder + "palette" + to_string(shape->palette) + ".vox";
-		string path_prefix = params.legacy_format ? "LEVEL/" : "MOD/vox/";
-		string vox_path = path_prefix + "palette" + to_string(shape->palette) + ".vox";
-		string vox_object = "shape" + to_string(handle);
-
-		MV_FILE* vox_file;
-		if (vox_files.find(shape->palette) == vox_files.end()) {
-			vox_file = new MV_FILE(vox_filename.c_str());
-			vox_files[shape->palette] = vox_file;
-		} else
-			vox_file = vox_files[shape->palette];
-
 		MVShape mvshape = { vox_object.c_str(), 0, 0, sizez / 2, voxels };
 
 		bool is_wheel_shape = false;
@@ -299,18 +296,6 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 		xml.AddStrAttribute(entity_element, "object", vox_object);
 		xml.AddFloatAttribute(entity_element, "scale", 10.0 * shape->scale, "1");
 	} else {
-		string vox_folder = params.legacy_format ? "custom/" : "vox/";
-		string vox_filename = params.map_folder + vox_folder + "palette" + to_string(shape->palette) + ".vox";
-		string path_prefix = params.legacy_format ? "LEVEL/" : "MOD/vox/";
-		string vox_path = path_prefix + "palette" + to_string(shape->palette) + ".vox";
-
-		MV_FILE* vox_file;
-		if (vox_files.find(shape->palette) == vox_files.end()) {
-			vox_file = new MV_FILE(vox_filename.c_str());
-			vox_files[shape->palette] = vox_file;
-		} else
-			vox_file = vox_files[shape->palette];
-
 		entity_element->SetName("compound");
 		for (int i = 0; i < (sizex + 256 - 1) / 256; i++)
 			for (int j = 0; j < (sizey + 256 - 1) / 256; j++)

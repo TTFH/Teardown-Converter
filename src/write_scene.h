@@ -18,7 +18,6 @@ class WriteXML : public TDBIN {
 private:
 	XML_Writer xml;
 	ConverterParams params;
-	vector<MV_FILE*> compound_files;
 	map<uint32_t, MV_FILE*> vox_files;
 
 	void WriteEntity2ndPass(Entity*);
