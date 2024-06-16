@@ -283,7 +283,7 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 			if (mvshape.voxels.Get(sizex - 1, sizey - 1, sizez - 1) == 0)
 				mvshape.voxels.Set(sizex - 1, sizey - 1, sizez - 1, 255);
 			vox_file->SetColor(255, 255, 0, 0);
-			vox_file->SetMaterial(255, 14, 0.1, 1.0, 0.0, 0.0, 1.0);
+			vox_file->SetMaterial(255, Material::Unphysical, 0.1, 1.0, 0.0, 0.0, 1.0);
 		}
 
 		bool duplicated = vox_file->GetShapeName(mvshape, vox_object);
@@ -325,16 +325,16 @@ void WriteXML::WriteCompound(uint32_t handle, const Tensor3D &voxels, MV_FILE* c
 	pos_x -= (sizex / 2) * 0.1;
 	pos_z += (sizey / 2) * 0.1;
 
-	int mv_pos_x = -10 * pos_x;
-	int mv_pos_y = 10 * pos_z;
-	int mv_pos_z = 10 * pos_y + part_sizez / 2;
+	int mv_pos_x = 10 * pos_x;
+	int mv_pos_y = -10 * pos_z;
+	int mv_pos_z = 10 * pos_y + part_sizez / 2 + part_sizez % 2;
 
 	string vox_object = "shape" + to_string(handle) + "_part" + to_string(i) + to_string(j) + to_string(k);
 	MVShape mvshape = { vox_object, mv_pos_x, mv_pos_y, mv_pos_z, Tensor3D(part_sizex, part_sizey, part_sizez) };
 	mvshape.voxels.Set(0, 0, 0, 255);
 	mvshape.voxels.Set(part_sizex - 1, part_sizey - 1, part_sizez - 1, 255);
 	compound_vox->SetColor(255, 255, 0, 0);
-	compound_vox->SetMaterial(255, 14, 0.1, 1.0, 0.0, 0.0, 1.0);
+	compound_vox->SetMaterial(255, Material::Unphysical, 0.1, 1.0, 0.0, 0.0, 1.0);
 
 	bool empty = true;
 	for (int z = offsetz; z < part_sizez + offsetz; z++)
