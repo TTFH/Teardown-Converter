@@ -53,6 +53,9 @@ public:
 	}
 };
 
+#define VERSION_1_6_0 160
+#define VERSION_1_5_4 154
+
 #define SmallVec Vec
 //typedef uint32_t Handle;
 
@@ -108,6 +111,7 @@ struct Entity {
 	static const uint8_t Screen = 9;
 	static const uint8_t Trigger = 10;
 	static const uint8_t Script = 11;
+	static const uint8_t Animator = 12;
 
 	uint8_t type;
 	uint32_t handle;
@@ -123,10 +127,10 @@ struct Entity {
 };
 /*
 enum BodyMode : uint8_t {
-	Average = 1,
-	Minimum = 2,
-	Multiply = 3,
-	Maximum = 4,
+	Average = 0,
+	Minimum = 1,
+	Multiply = 2,
+	Maximum = 3,
 };
 */
 struct Body {
@@ -163,6 +167,10 @@ struct Voxels {
 	// if the shape volume is not empty, voxels are stored using run length encoding
 	// with pairs (n-1, i) in xyz order
 	RLE palette_indexes;
+	uint32_t palette;
+	float scale;				// scale = 10.0 * this
+	uint8_t light_mask[8];		// - - - - | f r b -
+	bool is_disconnected;
 };
 
 struct Shape {
@@ -181,11 +189,8 @@ struct Shape {
 	bool is_broken;
 	uint8_t has_voxels;
 	Voxels voxels;
-	uint32_t palette;
-	float scale;				// scale = 10.0 * this
-	uint8_t light_mask[8];		// - - - - | f r b -
-	bool is_disconnected;
 	uint8_t origin;
+	uint32_t z_u32;
 
 	Transform old_transform;	// helper for screen positon
 };
@@ -290,7 +295,7 @@ struct VehicleProperties {
 	float strength;		// strength
 	float friction;		// friction
 	float max_steer_angle; // in rad, always 30°
-	bool handbrake;
+	float handbrake;
 	float antispin;		// antispin
 	float steerassist;	// steerassist
 	float assist_multiplier;
@@ -308,6 +313,12 @@ struct Vital {
 	Vector position;
 	float radius;
 	uint32_t nearby_voxels;
+};
+
+struct VehicleAnim {
+	string z_str;
+	Transform z_tr;
+	uint32_t z_u32;
 };
 
 struct Vehicle {
@@ -328,6 +339,7 @@ struct Vehicle {
 	Vec<uint32_t> bodies;
 	Vec<Exhaust> exhausts;	// exhaust
 	Vec<Vital> vitals;		// vital
+	Vec<VehicleAnim> animations;
 	float bounds_dist;
 	bool noroll;
 	float brokenthreshold;
@@ -437,6 +449,10 @@ struct Script {
 	Vec<ScriptSound> sounds;
 	Vec<ValueTransition> transitions;
 	~Script();
+};
+
+struct Animator {
+	
 };
 
 #endif

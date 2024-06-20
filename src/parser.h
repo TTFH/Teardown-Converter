@@ -34,6 +34,7 @@ void ParseFile(ConverterParams params);
 class TDBIN {
 protected:
 	Scene scene;
+	int tdbin_version = 0;
 	map<uint32_t, Entity*> entity_mapping;
 private:
 	FILE* bin_file;
@@ -73,6 +74,7 @@ private:
 	Screen* ReadScreen();
 	Trigger* ReadTrigger();
 	Script* ReadScript();
+	Animator* ReadAnimator();
 
 	void ReadPlayer();
 	void ReadEnvironment();

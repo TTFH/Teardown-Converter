@@ -19,3 +19,10 @@ const char* MaterialName[] = {
 	"ice",
 	"unphysical"
 };
+
+const char* FogType[] = {
+	"classic",
+	"linear",
+	"exp",
+	"exp2"
+};

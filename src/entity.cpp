@@ -12,7 +12,8 @@ const char* EntityName[] = {
 	"Wheel",
 	"Screen",
 	"Trigger",
-	"Script"
+	"Script",
+	"Animator"
 };
 
 static void DeleteEntity(uint8_t type, void* entity) {
@@ -49,6 +50,9 @@ static void DeleteEntity(uint8_t type, void* entity) {
 			break;
 		case Entity::Script:
 			delete static_cast<Script*>(entity);
+			break;
+		case Entity::Animator:
+			delete static_cast<Animator*>(entity);
 			break;
 	}
 }

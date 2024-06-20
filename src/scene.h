@@ -9,6 +9,7 @@
 using namespace std;
 
 extern const char* MaterialName[];
+extern const char* FogType[];
 
 struct PostProcessing {
 	float brightness;	// brightness
@@ -28,6 +29,7 @@ struct Player {
 	float time_underwater;
 	float bluetide_timer;	// game.player.steroid
 	float bluetide_power;
+	uint32_t animator;
 };
 
 struct Sun {
@@ -54,12 +56,14 @@ struct Skybox {
 };
 
 struct Fog {
+	uint8_t type;
 	Color color;	// fogColor
 	// fogParams:
 	float start;
 	float distance;	// end = start + distance
 	float amount;
 	float exponent;
+	float height_offset;
 };
 
 struct Snow {
@@ -186,6 +190,7 @@ struct Scene {
 	uint32_t flashlight;
 	uint32_t explosion_lua;
 	uint32_t achievements_lua;
+	uint32_t character_lua;
 
 	PostProcessing postpro;
 	Player player;

@@ -78,8 +78,10 @@ void WriteXML::WriteEnvironment() {
 	xml.AddColorAttribute(environment, "constant", skybox->constant, "0.003 0.003 0.003");
 	xml.AddFloatAttribute(environment, "ambient", skybox->ambient, "1");
 	xml.AddFloatAttribute(environment, "ambientexponent", skybox->ambientexponent, "1.3");
+	xml.AddStrAttribute(environment, "fog", FogType[fog->type], "classic");
 	xml.AddColorAttribute(environment, "fogColor", fog->color, "1 1 1");
 	xml.AddFloat4Attribute(environment, "fogParams", fog->start, fog->start + fog->distance, fog->amount, fog->exponent, "40 100 0.9 4");
+	xml.AddFloatAttribute(environment, "fogHeightOffset", fog->height_offset, "0");
 	xml.AddFloatAttribute(environment, "sunBrightness", skybox->sun.brightness, "0");
 	xml.AddColorAttribute(environment, "sunColorTint", skybox->sun.colortint, "1 1 1");
 	if (skybox->auto_sun_dir)
@@ -180,13 +182,13 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 	}
 
 	shape->old_transform = shape->transform;
-	Palette palette = scene.palettes[shape->palette];
+	Palette palette = scene.palettes[shape->voxels.palette];
 	bool collide = (shape->shape_flags & 0x10) != 0;
 
 	Tensor3D voxels(sizex, sizey, sizez);
 	voxels.FromRunLengthEncoding(shape->voxels.palette_indexes);
 
-	bool is_scaled = !CompareFloat(shape->scale, 0.1f);
+	bool is_scaled = !CompareFloat(shape->voxels.scale, 0.1f);
 	if (params.use_voxbox && voxels.IsFilledSingleColor() && !is_scaled) {
 		uint8_t index = voxels.Get(0, 0, 0);
 		Material palette_entry = palette.materials[index];
@@ -208,7 +210,7 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 	}
 
 	Vector axis_offset(0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0);
-	if (is_scaled) axis_offset = axis_offset * (10.0f * shape->scale);
+	if (is_scaled) axis_offset = axis_offset * (10.0f * shape->voxels.scale);
 	shape->transform.pos = shape->transform.pos + shape->transform.rot * axis_offset;
 	shape->transform.rot = shape->transform.rot * QuatEuler(90, 0, 0);
 
@@ -237,17 +239,17 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 	xml.AddBoolAttribute(entity_element, "prop", is_prop, false);
 
 	string vox_folder = params.legacy_format ? "custom/" : "vox/";
-	string vox_filename = params.map_folder + vox_folder + "palette" + to_string(shape->palette) + ".vox";
+	string vox_filename = params.map_folder + vox_folder + "palette" + to_string(shape->voxels.palette) + ".vox";
 	string path_prefix = params.legacy_format ? "LEVEL/" : "MOD/vox/";
-	string vox_path = path_prefix + "palette" + to_string(shape->palette) + ".vox";
+	string vox_path = path_prefix + "palette" + to_string(shape->voxels.palette) + ".vox";
 	string vox_object = "shape" + to_string(handle);
 
 	MV_FILE* vox_file;
-	if (vox_files.find(shape->palette) == vox_files.end()) {
+	if (vox_files.find(shape->voxels.palette) == vox_files.end()) {
 		vox_file = new MV_FILE(vox_filename.c_str());
-		vox_files[shape->palette] = vox_file;
+		vox_files[shape->voxels.palette] = vox_file;
 	} else
-		vox_file = vox_files[shape->palette];
+		vox_file = vox_files[shape->voxels.palette];
 
 	if (volume > 0 && sizex <= 256 && sizey <= 256 && sizez <= 256) {
 		MVShape mvshape = { vox_object.c_str(), 0, 0, sizez / 2, voxels };
@@ -294,7 +296,7 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 
 		xml.AddStrAttribute(entity_element, "file", vox_path);
 		xml.AddStrAttribute(entity_element, "object", vox_object);
-		xml.AddFloatAttribute(entity_element, "scale", 10.0 * shape->scale, "1");
+		xml.AddFloatAttribute(entity_element, "scale", 10.0 * shape->voxels.scale, "1");
 	} else {
 		entity_element->SetName("compound");
 		for (int i = 0; i < (sizex + 256 - 1) / 256; i++)
@@ -307,7 +309,7 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 
 void WriteXML::WriteCompound(uint32_t handle, const Tensor3D &voxels, MV_FILE* compound_vox, string vox_file, XMLElement* compound_xml, Shape* shape, int i, int j, int k) {
 	XMLElement* shape_xml = xml.CreateElement("vox");
-	Palette palette = scene.palettes[shape->palette];
+	Palette palette = scene.palettes[shape->voxels.palette];
 
 	int offsetx = 256 * i;
 	int offsety = 256 * j;
@@ -588,7 +590,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			int exhausts_count = vehicle->exhausts.getSize();
 			for (int i = 0; i < exhausts_count; i++) {
 				string exhaust_tag = "exhaust";
-				if (vehicle->exhausts[i].strength != 1.0f)
+				if (vehicle->exhausts[i].strength != 0.0f)
 					exhaust_tag += "=" + FloatToString(vehicle->exhausts[i].strength);
 
 				XMLElement* exhaust = xml.CreateElement("location");
@@ -846,7 +848,6 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		xml.AddElement(xml.GetScriptsGroup(), entity_element);
 
 		xml.AddStrAttribute(entity_element, "file", script_file);
-		assert(script->params.getSize() <= 4);
 		for (unsigned int i = 0; i < script->params.getSize(); i++) {
 			string param_index = "param";
 			param_index += to_string(i);

@@ -14,6 +14,7 @@
 
 #include "imgui/imgui.h"
 #include "imgui/backend/imgui_impl_glfw.h"
+#define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #include "imgui/backend/imgui_impl_opengl3.h"
 #include "file_dialog/ImGuiFileDialog.h"
 
@@ -87,14 +88,9 @@ void* DecompileMap(void* param) {
 		copy_folder(data->script_folder, data->map_folder + "custom/script");
 	} else {
 		fs::create_directories(data->map_folder + "vox");
-		if (data->dlc_id.empty()) {
-			fs::create_directories(data->map_folder + "main");
-			copy_folder(data->script_folder, data->map_folder + "main/script");
-		} else {
+		copy_folder(data->script_folder + data->level_id, data->map_folder + "main");
+		if (!data->dlc_id.empty())
 			copy_folder(data->script_folder + "script", data->map_folder + "script");
-			copy_folder(data->script_folder + "runtime", data->map_folder + "runtime");
-			copy_folder(data->script_folder + data->level_id, data->map_folder + data->level_id);
-		}
 	}
 	ParseFile(*data);
 	return NULL;
@@ -106,7 +102,7 @@ vector<LevelInfo> LoadLevels(string filter) {
 		const char* sandbox[][4] = {
 			{"lee", "lee_sandbox", "Lee Chemicals Sandbox", "Operated by the Lee family for three generations. Lawrence Lee Junior showed a promising start, but developed a weakness for fast cash. He is now a well known name in the criminal underworld."},
 			{"marina", "marina_sandbox", "West Point Marina Sandbox", "The oldest marina in Löckelle municipality. It features an industrial part and a separate section for leisure activities."},
-			{"mansion", "mansion_sandbox", "Villa Gordon Sandbox", "The home of mall manager and racing enthusiast Gordon Woo, his daughter Freya and fiancee Enid Coumans. An exclusive mansion with a private race track in the backyard."},
+			{"mansion", "mansion_sandbox", "Villa Gordon Sandbox", "The home of mall manager and racing enthusiast Gordon Woo, his daughter Freya and fiancee Enid Coumans. An exclusive mansion with a private track in the backyard."},
 			{"caveisland", "caveisland_sandbox", "Hollowrock Island Sandbox", "Formerly an old fishing hamlet, a few years ago Hollowrock Island was transformed into an energy drink research facility."},
 			{"mall", "mall_sandbox", "The Evertides Mall Sandbox", "An upscale shopping center by the waterfront managed by Gordon Woo. Also in the area is Löckelle municipality folk museum."},
 			{"frustrum", "frustrum_sandbox", "Frustrum Sandbox", "Tiny village of Frustrum along the Löckelle river, featuring an upscale hotel, a nightclub and a gas station."},
@@ -121,31 +117,6 @@ vector<LevelInfo> LoadLevels(string filter) {
 			LevelInfo info = { sandbox[i][0], sandbox[i][1], sandbox[i][2], sandbox[i][3] };
 			levels.push_back(info);
 		}
-	} else if (filter == "Challenges") {
-		const char* gamemodes[][3] = {
-			{"fetch", "Fetch", "Pick up as many targets as possible and get to your escape vehicle before the time runs out."},
-			{"hunted", "Hunted", "Pick up as many targets as possible from randomized positions. Avoid the guard helicopter."},
-			{"mayhem", "Mayhem", "Destroy as much as possible in 60 seconds. Be careful during preparation because the timer starts when 1000 voxels have been destroyed."},
-		};
-		int gamemodes_count = sizeof(gamemodes) / sizeof(gamemodes[0]);
-
-		const char* maps[][2] {
-			{"lee", "Lee Chemicals"},
-			{"marina", "West Point Marina"},
-			{"mansion", "Villa Gordon"},
-			{"caveisland", "Hollowrock Island"},
-			{"mall", "The Evertides Mall"},
-			{"frustrum", "Frustrum"},
-			{"carib", "Isla Estocastica"},
-			{"factory", "Quilez Security"},
-		};
-		int maps_count = sizeof(maps) / sizeof(maps[0]);
-
-		for (int j = 0; j < maps_count; j++)
-			for (int i = 0; i < gamemodes_count; i++) {
-				LevelInfo info = { maps[j][0], "ch_" + string(maps[j][0]) + "_" + string(gamemodes[i][0]), maps[j][1] + string(" ") + gamemodes[i][1], gamemodes[i][2] };
-				levels.push_back(info);
-			}
 	} else if (filter == "Hub") {
 		int hub_version = 1;
 		int hub_carib_version = 1;
@@ -194,7 +165,7 @@ vector<LevelInfo> LoadLevels(string filter) {
 			{ "mansion", "mansion_art", "Fine arts", "Steal at least four paintings from Gordon's art collection for Lee" },
 			{ "mansion", "mansion_fraud", "Insurance fraud", "Help Gordon steal at least three of his own cars to help him with the insurance payout." },
 			{ "mansion", "mansion_safe", "A wet affair", "Destroy Gordon's insurance papers by dumping his brand new safes in water. The safes feature a moisture alarm that triggers in contact with water or rain." },
-			{ "mansion", "mansion_race", "The speed deal", "Help Lee annoy Gordon by beating the track record on his private race track." },
+			{ "mansion", "mansion_race", "The speed deal", "Help Lee annoy Gordon by beating the track record on his private track." },
 			{ "caveisland", "caveisland_computers", "The BlueTide computers", "Steal computers for Parisa to investigate Lee's payments from BlueTide" },
 			{ "caveisland", "caveisland_propane", "Motivational reminder", "Destroy Mr Amanatides propane tanks for Gillian to demonstrate the true value of proper insurance." },
 			{ "caveisland", "caveisland_dishes", "An assortment of dishes", "Download communication data from three satellite dishes and at least two communication terminals. The island is protected by an armed  guard helicopter that arrives shortly after hacking the first target." },
@@ -220,15 +191,43 @@ vector<LevelInfo> LoadLevels(string filter) {
 			LevelInfo info = { missions[i][0], missions[i][1], missions[i][2], missions[i][3] };
 			levels.push_back(info);
 		}
+	} else if (filter == "Challenges") {
+		const char* gamemodes[][3] = {
+			{"fetch", "Fetch", "Pick up as many targets as possible and get to your escape vehicle before the time runs out."},
+			{"hunted", "Hunted", "Pick up as many targets as possible from randomized positions. Avoid the guard helicopter."},
+			{"mayhem", "Mayhem", "Destroy as much as possible in 60 seconds. Be careful during preparation because the timer starts when 1000 voxels have been destroyed."},
+		};
+		int gamemodes_count = sizeof(gamemodes) / sizeof(gamemodes[0]);
+
+		const char* maps[][2] {
+			{"lee", "Lee Chemicals"},
+			{"marina", "West Point Marina"},
+			{"mansion", "Villa Gordon"},
+			{"caveisland", "Hollowrock Island"},
+			{"mall", "The Evertides Mall"},
+			{"frustrum", "Frustrum"},
+			{"carib", "Isla Estocastica"},
+			{"factory", "Quilez Security"},
+		};
+		int maps_count = sizeof(maps) / sizeof(maps[0]);
+
+		for (int j = 0; j < maps_count; j++)
+			for (int i = 0; i < gamemodes_count; i++) {
+				LevelInfo info = { maps[j][0], "ch_" + string(maps[j][0]) + "_" + string(gamemodes[i][0]), maps[j][1] + string(" ") + gamemodes[i][1], gamemodes[i][2] };
+				levels.push_back(info);
+			}
 	} else if (filter == "Art Vandals") {
 		const char* dlc_missions[][4] = {
-			{ "tillaggaryd", "intro", "Art Vandals", "School's out for summer but no time to work on your tan when you play as Freya Woo helping your stepmum Enid in her rowdy plans." },
+			// Sandbox
 			{ "tillaggaryd", "museum_sandbox", "Sandbox", "Sandbox mode, go have some fun!" },
+			// Missions
+			{ "tillaggaryd", "intro", "Art Vandals", "School's out for summer but no time to work on your tan when you play as Freya Woo helping your stepmum Enid in her rowdy plans." },
 			{ "tillaggaryd", "paperboy", "Paper girl", "Prepare your paper route then wait for todays papers in the car and start delivering." },
 			{ "tillaggaryd", "art_heist", "Her prized prizes", "Steal Kerstin Stråbäck's art prizes since Enid is jealous." },
 			{ "tillaggaryd", "museum_heist", "Art Vandals", "Steal Kerstin's art from the museum since Enid found out they are up for new prizes. Bring the heavy targets to your car." },
 			{ "tillaggaryd", "museum_cam_heist", "The photo shoot", "Steal the security cameras from the museum." },
 			{ "tillaggaryd", "museum_destroy", "Out with a bang", "Destroy the museum since it's getting re-branded as Kerstin Stråbäck's Art Museum."},
+			// Hub
 			{ "mansion", "hub", "The Woo Mansion v1", "Check your phone for messages." },
 			{ "mansion", "hub0", "The Woo Mansion v2", "Check your phone for messages." },
 			{ "mansion", "hub1", "The Woo Mansion v3", "Check your phone for messages." },
@@ -245,10 +244,11 @@ vector<LevelInfo> LoadLevels(string filter) {
 		}
 	} else if (filter == "Time Campers") {
 		const char* dlc_missions[][4] = {
+			// Sandbox
 			{ "hub_wildwest", "hub", "Western Camp Sandbox", "The western camp." },
 			{ "town", "town_sandbox", "Combustown Sandbox", "The old town and the mine." },
 			{ "ravine", "ravine_sandbox", "Mineral Ravine Sandbox", "This is the ravine level, it is a big ravine, there's also a curch here." },
-
+			// Missions
 			{ "town", "town_heist", "Stocking Up", "Steal supplies for your camp, then go to your escape vehicle" },
 			{ "town", "town_explosive", "Going Volatile", "Steal ingredients to make your own explosives. They are protected by an alarm system. The hot air balloon security arrives shortly after the alarm is triggered." },
 			{ "ravine", "ravine_heist", "Hiding Traces", "Gather all objects stuck in time loops. The objects can be shot down but doing that or grabbing them will alert the hot air balloon." },
@@ -258,7 +258,7 @@ vector<LevelInfo> LoadLevels(string filter) {
 			{ "ravine", "ravine_motivational", "Motivational reminder", "Destroy the gunpowder supplies to demonstrate the true value of proper insurance." },
 			{ "town", "town_cars", "Four Stolen Hooves", "Bring the wheel, horse and gear to the escape vehicle. Use horses and ropes to drag the heavy targets. If possible, steal some food for the horse and some extra wire." },
 			{ "ravine", "ravine_bridge", "Choo-choosing path", "Destroy the bridge and get to the escape vehicle before the train arrives." },
-
+			// Hub
 			{ "hub_lockelle", "hub_lockelle", "The hub", "The normal hub in löckelle." },
 			{ "hub_wildwest", "hub1", "Western Camp", "Check your laptop in the camper for messages." },
 			{ "hub_wildwest", "hub2", "Western Camp", "Check your laptop in the camper for messages." },
@@ -269,7 +269,7 @@ vector<LevelInfo> LoadLevels(string filter) {
 			{ "hub_wildwest", "hub7", "Western Camp", "Check your laptop in the camper for messages." },
 			{ "hub_wildwest", "hub8", "Western Camp", "Check your laptop in the camper for messages." },
 			{ "hub_wildwest", "hub9", "Western Camp", "Check your laptop in the camper for messages." },
-
+			// Others
 			{ "hub_lockelle", "start", "Löckelle Teardown Services", "Family owned demolition company and your home base. Through the computer terminal you can read messages, accept missions and upgrade you tools." },
 			{ "hub_wildwest", "main", "Main menu", "Time Campers DLC - Main menu" },
 			{ "hub_wildwest", "final", "Credits", "Time Campers DLC - Credits" },
@@ -283,7 +283,72 @@ vector<LevelInfo> LoadLevels(string filter) {
 		}
 	} else if (filter == "Folkrace") {
 		const char* dlc_missions[][4] = {
-			{ "map", "file", "name", "desc" },
+			// Sandbox
+			{ "m_lobby", "lobby_sandbox.bin", "Granriket", "Free roam sandbox play with unlimited resources and no challenge." },
+			{ "m_village", "village_sandbox.bin", "Almondman's Farm", "Free roam sandbox play with unlimited resources and no challenge." },
+			{ "m_docks", "docks_sandbox.bin", "Glennburgh Docks", "Free roam sandbox play with unlimited resources and no challenge." },
+			{ "m_mall", "mall_sandbox.bin", "Möbel Mall", "Free roam sandbox play with unlimited resources and no challenge." },
+			{ "m_mall", "mall_storage_sandbox.bin", "Möbel Mall Derby", "Free roam sandbox play with unlimited resources and no challenge." },
+			// Missions
+			{ "m_lobby", "bluetide", "A Good Deed", "Destroy the BlueTide vending machines with the shredder at Björn's landfill." },
+			{ "m_lobby", "bluetide_1", "A Good Deed", "Destroy the BlueTide vending machines with the shredder at Björn's landfill." },
+			{ "m_lobby", "bluetide_2", "A Good Deed", "Destroy the BlueTide vending machines with the shredder at Björn's landfill." },
+			{ "m_lobby", "paperboy.bin", "Honest work", "Take the newspapers and get ready for the delivery. When you're ready, get in your car. Don't forget the timer." },
+			{ "m_lobby", "paperboy_1.bin", "Honest work", "Take the newspapers and get ready for the delivery. When you're ready, get in your car. Don't forget the timer." },
+			{ "m_lobby", "paperboy_2.bin", "Honest work", "Take the newspapers and get ready for the delivery. When you're ready, get in your car. Don't forget the timer." },
+			{ "m_lobby", "camera", "Photo hunt", "The countdown begins as soon as you take the first picture. Take the picture and return the camera back to the charging station before the timer runs out." },
+			{ "m_lobby", "camera_1", "Photo hunt", "The countdown begins as soon as you take the first picture. Take the picture and return the camera back to the charging station before the timer runs out." },
+			{ "m_lobby", "camera_2", "Photo hunt", "The countdown begins as soon as you take the first picture. Take the picture and return the camera back to the charging station before the timer runs out." },
+			{ "m_lobby", "bjorn_revenge", "Björn's Vengeance", "Steal 4 valuable items belonging to Ingvar Hemmelsen. The hot dog grill needs to be delivered to the garage. Don't forget about the security systems!" },
+			{ "m_lobby", "bjorn_revenge_1", "Björn's Vengeance", "Steal 4 valuable items belonging to Ingvar Hemmelsen. The hot dog grill needs to be delivered to the garage. Don't forget about the security systems!" },
+			{ "m_lobby", "bjorn_revenge_2", "Björn's Vengeance", "Steal 4 valuable items belonging to Ingvar Hemmelsen. The hot dog grill needs to be delivered to the garage. Don't forget about the security systems!" },
+			{ "m_lobby", "demolish", "Good Ol' Wreckin'", "Destroy the houses belonging to Ingvar. Beware of security robots." },
+			{ "m_lobby", "demolish_1", "Good Ol' Wreckin'", "Destroy the houses belonging to Ingvar. Beware of security robots." },
+			{ "m_lobby", "demolish_2", "Good Ol' Wreckin'", "Destroy the houses belonging to Ingvar. Beware of security robots." },
+			// Hub
+			{ "m_lobby", "lobby_0.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_1.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_2.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_2_1.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_2_1a.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_2_1b.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_2_2.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_2_2a.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_2_2b.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_2_2c.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_3.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_3_0.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_3a.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			{ "m_lobby", "lobby_4.bin", "Granriket", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
+			// Races
+			{ "m_village", "village_derby.bin", "Almondman's Farm Derby", "" },
+			{ "m_village", "village_derby_night.bin", "Almondman's Farm Derby Night", "" },
+			{ "m_village", "village_derby_winter.bin", "Almondman's Farm Derby Winter", "" },
+			{ "m_village", "village_race.bin", "Almondman's Farm", "" },
+			{ "m_village", "village_race_night.bin", "Almondman's Farm Night", "" },
+			{ "m_village", "village_race_winter.bin", "Almondman's Farm Winter", "" },
+			{ "m_village", "village_reverse_race.bin", "Almondman's Farm Track 2", "" },
+			{ "m_village", "village_reverse_race_night.bin", "Almondman's Farm Track 2 Night", "" },
+			{ "m_village", "village_reverse_race_winter.bin", "Almondman's Farm Track 2 Winter", "" },
+
+			{ "m_docks", "docks_derby_day_1", "Glennburgh Docks Derby Dat", "" },
+			{ "m_docks", "docks_derby_night_1.bin", "Glennburgh Docks Derby Night", "" },
+			{ "m_docks", "docks_race_day_1.bin", "Glennburgh Docks", "" },
+			{ "m_docks", "docks_race_day_2.bin", "Glennburgh Docks Track 2", "" },
+			{ "m_docks", "docks_race_day_winter_1.bin", "Glennburgh Docks Winter", "" },
+			{ "m_docks", "docks_race_day_winter_2.bin", "Glennburgh Docks Track 2 Winter", "" },
+			{ "m_docks", "docks_race_night_1.bin", "Glennburgh Docks Night", "" },
+			{ "m_docks", "docks_race_night_2.bin", "Glennburgh Docks Night Track 2", "" },
+
+			{ "m_mall", "mall_derby.bin", "Möbel Mall Derby", "" },
+			{ "m_mall", "mall_race_day.bin", "Möbel Mall", "" },
+			{ "m_mall", "mall_race_night.bin", "Möbel Mall Night", "" },
+			{ "m_mall", "mall_race_rev_day.bin", "Möbel Mall Track 2", "" },
+			{ "m_mall", "mall_race_rev_night.bin", "Möbel Mall Track 2 Night", "" },
+
+			{ "m_village", "village_woo_champ_1.bin", "Woo's Folkrace Grand Prix 1", "" },
+			{ "m_mall", "woo_champ_2.bin", "Woo's Folkrace Grand Prix 2", "" },
+			{ "m_mall", "woo_champ_3.bin", "Woo's Folkrace Grand Prix 3", "" },
 		};
 		int dlc_missions_count = sizeof(dlc_missions) / sizeof(dlc_missions[0]);
 		for (int i = 0; i < dlc_missions_count; i++) {
@@ -291,21 +356,22 @@ vector<LevelInfo> LoadLevels(string filter) {
 			levels.push_back(info);
 		}
 	} else {
-		LevelInfo info;
-		info = { "about", "about", "Credits", "" };
-		levels.push_back(info);
-		info = { "lee", "ending10", "Lee Chemicals Part 1 Ending", "" };
-		levels.push_back(info);
-		info = { "hub", "ending20", "Hub Part 2 Ending", "" };
-		levels.push_back(info);
-		info = { "mansion", "ending21", "Villa Gordon Part 2 Ending", "" };
-		levels.push_back(info);
-		info = { "marina", "ending22", "Marina Part 2 Ending", "" };
-		levels.push_back(info);
-		info = { "", "quicksave", "Quicksave", "Last Saved Level" };
-		levels.push_back(info);
-		info = { "lee", "test", "Performance Test", "" };
-		levels.push_back(info);
+		const char* others[][4] = {
+			{ "about", "about", "Credits", "" },
+			{ "lee", "ending10", "Lee Chemicals Part 1 Ending", "" },
+			{ "hub", "ending20", "Hub Part 2 Ending", "" },
+			{ "mansion", "ending21", "Villa Gordon Part 2 Ending", "" },
+			{ "marina", "ending22", "Marina Part 2 Ending", "" },
+			{ "preview", "quicksave", "Quicksave", "Last Saved Level" },
+			{ "preview", "quicksavecampaign", "Quicksave Campaign", "Last Saved Campaign Level" },
+			{ "lee", "test", "Performance Test", "" },
+			{ "menu", "menu", "Character selection", "" },
+		};
+		int others_count = sizeof(others) / sizeof(others[0]);
+		for (int i = 0; i < others_count; i++) {
+			LevelInfo info = { others[i][0], others[i][1], others[i][2], others[i][3] };
+			levels.push_back(info);
+		}
 	}
 	return levels;
 }
@@ -326,18 +392,12 @@ GLFWwindow* InitOpenGL(const char* window_title, int width, int height) {
 #ifdef __linux__
 	major = 4;
 	minor = 2;
-#elif __APPLE__
-	major = 4;
-	minor = 1;
 #endif
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
 	glfwWindowHint(GLFW_SAMPLES, 1); // MSAA
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef __APPLE__
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
 	GLFWwindow* window = glfwCreateWindow(width, height, window_title, NULL, NULL);
 	if (window == NULL) {
 		printf("[GLFW] Failed to initialize OpenGL\n");
@@ -355,7 +415,6 @@ GLuint LoadTexture(const char* path) {
 	GLuint texture_id;
 	int width, height, channels;
 	uint8_t* data = stbi_load(path, &width, &height, &channels, STBI_rgb_alpha);
-	//printf("Loading texture %s with %d channels\n", path, channels);
 
 	glGenTextures(1, &texture_id);
 	glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -388,22 +447,22 @@ int main(int argc, char* argv[]) {
 	}
 
 	GLFWwindow* window = InitOpenGL("Teardown Converter", 700, 600);
+	ImVec4 clear_color = ImVec4(0.27f, 0.57f, 0.72f, 1.00f);
 
-	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init();
+
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-	ImGui::StyleColorsDark();
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init("#version 410");
-	ImVec4 clear_color = ImVec4(0.27f, 0.57f, 0.72f, 1.00f);
-	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
-	ImGuiStyle& style = ImGui::GetStyle();
-	style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
-
-	ImGuiWindowFlags dialog_flags = 0;
+	ImGuiWindowFlags dialog_flags = ImGuiWindowFlags_None;
 	dialog_flags |= ImGuiWindowFlags_NoResize;
+
+	ImGui::StyleColorsDark();
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
+	style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
 
 #ifdef _WIN32
 	char quicksave_folder[256] = "C:\\Users\\User\\AppData\\Local\\Teardown";
@@ -530,7 +589,7 @@ int main(int argc, char* argv[]) {
 
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
-			ImGui::Combo("##gameversion", &game_version, " 1.5.4\0");
+			ImGui::Combo("##gameversion", &game_version, " 1.6.0\0");
 			ImGui::PopItemWidth();
 
 			ImGui::Spacing();
@@ -545,7 +604,10 @@ int main(int argc, char* argv[]) {
 						selected_level = it;
 					}
 					ImGui::SameLine(300);
-					ImGui::Text(it->title.c_str());
+					if (it->title.empty())
+						ImGui::Text(it->level_id.c_str());
+					else
+						ImGui::Text(it->title.c_str());
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
 				}
@@ -609,14 +671,14 @@ int main(int argc, char* argv[]) {
 				else if (selected_category == "Time Campers")
 					params->dlc_id = "wildwestheist";
 				else if (selected_category == "Folkrace")
-					params->dlc_id = "summercamp";
+					params->dlc_id = "folkrace";
 
 				if (!params->dlc_id.empty()) {
 					params->script_folder = game_folder;
 					params->script_folder += "/dlcs/" + params->dlc_id + "/";
 				} else {
 					params->script_folder = game_folder;
-					params->script_folder += "/data/level/" + params->level_id + "/script";
+					params->script_folder += "/data/level/";
 				}
 
 				if (selected_level->filename == "quicksave") {

@@ -43,7 +43,7 @@ TDBIN::~TDBIN() {
 
 bool TDBIN::ReadBool() {
 	uint8_t b = ReadByte();
-	assert(b == 0 || b == 1);
+	//assert(b == 0 || b == 1);
 	return b != 0;
 }
 
@@ -178,7 +178,10 @@ VehicleProperties TDBIN::ReadVehicleProperties() {
 	properties.strength = ReadFloat();
 	properties.friction = ReadFloat();
 	properties.max_steer_angle = ReadFloat();
-	properties.handbrake = ReadBool();
+	if (tdbin_version >= VERSION_1_6_0)
+		properties.handbrake = ReadFloat();
+	else
+		properties.handbrake = ReadBool() ? 1.0f : 0.0f;
 	properties.antispin = ReadFloat();
 	properties.steerassist = ReadFloat();
 	properties.assist_multiplier = ReadFloat();
@@ -203,6 +206,12 @@ Voxels TDBIN::ReadVoxels() {
 			voxels.palette_indexes[i] = { run_length, voxel_index };
 		}
 	}
+	voxels.palette = ReadInt();
+	voxels.scale = ReadFloat();
+
+	for (int i = 0; i < 8; i++)
+		voxels.light_mask[i] = ReadByte();
+	voxels.is_disconnected = ReadByte();
 	return voxels;
 }
 
@@ -318,13 +327,10 @@ Shape* TDBIN::ReadShape() {
 	shape->is_broken = ReadBool();
 	shape->has_voxels = ReadByte();
 	shape->voxels = ReadVoxels();
-	shape->palette = ReadInt();
-	shape->scale = ReadFloat();
 
-	for (int i = 0; i < 8; i++)
-		shape->light_mask[i] = ReadByte();
-	shape->is_disconnected = ReadByte();
 	shape->origin = ReadByte();
+	if (tdbin_version >= VERSION_1_6_0)
+		shape->z_u32 = ReadInt();
 	return shape;
 }
 
@@ -456,6 +462,17 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->vitals[i].radius = ReadFloat();
 		vehicle->vitals[i].nearby_voxels = ReadInt();
 	}
+
+	if (tdbin_version >= VERSION_1_6_0) {
+		int anim_count = ReadInt();
+		vehicle->animations.resize(anim_count);
+		for (int i = 0; i < anim_count; i++) {
+			vehicle->animations[i].z_str = ReadString();
+			vehicle->animations[i].z_tr = ReadTransform();
+			vehicle->animations[i].z_u32 = ReadInt();
+		}
+	}
+
 	vehicle->bounds_dist = ReadFloat();
 	vehicle->noroll = ReadBool();
 	vehicle->brokenthreshold = ReadFloat();
@@ -566,6 +583,12 @@ Script* TDBIN::ReadScript() {
 	return script;
 }
 
+Animator* TDBIN::ReadAnimator() {
+	Animator* animator = new Animator();
+	assert(false);
+	return animator;
+}
+
 void* TDBIN::ReadEntityType(uint8_t type) {
 	switch (type) {
 		case Entity::Body:
@@ -590,6 +613,8 @@ void* TDBIN::ReadEntityType(uint8_t type) {
 			return ReadTrigger();
 		case Entity::Script:
 			return ReadScript();
+		case Entity::Animator:
+			return ReadAnimator();
 		default:
 			printf("[ERROR] Invalid entity type: %d\n", (uint8_t)type);
 			exit(EXIT_FAILURE);
@@ -609,6 +634,8 @@ void TDBIN::ReadPlayer() {
 	player->time_underwater = ReadFloat();
 	player->bluetide_timer = ReadFloat();
 	player->bluetide_power = ReadFloat();
+	if (tdbin_version >= VERSION_1_6_0)
+		player->animator = ReadFloat();
 }
 
 void TDBIN::ReadEnvironment() {
@@ -637,11 +664,19 @@ void TDBIN::ReadEnvironment() {
 	environment->brightness = ReadFloat();
 
 	Fog* fog = &environment->fog;
+	if (tdbin_version >= VERSION_1_6_0)
+		fog->type = ReadByte();
+	else
+		fog->type = 0;
 	fog->color = ReadColor();
 	fog->start = ReadFloat();
 	fog->distance = ReadFloat();
 	fog->amount = ReadFloat();
 	fog->exponent = ReadFloat();
+	if (tdbin_version >= VERSION_1_6_0)
+		fog->height_offset = ReadFloat();
+	else
+		fog->height_offset = 0.0f;
 
 	Environment::Water* water = &environment->water;
 	water->wetness = ReadFloat();
@@ -669,9 +704,9 @@ void TDBIN::ReadEnvironment() {
 void TDBIN::parse() {
 	for (int i = 0; i < 5; i++)
 		scene.magic[i] = ReadByte();
-
 	for (int i = 0; i < 3; i++)
 		scene.version[i] = ReadByte();
+	tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
 
 	scene.level_id = ReadString();
 	scene.level_path = ReadString();
@@ -700,6 +735,8 @@ void TDBIN::parse() {
 	scene.flashlight = ReadInt();
 	scene.explosion_lua = ReadInt();
 	scene.achievements_lua = ReadInt();
+	if (tdbin_version >= VERSION_1_6_0)
+		scene.character_lua = ReadInt();
 
 	PostProcessing* postpro = &scene.postpro;
 	postpro->brightness = ReadFloat();
