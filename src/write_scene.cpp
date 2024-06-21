@@ -848,9 +848,14 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 
 		prefix = "RAW:";
 		if (script_file.find(prefix) == 0)
-			return;
+			return; // Not cooked enough
 
-		if (script_file == "achievements.lua" || script_file == "creativemode.lua" || script_file == "explosion.lua" || script_file == "fx.lua" || script_file == "spawn.lua")
+		if (script_file == "characters.lua" ||
+			script_file == "creativemode.lua" ||
+			script_file == "explosion.lua" ||
+			script_file == "fx.lua" ||
+			script_file == "spawn.lua" ||
+			script_file == "achievements.lua")
 			return;
 
 		xml.AddElement(xml.GetScriptsGroup(), entity_element);
@@ -869,7 +874,8 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			uint32_t entity_handle = script->entities[j];
 			XMLElement* entity_child = xml.GetNode(entity_handle);
 			if (entity_child != NULL && strcmp(entity_child->Name(), "joint") != 0) {
-				while (entity_child->Parent() != NULL && entity_child->Parent()->ToElement() != xml.GetScene())
+				while (entity_child->Parent() != NULL && entity_child->Parent()->ToElement() != xml.GetScene()
+					&& strcmp(entity_child->Parent()->ToElement()->Name(), "group") != 0)
 					entity_child = entity_child->Parent()->ToElement();
 				if (entity_element != entity_child)
 					xml.MoveElement(entity_element, entity_child);

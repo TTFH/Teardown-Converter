@@ -762,7 +762,7 @@ void TDBIN::parse() {
 	scene.explosion_lua = ReadInt();
 	scene.achievements_lua = ReadInt();
 	if (tdbin_version >= VERSION_1_6_0)
-		scene.character_lua = ReadInt();
+		scene.characters_lua = ReadInt();
 
 	ReadPostProcessing();
 	ReadPlayer();

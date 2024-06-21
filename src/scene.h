@@ -190,7 +190,7 @@ struct Scene {
 	uint32_t flashlight;
 	uint32_t explosion_lua;
 	uint32_t achievements_lua;
-	uint32_t character_lua;
+	uint32_t characters_lua;
 
 	PostProcessing postpro;
 	Player player;
