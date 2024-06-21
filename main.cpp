@@ -331,7 +331,7 @@ vector<LevelInfo> LoadLevels(string filter) {
 			{ "m_village", "village_reverse_race_night.bin", "Almondman's Farm Track 2 Night", "" },
 			{ "m_village", "village_reverse_race_winter.bin", "Almondman's Farm Track 2 Winter", "" },
 
-			{ "m_docks", "docks_derby_day_1", "Glennburgh Docks Derby Dat", "" },
+			{ "m_docks", "docks_derby_day_1", "Glennburgh Docks Derby", "" },
 			{ "m_docks", "docks_derby_night_1.bin", "Glennburgh Docks Derby Night", "" },
 			{ "m_docks", "docks_race_day_1.bin", "Glennburgh Docks", "" },
 			{ "m_docks", "docks_race_day_2.bin", "Glennburgh Docks Track 2", "" },

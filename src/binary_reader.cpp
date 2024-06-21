@@ -1,69 +1,57 @@
-#include <assert.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <stdexcept>
+#include <assert.h>
 
-#include "scene.h"
+#include "binary_reader.h"
 
-using namespace std;
+FileReader::FileReader() {
+	file = NULL;
+}
 
-// WIP, unused
+void FileReader::InitReader(const char* path) {
+	file = fopen(path, "rb");
+	if (file == NULL) {
+		printf("[ERROR] Could not open %s for reading\n", path);
+		exit(EXIT_FAILURE);
+	}
+}
 
-class Reader {
-public:
-	virtual uint8_t ReadByte() = 0;
-	virtual uint16_t ReadWord() = 0;
-	virtual uint32_t ReadInt() = 0;
-	virtual float ReadFloat() = 0;
-	virtual double ReadDouble() = 0;
+FileReader::~FileReader() {
+	fclose(file);
+}
 
-	// TODO: move / remove
-	bool ReadBool();
-	string ReadString();
-	Tag ReadTag();
-	Registry ReadRegistry();
-	Color ReadColor();
-	Vector ReadVector();
-	Quat ReadQuat();
-	Transform ReadTransform();
-	void ReadBuffer(uint8_t* buffer, int size);
+uint8_t FileReader::ReadByte() {
+	uint8_t b;
+	fread(&b, 1, 1, file);
+	return b;
+}
 
-	virtual ~Reader() = default;
-};
+uint16_t FileReader::ReadWord() {
+	uint16_t w;
+	fread(&w, 2, 1, file);
+	return w;
+}
 
-class FileReader : public Reader {
-private:
-	FILE* file;
-public:
-	FileReader(const char* path);
-	uint8_t ReadByte() override;
-	uint16_t ReadWord() override;
-	uint32_t ReadInt() override;
-	float ReadFloat() override;
-	double ReadDouble() override;
-	~FileReader();
-};
+uint32_t FileReader::ReadInt() {
+	uint32_t i;
+	fread(&i, 4, 1, file);
+	return i;
+}
 
-class BufferReader : public Reader {
-private:
-	uint8_t* buffer;
-	int size;
-	int offset;
-public:
-	BufferReader(const uint8_t* buffer, int size);
-	uint8_t ReadByte() override;
-	uint16_t ReadWord() override;
-	uint32_t ReadInt() override;
-	float ReadFloat() override;
-	double ReadDouble() override;
-	~BufferReader();
-};
+float FileReader::ReadFloat() {
+	float f;
+	fread(&f, 4, 1, file);
+	return f;
+}
 
-// Too much overhead???
+double FileReader::ReadDouble() {
+	double d;
+	fread(&d, 8, 1, file);
+	return d;
+}
 
 bool Reader::ReadBool() {
 	uint8_t b = ReadByte();
-	assert(b == 0 || b == 1);
+	//assert(b == 0 || b == 1);
 	return b != 0;
 }
 
@@ -98,6 +86,13 @@ Color Reader::ReadColor() {
 	color.b = ReadFloat();
 	color.a = ReadFloat();
 	return color;
+}
+
+Vertex Reader::ReadVertex() {
+	Vertex vertex;
+	vertex.x = ReadFloat();
+	vertex.y = ReadFloat();
+	return vertex;
 }
 
 Vector Reader::ReadVector() {

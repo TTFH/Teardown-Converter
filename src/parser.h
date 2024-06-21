@@ -8,6 +8,7 @@
 #include <map>
 
 #include "scene.h"
+#include "binary_reader.h"
 
 using namespace std;
 
@@ -31,34 +32,17 @@ struct ConverterParams {
 
 void ParseFile(ConverterParams params);
 
-class TDBIN {
+class TDBIN : public FileReader {
 protected:
 	Scene scene;
 	int tdbin_version = 0;
 	map<uint32_t, Entity*> entity_mapping;
 private:
-	FILE* bin_file;
-
-	bool ReadBool();
-	uint8_t ReadByte();
-	uint16_t ReadWord();
-	uint32_t ReadInt();
-	float ReadFloat();
-	double ReadDouble();
-	string ReadString();
-
-	Tag ReadTag();
-	Registry ReadRegistry();
-	Color ReadColor();
-	Vector ReadVector();
-	Transform ReadTransform();
-
 	Fire ReadFire();
 	Palette ReadPalette();
 	Rope* ReadRope();
 	VehicleProperties ReadVehicleProperties();
 	Voxels ReadVoxels();
-
 	LuaValue ReadLuaValue(LuaType key_type);
 	LuaTable* ReadLuaTable();
 
@@ -76,11 +60,13 @@ private:
 	Script* ReadScript();
 	Animator* ReadAnimator();
 
+	void ReadPostProcessing();
 	void ReadPlayer();
 	void ReadEnvironment();
 	void* ReadEntityType(uint8_t type);
 public:
-	void init(const char* input);
+	TDBIN();
+	void InitScene(const char* input);
 	~TDBIN();
 	void parse();
 };

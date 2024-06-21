@@ -14,7 +14,7 @@
 #include "../lib/tinyxml2.h"
 
 WriteXML::WriteXML(ConverterParams params) : params(params) {
-	init(params.bin_path.c_str());
+	InitScene(params.bin_path.c_str());
 }
 
 WriteXML::~WriteXML() {
@@ -719,6 +719,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		case Entity::Script:
 			entity_element = NULL; // Process scripts on a second pass
 			break;
+		case Entity::Animator:
+			Animator* animator = static_cast<Animator*>(entity->self);
+			entity_element->SetName("group");
+			xml.AddStrAttribute(entity_element, "name", animator->animation_path);
+			WriteTransform(entity_element, animator->transform);
+			break;
 	}
 
 	if (entity_element != NULL)
@@ -799,6 +805,8 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				xml.AddAttribute(entity_element, "type", "hinge");
 			else if (joint->type == Joint::Prismatic)
 				xml.AddAttribute(entity_element, "type", "prismatic");
+			else if (joint->type == Joint::Cone)
+				xml.AddAttribute(entity_element, "type", "cone");
 
 			xml.AddFloatAttribute(entity_element, "size", joint->size, "0.1");
 			if (joint->type != Joint::Prismatic) {
@@ -806,7 +814,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 				xml.AddFloatAttribute(entity_element, "rotspring", joint->rotspring, "0.5");
 			}
 			xml.AddBoolAttribute(entity_element, "collide", joint->collide, false);
-			if (joint->type == Joint::Hinge) {
+			if (joint->type == Joint::Hinge || joint->type == Joint::Cone) {
 				if (joint->limits[0] != 0.0 || joint->limits[1] != 0.0)
 					xml.AddFloat2Attribute(entity_element, "limits", deg(joint->limits[0]), deg(joint->limits[1]));
 			} else if (joint->type == Joint::Prismatic)
@@ -861,10 +869,8 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			uint32_t entity_handle = script->entities[j];
 			XMLElement* entity_child = xml.GetNode(entity_handle);
 			if (entity_child != NULL && strcmp(entity_child->Name(), "joint") != 0) {
-				while (entity_child->Parent() != NULL && entity_child->Parent()->ToElement() != xml.GetScene() &&
-					strcmp(entity_child->Parent()->ToElement()->Name(), "group") != 0) {
+				while (entity_child->Parent() != NULL && entity_child->Parent()->ToElement() != xml.GetScene())
 					entity_child = entity_child->Parent()->ToElement();
-				}
 				if (entity_element != entity_child)
 					xml.MoveElement(entity_element, entity_child);
 			}

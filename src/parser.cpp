@@ -10,8 +10,10 @@
 
 using namespace std::filesystem;
 
-void TDBIN::init(const char* input) {
-	int len = strlen(input) + 3; // for 'td'
+TDBIN::TDBIN() { }
+
+void TDBIN::InitScene(const char* input) {
+	int len = strlen(input) + 3; // for "td\0" in ".tdbin"
 	char* filename = new char[len];
 	strcpy(filename, input);
 	if (IsFileCompressed(input)) {
@@ -26,90 +28,14 @@ void TDBIN::init(const char* input) {
 		strcpy(filename, output);
 		delete[] output;
 	}
+	InitReader(filename);
 	printf("Parsing file...\n");
-	bin_file = fopen(filename, "rb");
-	if (bin_file == NULL) {
-		printf("[ERROR] Could not open %s for reading\n", filename);
-		exit(EXIT_FAILURE);
-	}
 	delete[] filename;
 }
 
 TDBIN::~TDBIN() {
-	fclose(bin_file);
 	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
 		delete scene.entities[i];
-}
-
-bool TDBIN::ReadBool() {
-	uint8_t b = ReadByte();
-	//assert(b == 0 || b == 1);
-	return b != 0;
-}
-
-uint8_t TDBIN::ReadByte() {
-	uint8_t byte = 0;
-	fread(&byte, sizeof(uint8_t), 1, bin_file);
-	return byte;
-}
-
-uint16_t TDBIN::ReadWord() {
-	uint16_t word = 0;
-	fread(&word, sizeof(uint16_t), 1, bin_file);
-	return word;
-}
-
-uint32_t TDBIN::ReadInt() {
-	uint32_t val = 0;
-	fread(&val, sizeof(uint32_t), 1, bin_file);
-	return val;
-}
-
-float TDBIN::ReadFloat() {
-	float val = 0;
-	fread(&val, sizeof(float), 1, bin_file);
-	return val;
-}
-
-double TDBIN::ReadDouble() {
-	double val = 0;
-	fread(&val, sizeof(double), 1, bin_file);
-	return val;
-}
-
-string TDBIN::ReadString() {
-	string str;
-	char c;
-	do {
-		fread(&c, sizeof(char), 1, bin_file);
-		if (c != '\0') str += c;
-	} while (c != '\0');
-	return str;
-}
-
-Registry TDBIN::ReadRegistry() {
-	Registry entry;
-	entry.key = ReadString();
-	entry.value = ReadString();
-	return entry;
-}
-
-Color TDBIN::ReadColor() {
-	Color color;
-	fread(&color, sizeof(Color), 1, bin_file);
-	return color;
-}
-
-Vector TDBIN::ReadVector() {
-	Vector vec;
-	fread(&vec, sizeof(Vector), 1, bin_file);
-	return vec;
-}
-
-Transform TDBIN::ReadTransform() {
-	Transform transform;
-	fread(&transform, sizeof(Transform), 1, bin_file);
-	return transform;
 }
 
 Fire TDBIN::ReadFire() {
@@ -136,9 +62,9 @@ Palette TDBIN::ReadPalette() {
 		p.materials[i].is_tint = ReadBool();
 	}
 	p.has_transparent = ReadBool();
-	fread(&p.black_tint, sizeof(uint8_t), 4 * 256, bin_file);
-	fread(&p.yellow_tint, sizeof(uint8_t), 4 * 256, bin_file);
-	fread(&p.rgba_tint, sizeof(uint8_t), 4 * 256, bin_file);
+	ReadBuffer(p.black_tint, 4 * 256);
+	ReadBuffer(p.yellow_tint, 4 * 256);
+	ReadBuffer(p.rgba_tint, 4 * 256);
 	return p;
 }
 
@@ -159,13 +85,6 @@ Rope* TDBIN::ReadRope() {
 		rope->segments[i].to = ReadVector();
 	}
 	return rope;
-}
-
-Tag TDBIN::ReadTag() {
-	Tag tag;
-	tag.name = ReadString();
-	tag.value = ReadString();
-	return tag;
 }
 
 VehicleProperties TDBIN::ReadVehicleProperties() {
@@ -379,10 +298,8 @@ Water* TDBIN::ReadWater() {
 	water->visibility = ReadFloat();
 	int vertex_count = ReadInt();
 	water->vertices.resize(vertex_count);
-	for (int i = 0; i < vertex_count; i++) {
-		water->vertices[i].x = ReadFloat();
-		water->vertices[i].y = ReadFloat();
-	}
+	for (int i = 0; i < vertex_count; i++)
+		water->vertices[i] = ReadVertex();
 	return water;
 }
 
@@ -399,10 +316,7 @@ Joint* TDBIN::ReadJoint() {
 	joint->collide = ReadBool();
 	joint->rotstrength = ReadFloat();
 	joint->rotspring = ReadFloat();
-	joint->hinge_rot.x = ReadFloat();
-	joint->hinge_rot.y = ReadFloat();
-	joint->hinge_rot.z = ReadFloat();
-	joint->hinge_rot.w = ReadFloat();
+	joint->hinge_rot = ReadQuat();
 	for (int i = 0; i < 2; i++)
 		joint->limits[i] = ReadFloat();
 	joint->max_velocity = ReadFloat();
@@ -533,10 +447,8 @@ Trigger* TDBIN::ReadTrigger() {
 	trigger->polygon_size = ReadFloat();
 	int vertex_count = ReadInt();
 	trigger->polygon_vertices.resize(vertex_count);
-	for (int i = 0; i < vertex_count; i++) {
-		trigger->polygon_vertices[i].x = ReadFloat();
-		trigger->polygon_vertices[i].y = ReadFloat();
-	}
+	for (int i = 0; i < vertex_count; i++)
+		trigger->polygon_vertices[i] = ReadVertex();
 	trigger->sound.path = ReadString();
 	trigger->sound.ramp = ReadFloat();
 	trigger->sound.type = ReadByte();
@@ -583,9 +495,114 @@ Script* TDBIN::ReadScript() {
 	return script;
 }
 
+// Bitch
 Animator* TDBIN::ReadAnimator() {
+	int entries = 0;
+	uint8_t* buffer = NULL;
 	Animator* animator = new Animator();
-	assert(false);
+	animator->transform = ReadTransform();
+	animator->animation_path = ReadString();
+
+	ReadBool();
+
+	entries = ReadInt();
+	for (int i = 0; i < entries; i++) {
+		ReadInt();
+		ReadInt();
+		ReadInt();
+		ReadString();
+	}
+
+	entries = ReadInt();
+	for (int i = 0; i < entries; i++) {
+		ReadTransform();
+		ReadVertex();
+		ReadVertex();
+		ReadFloat();
+		ReadFloat();
+		ReadByte();
+		ReadByte();
+		ReadInt();
+		ReadInt();
+		ReadInt();
+		ReadInt();
+		ReadQuat();
+		ReadVector();
+		ReadVector();
+		ReadVector();
+		ReadVector();
+		ReadInt();
+		ReadInt();
+	}
+
+	entries = ReadInt();
+	for (int i = 0; i < entries; i++) {
+		ReadInt();
+		ReadTransform();
+		ReadFloat();
+		ReadFloat();
+		ReadInt();
+		ReadInt();
+		ReadBool();
+		ReadBool();
+		ReadByte();
+		ReadVoxels();
+	}
+
+	entries = ReadInt();
+	for (int i = 0; i < entries; i++) {
+		ReadString();
+		uint8_t st_buffer[56];
+		ReadBuffer(st_buffer, 56);
+	}
+
+	entries = ReadInt();
+	for (int i = 0; i < entries; i++) {
+		ReadString();
+		uint8_t st_buffer[128];
+		ReadBuffer(st_buffer, 128);
+	}
+
+	ReadInt();
+
+	entries = ReadInt();
+	for (int i = 0; i < entries; i++) {
+		ReadString();
+		uint8_t st_buffer[72];
+		ReadBuffer(st_buffer, 72);
+	}
+
+	ReadInt();
+
+	entries = ReadInt();
+	buffer = new uint8_t[8 * entries];
+	ReadBuffer(buffer, 8 * entries);
+	delete[] buffer;
+
+	entries = ReadInt();
+	for (int i = 0; i < entries; i++)
+		ReadString();
+
+	entries = ReadInt();
+	buffer = new uint8_t[28 * entries];
+	ReadBuffer(buffer, 28 * entries);
+	delete[] buffer;
+
+	entries = ReadInt();
+	buffer = new uint8_t[28 * entries];
+	ReadBuffer(buffer, 28 * entries);
+	delete[] buffer;
+
+	entries = ReadInt();
+	buffer = new uint8_t[4 * entries];
+	ReadBuffer(buffer, 4 * entries);
+	delete[] buffer;
+
+	entries = ReadInt();
+	for (int i = 0; i < entries; i++) {
+		ReadString();
+		ReadTransform();
+	}
 	return animator;
 }
 
@@ -620,6 +637,15 @@ void* TDBIN::ReadEntityType(uint8_t type) {
 			exit(EXIT_FAILURE);
 			return NULL;
 	}
+}
+
+void TDBIN::ReadPostProcessing() {
+	PostProcessing* postpro = &scene.postpro;
+	postpro->brightness = ReadFloat();
+	postpro->colorbalance = ReadColor();
+	postpro->saturation = ReadFloat();
+	postpro->gamma = ReadFloat();
+	postpro->bloom = ReadFloat();
 }
 
 void TDBIN::ReadPlayer() {
@@ -738,23 +764,15 @@ void TDBIN::parse() {
 	if (tdbin_version >= VERSION_1_6_0)
 		scene.character_lua = ReadInt();
 
-	PostProcessing* postpro = &scene.postpro;
-	postpro->brightness = ReadFloat();
-	postpro->colorbalance = ReadColor();
-	postpro->saturation = ReadFloat();
-	postpro->gamma = ReadFloat();
-	postpro->bloom = ReadFloat();
-
+	ReadPostProcessing();
 	ReadPlayer();
 	ReadEnvironment();
 
 	Boundary* boundary = &scene.boundary;
 	int vertex_count = ReadInt();
 	boundary->vertices.resize(vertex_count);
-	for (int i = 0; i < vertex_count; i++) {
-		boundary->vertices[i].x = ReadFloat();
-		boundary->vertices[i].y = ReadFloat();
-	}
+	for (int i = 0; i < vertex_count; i++)
+		boundary->vertices[i] = ReadVertex();
 	boundary->padleft = ReadFloat();
 	boundary->padtop = ReadFloat();
 	boundary->padright = ReadFloat();
@@ -802,9 +820,6 @@ void TDBIN::parse() {
 		scene.assets[i].folder = ReadString();
 		scene.assets[i].do_override = ReadBool();
 	}
-
-	if (fgetc(bin_file) != EOF)
-		throw runtime_error("File size mismatch.");
 	printf("File parsed successfully!\n");
 }
 

@@ -259,6 +259,7 @@ struct Joint {
 	static const uint32_t Hinge = 2;
 	static const uint32_t Prismatic = 3;
 	static const uint32_t _Rope = 4;
+	static const uint32_t Cone = 5;
 
 	uint32_t type;				// type
 	uint32_t shapes[2];
@@ -452,7 +453,9 @@ struct Script {
 };
 
 struct Animator {
-	
+	Transform transform;
+	string animation_path;
+	//Bullshit bullshit;
 };
 
 #endif
