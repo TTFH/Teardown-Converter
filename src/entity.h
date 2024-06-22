@@ -316,10 +316,10 @@ struct Vital {
 	uint32_t nearby_voxels;
 };
 
-struct VehicleAnim {
-	string z_str;
-	Transform z_tr;
-	uint32_t z_u32;
+struct VehicleLocation {
+	string name;
+	Transform transform;
+	uint32_t handle;
 };
 
 struct Vehicle {
@@ -340,7 +340,7 @@ struct Vehicle {
 	Vec<uint32_t> bodies;
 	Vec<Exhaust> exhausts;	// exhaust
 	Vec<Vital> vitals;		// vital
-	Vec<VehicleAnim> animations;
+	Vec<VehicleLocation> locations;
 	float bounds_dist;
 	bool noroll;
 	float brokenthreshold;

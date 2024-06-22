@@ -721,8 +721,8 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			break;
 		case Entity::Animator:
 			Animator* animator = static_cast<Animator*>(entity->self);
-			entity_element->SetName("group");
-			xml.AddStrAttribute(entity_element, "name", animator->animation_path);
+			entity_element->SetName("animator");
+			xml.AddStrAttribute(entity_element, "file", animator->animation_path);
 			WriteTransform(entity_element, animator->transform);
 			break;
 	}

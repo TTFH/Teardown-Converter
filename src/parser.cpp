@@ -379,11 +379,11 @@ Vehicle* TDBIN::ReadVehicle() {
 
 	if (tdbin_version >= VERSION_1_6_0) {
 		int anim_count = ReadInt();
-		vehicle->animations.resize(anim_count);
+		vehicle->locations.resize(anim_count);
 		for (int i = 0; i < anim_count; i++) {
-			vehicle->animations[i].z_str = ReadString();
-			vehicle->animations[i].z_tr = ReadTransform();
-			vehicle->animations[i].z_u32 = ReadInt();
+			vehicle->locations[i].name = ReadString();
+			vehicle->locations[i].transform = ReadTransform();
+			vehicle->locations[i].handle = ReadInt();
 		}
 	}
 
@@ -545,7 +545,7 @@ Animator* TDBIN::ReadAnimator() {
 		ReadInt();
 		ReadBool();
 		ReadBool();
-		ReadByte();
+		ReadBool();
 		ReadVoxels();
 	}
 
