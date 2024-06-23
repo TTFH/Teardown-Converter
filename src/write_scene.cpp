@@ -722,7 +722,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 		case Entity::Animator:
 			Animator* animator = static_cast<Animator*>(entity->self);
 			entity_element->SetName("animator");
-			xml.AddStrAttribute(entity_element, "file", animator->animation_path);
+			xml.AddStrAttribute(entity_element, "file", animator->path);
 			WriteTransform(entity_element, animator->transform);
 			break;
 	}
@@ -771,7 +771,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			Vector relative_pos = joint->positions[0];
 			Quat relative_rot;
 			if (joint->type != Joint::Ball) {
-				Vector joint_axis(joint->axis[0]);
+				Vector joint_axis(joint->axes[0]);
 				if (joint_axis == Vector(1, 0, 0))
 					relative_rot = QuatEuler(0, 90, 0);
 				else if (joint_axis == Vector(-1, 0, 0))

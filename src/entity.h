@@ -264,7 +264,7 @@ struct Joint {
 	uint32_t type;				// type
 	uint32_t shapes[2];
 	Vector positions[2];
-	Vector axis[2];
+	Vector axes[2];
 	bool connected;
 	bool collide;				// collide
 	float rotstrength;			// rotstrength
@@ -296,7 +296,7 @@ struct VehicleProperties {
 	float strength;		// strength
 	float friction;		// friction
 	float max_steer_angle; // in rad, always 30°
-	float handbrake;
+	bool handbrake;
 	float antispin;		// antispin
 	float steerassist;	// steerassist
 	float assist_multiplier;
@@ -454,7 +454,7 @@ struct Script {
 
 struct Animator {
 	Transform transform;
-	string animation_path;
+	string path;		// file
 	//Bullshit bullshit;
 };
 

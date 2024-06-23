@@ -97,10 +97,7 @@ VehicleProperties TDBIN::ReadVehicleProperties() {
 	properties.strength = ReadFloat();
 	properties.friction = ReadFloat();
 	properties.max_steer_angle = ReadFloat();
-	if (tdbin_version >= VERSION_1_6_0)
-		properties.handbrake = ReadFloat();
-	else
-		properties.handbrake = ReadBool() ? 1.0f : 0.0f;
+	properties.handbrake = ReadBool();
 	properties.antispin = ReadFloat();
 	properties.steerassist = ReadFloat();
 	properties.assist_multiplier = ReadFloat();
@@ -311,7 +308,7 @@ Joint* TDBIN::ReadJoint() {
 	for (int i = 0; i < 2; i++)
 			joint->positions[i] = ReadVector();
 	for (int i = 0; i < 2; i++)
-		joint->axis[i] = ReadVector();
+		joint->axes[i] = ReadVector();
 	joint->connected = ReadBool();
 	joint->collide = ReadBool();
 	joint->rotstrength = ReadFloat();
@@ -501,7 +498,7 @@ Animator* TDBIN::ReadAnimator() {
 	uint8_t* buffer = NULL;
 	Animator* animator = new Animator();
 	animator->transform = ReadTransform();
-	animator->animation_path = ReadString();
+	animator->path = ReadString();
 
 	ReadBool();
 

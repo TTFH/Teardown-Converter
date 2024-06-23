@@ -1,7 +1,7 @@
 #include "entity.h"
 
 const char* EntityName[] = {
-	"",
+	"Unknown",
 	"Body",
 	"Shape",
 	"Light",
