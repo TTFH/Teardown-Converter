@@ -93,7 +93,7 @@ enum Flags : uint16_t {
 	AutoBreak	= 1 << 6,
 	BreakAll	= 1 << 5,
 	NoCull		= 1 << 4,
-	???
+	Debris?		= 1 << 3,
 	Unbreakable	= 1 << 2,
 	InheritTags	= 1 << 1,
 	HasTag		= 1 << 0,
@@ -152,7 +152,7 @@ enum ShapeFlags {
 	Large		= 1 << 2,
 	Dynamic		= 1 << 1,
 	Static		= 1 << 0,
-}
+};
 
 enum ShapeOrigin : uint8_t {
 	Tool = 1,
@@ -190,7 +190,7 @@ struct Shape {
 	uint8_t has_voxels;
 	Voxels voxels;
 	uint8_t origin;
-	uint32_t z_u32;
+	uint32_t animator;
 
 	Transform old_transform;	// helper for screen positon
 };
@@ -412,6 +412,7 @@ struct Trigger {
 enum SoundType : uint32_t {
 	Sound = 1,
 	Loop = 2,
+	//Sprite = 3, :skull:
 	Music = ?,
 	UiSound = ?,
 	UiLoop = ?

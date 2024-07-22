@@ -398,13 +398,11 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				body->transform = TransformToLocalTransform(parent_vehicle->transform, body->transform);
 			}
 
-			// Change world body to group, and other static bodies
 			if (!params.legacy_format && entity->parent == NULL && !body->dynamic && entity->tags.getSize() == 0) {
-				entity_element->SetName("group");
-				if (entity->handle == scene.world_body)
+				if (entity->handle == scene.world_body) {
+					entity_element->SetName("group");
 					xml.AddStrAttribute(entity_element, "name", "World Body");
-				else
-					xml.AddStrAttribute(entity_element, "name", "Static");
+				}
 			} else if (parent == xml.GetScene())
 				parent = xml.GetDynamicGroup();
 

@@ -246,7 +246,7 @@ Shape* TDBIN::ReadShape() {
 
 	shape->origin = ReadByte();
 	if (tdbin_version >= VERSION_1_6_0)
-		shape->z_u32 = ReadInt();
+		shape->animator = ReadInt();
 	return shape;
 }
 
