@@ -1,71 +1,70 @@
+TARGET = release/teardown-converter
+
 CXX = g++
-EXE = release/teardown-converter
-ODIR = obj
-IMGUI_DIR = imgui
-
-SOURCES = main.cpp glad/glad.c src/binary_reader.cpp
-SOURCES += src/entity.cpp src/lua_table.cpp src/math_utils.cpp src/parser.cpp src/scene.cpp src/vox_writer.cpp src/write_scene.cpp src/xml_writer.cpp src/zlib_utils.cpp
-SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
-SOURCES += $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
-SOURCES += file_dialog/ImGuiFileDialog.cpp lib/tinyxml2.cpp
-
-OBJS = $(addprefix obj/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
-UNAME_S := $(shell uname -s)
-
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -O3 -g
-CXXFLAGS += -std=c++17 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Ifile_dialog -Ilib
+CXXFLAGS += -Iimgui
 CXXFLAGS += -Wno-missing-field-initializers
-LIBS = -lz -lstdc++fs -lpthread
+CXXFLAGS += `pkg-config --cflags glfw3`
+LIBS = `pkg-config --libs glfw3 --static` -lz
 
-##---------------------------------------------------------------------
-## BUILD FLAGS PER PLATFORM
-##---------------------------------------------------------------------
+SOURCES = main.cpp glad/glad.c lib/tinyxml2.cpp
+SOURCES += src/binary_reader.cpp src/entity.cpp src/lua_table.cpp src/math_utils.cpp
+SOURCES += src/parser.cpp src/scene.cpp src/vox_writer.cpp src/write_scene.cpp
+SOURCES += src/xml_writer.cpp src/zlib_utils.cpp
+SOURCES += imgui/imgui.cpp imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp
+SOURCES += imgui/backends/imgui_impl_glfw.cpp imgui/backends/imgui_impl_opengl3.cpp
+SOURCES += file_dialog/ImGuiFileDialog.cpp
+
+OBJDIR = obj
+OBJS = $(SOURCES:.cpp=.o)
+OBJS := $(OBJS:.c=.o)
+OBJS := $(addprefix $(OBJDIR)/, $(notdir $(OBJS)))
+
+UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S), Linux)
 	ECHO_MESSAGE = "Linux"
-	CXXFLAGS += -Wno-format-security -Wno-unused-result -Wno-unknown-pragmas
-	CXXFLAGS += `pkg-config --cflags glfw3`
-	LIBS += -lglfw `pkg-config --static --libs glfw3`
 endif
 
 ifeq ($(OS), Windows_NT)
-	ECHO_MESSAGE = "Windows"
-	CXXFLAGS += -Wno-stringop-overflow
-	CXXFLAGS += `pkg-config --cflags glfw3`
-	LIBS += -lglfw3 -lgdi32 -lopengl32 -limm32 -static icon.res
+	ECHO_MESSAGE = "MinGW"
+	LIBS += -lopengl32 -limm32 -static icon.res
 endif
 
-##---------------------------------------------------------------------
-## BUILD RULES
-##---------------------------------------------------------------------
-.PHONY: all clean
+ifeq ($(UNAME_S), Darwin)
+	ECHO_MESSAGE = "MacOS"
+endif
 
-$(ODIR)/%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-	
-$(ODIR)/%.o: src/%.cpp src/%.h
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+.PHONY: all clean rebuild
 
-$(ODIR)/%.o: lib/%.cpp lib/%.h
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(ODIR)/%.o: glad/%.c glad/%.h
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(ODIR)/%.o: $(IMGUI_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(ODIR)/%.o: $(IMGUI_DIR)/backend/%.cpp $(IMGUI_DIR)/backend/%.h
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(ODIR)/%.o: file_dialog/%.cpp file_dialog/%.h
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-all: $(EXE)
+all: $(TARGET)
 	@echo Build complete for $(ECHO_MESSAGE)
 
-$(EXE): $(OBJS)
+$(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
 
+$(OBJDIR)/%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: src/%.cpp src/%.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: lib/%.cpp lib/%.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: glad/%.c glad/%.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: imgui/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: imgui/backend/%.cpp imgui/backend/%.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: file_dialog/%.cpp file_dialog/%.h
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+rebuild: clean all
+
 clean:
-	rm -f $(EXE) $(OBJS)
+	rm -f $(TARGET) $(OBJDIR)/*.o
