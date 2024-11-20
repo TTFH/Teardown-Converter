@@ -452,11 +452,35 @@ struct Script {
 	Vec<ValueTransition> transitions;
 	~Script();
 };
+/*
+struct Bone {
+	uint32_t body;
+	int index;
+	int parent_index;
+	string name;
+};
 
+struct Keyframe {
+	Transform transform;
+	float time;
+};
+
+struct Sequence {
+	uint32_t bone_index;
+	Vec<Keyframe> frames;
+};
+
+struct Animation {
+	string name;
+	uint32_t start_bone;
+	float anim_rate;
+	Vec<Sequence> seqs;
+};
+*/
 struct Animator {
 	Transform transform;
 	string path;		// file
-	//Bullshit bullshit;
+	// ...
 };
 
 #endif

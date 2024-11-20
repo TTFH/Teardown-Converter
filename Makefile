@@ -24,6 +24,7 @@ UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S), Linux)
 	ECHO_MESSAGE = "Linux"
+	CXXFLAGS += -Wno-format-security -Wno-unused-result -Wno-unknown-pragmas
 endif
 
 ifeq ($(OS), Windows_NT)

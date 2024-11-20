@@ -492,7 +492,6 @@ Script* TDBIN::ReadScript() {
 	return script;
 }
 
-// Bitch
 Animator* TDBIN::ReadAnimator() {
 	int entries = 0;
 	uint8_t* buffer = NULL;
@@ -540,8 +539,10 @@ Animator* TDBIN::ReadAnimator() {
 		ReadFloat();
 		ReadInt();
 		ReadInt();
-		ReadBool();
-		ReadBool();
+		ReadByte();
+		ReadByte();
+		ReadByte();
+		ReadByte();
 		ReadBool();
 		ReadVoxels();
 	}
