@@ -84,7 +84,7 @@ void WriteXML::WriteEnvironment() {
 	xml.AddFloatAttribute(environment, "fogHeightOffset", fog->height_offset, "0");
 	xml.AddFloatAttribute(environment, "sunBrightness", skybox->sun.brightness, "0");
 	xml.AddColorAttribute(environment, "sunColorTint", skybox->sun.colortint, "1 1 1");
-	if (skybox->auto_sun_dir)
+	if (skybox->sun.auto_dir)
 		xml.AddStrAttribute(environment, "sunDir", "auto");
 	else
 		xml.AddVectorAttribute(environment, "sunDir", skybox->sun.dir);
@@ -848,12 +848,13 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		if (script_file.find(prefix) == 0)
 			return; // Not cooked enough
 
-		if (script_file == "characters.lua" ||
+		if (script_file == "achievements.lua" ||
+			script_file == "characters.lua" ||
 			script_file == "creativemode.lua" ||
 			script_file == "explosion.lua" ||
 			script_file == "fx.lua" ||
-			script_file == "spawn.lua" ||
-			script_file == "achievements.lua")
+			script_file == "playerbody.lua" ||
+			script_file == "spawn.lua")
 			return;
 
 		xml.AddElement(xml.GetScriptsGroup(), entity_element);

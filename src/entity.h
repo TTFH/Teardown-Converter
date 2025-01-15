@@ -87,6 +87,7 @@ struct Sound {
 // ------------------------------------
 /*
 enum Flags : uint16_t {
+	NoShadow	= 1 << 12,
 	Invisible	= 1 << 9,
 	Interact	= 1 << 8,
 	NoNav		= 1 << 7,

@@ -665,20 +665,21 @@ void TDBIN::ReadPlayer() {
 void TDBIN::ReadEnvironment() {
 	Environment* environment = &scene.environment;
 	Skybox* skybox = &environment->skybox;
+	Sun* sun = &skybox->sun;
 
 	skybox->texture = ReadString();
 	skybox->tint = ReadColor();
 	skybox->brightness = ReadFloat();
 	skybox->rot = ReadFloat();
-	skybox->sun.tint_brightness = ReadVector();
-	skybox->sun.colortint = ReadColor();
-	skybox->sun.dir = ReadVector();
-	skybox->sun.brightness = ReadFloat();
-	skybox->sun.spread = ReadFloat();
-	skybox->sun.length = ReadFloat();
-	skybox->sun.fogscale = ReadFloat();
-	skybox->sun.glare = ReadFloat();
-	skybox->auto_sun_dir = ReadBool();
+	sun->tint_brightness = ReadVector();
+	sun->colortint = ReadColor();
+	sun->dir = ReadVector();
+	sun->brightness = ReadFloat();
+	sun->spread = ReadFloat();
+	sun->length = ReadFloat();
+	sun->fogscale = ReadFloat();
+	sun->glare = ReadFloat();
+	sun->auto_dir = ReadBool();
 	skybox->constant = ReadColor();
 	skybox->ambient = ReadFloat();
 	skybox->ambientexponent = ReadFloat();

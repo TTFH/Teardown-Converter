@@ -41,6 +41,7 @@ struct Sun {
 	float length;		// sunLength
 	float fogscale;		// sunFogScale
 	float glare;		// sunGlare
+	bool auto_dir;
 };
 
 struct Skybox {
@@ -49,7 +50,6 @@ struct Skybox {
 	float brightness;		// skyboxbrightness
 	float rot;				// skyboxrot (in rad)
 	Sun sun;
-	bool auto_sun_dir;
 	Color constant;			// constant
 	float ambient;			// ambient
 	float ambientexponent;	// ambientexponent
