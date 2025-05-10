@@ -255,7 +255,7 @@ bool MV_FILE::FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max, bool halt)
 		mapped_index++;
 	assert(mapped_index < 256);
 
-	// Only move if not in range, or it'll broke vehicle lights
+	// Only move if not in range, or it'll break vehicle lights
 	if (mapped_index < i_min || mapped_index > i_max) {
 		unsigned int empty_index = i_min;
 		while (empty_index <= i_max && is_index_used[empty_index])
@@ -481,7 +481,7 @@ void MV_FILE::SetColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
 
 /*
 _type = "_metal"
-reflectivity = _sp
+reflectivity = _sp - 1.0
 shinyness = 1.0 - _rough
 metalness = _metal
 emissive = 0.0

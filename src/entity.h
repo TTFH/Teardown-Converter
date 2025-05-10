@@ -53,6 +53,7 @@ public:
 	}
 };
 
+#define VERSION_1_6_3 163
 #define VERSION_1_6_0 160
 #define VERSION_1_5_4 154
 

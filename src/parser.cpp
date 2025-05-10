@@ -724,6 +724,9 @@ void TDBIN::ReadEnvironment() {
 
 	environment->wind = ReadVector();
 	environment->waterhurt = ReadFloat();
+
+	if (tdbin_version >= VERSION_1_6_3)
+		ReadByte();
 }
 
 void TDBIN::parse() {
