@@ -22,7 +22,7 @@ public:
 	Registry ReadRegistry();
 	Color ReadColor();
 	Vertex ReadVertex();
-	Vector ReadVector();
+	Vec3 ReadVector();
 	Quat ReadQuat();
 	Transform ReadTransform();
 	void ReadBuffer(uint8_t* buffer, int size);

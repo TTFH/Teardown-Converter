@@ -75,6 +75,8 @@ void WriteXML::WriteEnvironment() {
 	xml.AddColorAttribute(environment, "skyboxtint", skybox->tint, "1 1 1");
 	xml.AddFloatAttribute(environment, "skyboxbrightness", skybox->brightness, "1");
 	xml.AddFloatAttribute(environment, "skyboxrot", deg(skybox->rot), "0");
+	xml.AddVectorAttribute(environment, "skyboxaxis", Vec3(0, 1, 0), "0 1 0");
+	xml.AddStrAttribute(environment, "lensdirt", scene.environment.lensdirt, "");
 	xml.AddColorAttribute(environment, "constant", skybox->constant, "0.003 0.003 0.003");
 	xml.AddFloatAttribute(environment, "ambient", skybox->ambient, "1");
 	xml.AddFloatAttribute(environment, "ambientexponent", skybox->ambientexponent, "1.3");
@@ -209,7 +211,7 @@ void WriteXML::WriteShape(XMLElement* &parent_element, XMLElement* &entity_eleme
 		return;
 	}
 
-	Vector axis_offset(0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0);
+	Vec3 axis_offset(0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0);
 	if (is_scaled) axis_offset = axis_offset * (10.0f * shape->voxels.scale);
 	shape->transform.pos = shape->transform.pos + shape->transform.rot * axis_offset;
 	shape->transform.rot = shape->transform.rot * QuatEuler(90, 0, 0);
@@ -543,8 +545,8 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				int knot_count = joint->rope->segments.getSize();
 				if (knot_count > 0) {
 					XMLElement* location_from = xml.CreateElement("location");
-					Vector rope_start = joint->rope->segments[0].from;
-					Vector rope_end = joint->rope->segments[knot_count - 1].to;
+					Vec3 rope_start = joint->rope->segments[0].from;
+					Vec3 rope_end = joint->rope->segments[knot_count - 1].to;
 
 					xml.AddElement(entity_element, location_from);
 					xml.AddVectorAttribute(location_from, "pos", rope_start);
@@ -553,7 +555,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 					xml.AddElement(entity_element, location_to);
 					xml.AddVectorAttribute(location_to, "pos", rope_end);
 
-					Vector rope_dir = rope_end - rope_start;
+					Vec3 rope_dir = rope_end - rope_start;
 					float rope_length = rope_dir.length();
 					float slack = joint->rope->slack - rope_length;
 					xml.AddFloatAttribute(entity_element, "slack", slack, "0");
@@ -692,7 +694,7 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			Trigger* trigger = static_cast<Trigger*>(entity->self);
 			entity_element->SetName("trigger");
 			if (trigger->type == Trigger::Box) {
-				Vector offset = Vector(0, trigger->box_size[1], 0);
+				Vec3 offset = Vec3(0, trigger->box_size[1], 0);
 				trigger->transform.pos = trigger->transform.pos - trigger->transform.rot * offset;
 			}
 			WriteTransform(entity_element, trigger->transform);
@@ -766,21 +768,21 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			XMLElement* parent_element = xml.GetNode(shape_handle);
 			assert(parent_element != NULL);
 
-			Vector relative_pos = joint->positions[0];
+			Vec3 relative_pos = joint->positions[0];
 			Quat relative_rot;
 			if (joint->type != Joint::Ball) {
-				Vector joint_axis(joint->axes[0]);
-				if (joint_axis == Vector(1, 0, 0))
+				Vec3 joint_axis(joint->axes[0]);
+				if (joint_axis == Vec3(1, 0, 0))
 					relative_rot = QuatEuler(0, 90, 0);
-				else if (joint_axis == Vector(-1, 0, 0))
+				else if (joint_axis == Vec3(-1, 0, 0))
 					relative_rot = QuatEuler(0, -90, 0);
-				else if (joint_axis == Vector(0, 1, 0))
+				else if (joint_axis == Vec3(0, 1, 0))
 					relative_rot = QuatEuler(-90, 0, 0);
-				else if (joint_axis == Vector(0, -1, 0))
+				else if (joint_axis == Vec3(0, -1, 0))
 					relative_rot = QuatEuler(90, 0, 0);
-				else if (joint_axis == Vector(0, 0, 1))
+				else if (joint_axis == Vec3(0, 0, 1))
 					relative_rot = Quat();
-				else if (joint_axis == Vector(0, 0, -1))
+				else if (joint_axis == Vec3(0, 0, -1))
 					relative_rot = QuatEuler(0, 180, 0);
 				else {
 					double a = -asin(joint_axis.y);

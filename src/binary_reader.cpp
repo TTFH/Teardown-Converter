@@ -95,8 +95,8 @@ Vertex Reader::ReadVertex() {
 	return vertex;
 }
 
-Vector Reader::ReadVector() {
-	Vector vec;
+Vec3 Reader::ReadVector() {
+	Vec3 vec;
 	vec.x = ReadFloat();
 	vec.y = ReadFloat();
 	vec.z = ReadFloat();

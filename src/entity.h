@@ -137,8 +137,8 @@ enum BodyMode : uint8_t {
 */
 struct Body {
 	Transform transform;
-	Vector velocity;
-	Vector angular_velocity;
+	Vec3 velocity;
+	Vec3 angular_velocity;
 	bool dynamic;				// dynamic
 	uint8_t active;
 	float friction;
@@ -186,7 +186,7 @@ struct Shape {
 	uint16_t blendtexture_tile;	// blendtexture
 	float texture_weight;		// texture
 	float blendtexture_weight;	// blendtexture
-	Vector texture_offset;
+	Vec3 texture_offset;
 	float emissive_scale;
 	bool is_broken;
 	uint8_t has_voxels;
@@ -217,7 +217,7 @@ struct Light {
 	float fogscale;		// fogscale
 	float area_size[2];	// size = 2.0 * this
 	float capsule_size;	// size.x = 2.0 * this
-	Vector position;
+	Vec3 position;
 	uint8_t index;
 	float flickering;
 	Sound sound;		// sound
@@ -241,8 +241,8 @@ struct Water {
 };
 
 struct Segment {
-	Vector from;
-	Vector to;
+	Vec3 from;
+	Vec3 to;
 };
 
 struct Rope {
@@ -265,8 +265,8 @@ struct Joint {
 
 	uint32_t type;				// type
 	uint32_t shapes[2];
-	Vector positions[2];
-	Vector axes[2];
+	Vec3 positions[2];
+	Vec3 axes[2];
 	bool connected;
 	bool collide;				// collide
 	float rotstrength;			// rotstrength
@@ -313,7 +313,7 @@ struct Exhaust {
 
 struct Vital {
 	uint32_t body;
-	Vector position;
+	Vec3 position;
 	float radius;
 	uint32_t nearby_voxels;
 };
@@ -330,10 +330,10 @@ struct Vehicle {
 	Transform transform2;
 	Vec<uint32_t> wheels;
 	VehicleProperties properties;
-	Vector camera;			// camera
-	Vector player;			// player
-	Vector exit;			// exit
-	Vector propeller;		// propeller
+	Vec3 camera;			// camera
+	Vec3 player;			// player
+	Vec3 exit;			// exit
+	Vec3 propeller;		// propeller
 	float difflock;			// difflock
 	float health;
 	uint32_t main_voxel_count;

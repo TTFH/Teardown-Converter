@@ -16,34 +16,34 @@ bool CompareFloat(float a, float b) {
 	return fabs(a - b) < 0.0001;
 }
 
-float Vector::length() const {
+float Vec3::length() const {
 	return sqrt(x * x + y * y + z * z);
 }
 
-bool Vector::isZero() const {
-	return *this == Vector();
+bool Vec3::isZero() const {
+	return *this == Vec3();
 }
 
-Vector Vector::normalize() const {
+Vec3 Vec3::normalize() const {
 	float len = length();
-	if (len == 0) return Vector();
-	return Vector(x / len, y / len, z / len);
+	if (len == 0) return Vec3();
+	return Vec3(x / len, y / len, z / len);
 }
 
-bool Vector::operator==(const Vector& v) const {
+bool Vec3::operator==(const Vec3& v) const {
 	return CompareFloat(x, v.x) && CompareFloat(y, v.y) && CompareFloat(z, v.z);
 }
 
-Vector Vector::operator+(const Vector& v) const {
-	return Vector(x + v.x, y + v.y, z + v.z);
+Vec3 Vec3::operator+(const Vec3& v) const {
+	return Vec3(x + v.x, y + v.y, z + v.z);
 }
 
-Vector Vector::operator-(const Vector& v) const {
-	return Vector(x - v.x, y - v.y, z - v.z);
+Vec3 Vec3::operator-(const Vec3& v) const {
+	return Vec3(x - v.x, y - v.y, z - v.z);
 }
 
-Vector Vector::operator*(float f) const {
-	return Vector(x * f, y * f, z * f);
+Vec3 Vec3::operator*(float f) const {
+	return Vec3(x * f, y * f, z * f);
 }
 
 static Quat Conjugate(const Quat& q) {
@@ -58,11 +58,11 @@ Quat operator*(const Quat& p, const Quat& q) {
 	return Quat(x, y, z, w);
 }
 
-Vector operator*(const Quat& q, const Vector& p1) {
+Vec3 operator*(const Quat& q, const Vec3& p1) {
 	Quat p(p1.x, p1.y, p1.z, 0);
 	Quat qConj = Conjugate(q);
 	Quat result = q * p * qConj;
-	return Vector(result.x, result.y, result.z);
+	return Vec3(result.x, result.y, result.z);
 }
 
 Quat QuatEuler(double roll, double yaw, double pitch) {
@@ -109,7 +109,7 @@ void QuatToEuler(Quat q, float &bank, float &heading, float &attitude) {
 	attitude = deg(attitude);
 }
 
-Quat FromAxisAngle(Vector axis, float angle) {
+Quat FromAxisAngle(Vec3 axis, float angle) {
 	axis = axis.normalize();
 	angle = rad(angle);
 	float s = sin(angle / 2.0);

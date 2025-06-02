@@ -50,7 +50,7 @@ public:
 	void AddIntFloatAttribute(XMLElement* element, const char* name, int value1, float value2);
 	void AddStrFloatAttribute(XMLElement* element, const char* name, string value1, float value2, string default_value = "");
 	void AddFloatAttribute(XMLElement* element, const char* name, float value, string default_value = "");
-	void AddVectorAttribute(XMLElement* element, const char* name, Vector value, string default_value = "");
+	void AddVectorAttribute(XMLElement* element, const char* name, Vec3 value, string default_value = "");
 	void AddFloat2Attribute(XMLElement* element, const char* name, float value1, float value2, string default_value = "");
 	void AddFloat3Attribute(XMLElement* element, const char* name, float value1, float value2, float value3);
 	void AddFloat4Attribute(XMLElement* element, const char* name, float value1, float value2, float value3, float value4, string default_value = "");

@@ -726,7 +726,9 @@ void TDBIN::ReadEnvironment() {
 	environment->waterhurt = ReadFloat();
 
 	if (tdbin_version >= VERSION_1_6_3)
-		ReadByte();
+		environment->lensdirt = ReadString();
+	else
+		environment->lensdirt = "";
 }
 
 void TDBIN::parse() {

@@ -176,7 +176,7 @@ void XML_Writer::AddStrFloatAttribute(XMLElement* element, const char* name, str
 		element->SetAttribute(name, value1.c_str());
 }
 
-void XML_Writer::AddVectorAttribute(XMLElement* element, const char* name, Vector value, string default_value) {
+void XML_Writer::AddVectorAttribute(XMLElement* element, const char* name, Vec3 value, string default_value) {
 	string buffer = FloatToString(value.x) + " " + FloatToString(value.y) + " " + FloatToString(value.z);
 	if (default_value == "" || buffer != default_value)
 		element->SetAttribute(name, buffer.c_str());

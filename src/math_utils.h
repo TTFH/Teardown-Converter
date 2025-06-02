@@ -10,18 +10,18 @@ using namespace std;
 
 typedef vector<pair<uint8_t, uint8_t>> RLE;
 
-struct Vector {
+struct Vec3 {
 	float x, y, z;
-	Vector() : x(0), y(0), z(0) {}
-	Vector(float x, float y, float z) : x(x), y(y), z(z) {}
-	Vector(float v[3]) : x(v[0]), y(v[1]), z(v[2]) {}
+	Vec3() : x(0), y(0), z(0) {}
+	Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
+	Vec3(float v[3]) : x(v[0]), y(v[1]), z(v[2]) {}
 	float length() const;
 	bool isZero() const;
-	Vector normalize() const;
-	bool operator==(const Vector& v) const;
-	Vector operator+(const Vector& v) const;
-	Vector operator-(const Vector& v) const;
-	Vector operator*(float f) const;
+	Vec3 normalize() const;
+	bool operator==(const Vec3& v) const;
+	Vec3 operator+(const Vec3& v) const;
+	Vec3 operator-(const Vec3& v) const;
+	Vec3 operator*(float f) const;
 };
 
 struct Quat {
@@ -31,10 +31,10 @@ struct Quat {
 };
 
 struct Transform {
-	Vector pos;
+	Vec3 pos;
 	Quat rot;
 	Transform() : pos(), rot() {}
-	Transform(Vector pos, Quat rot) : pos(pos), rot(rot) {}
+	Transform(Vec3 pos, Quat rot) : pos(pos), rot(rot) {}
 	bool isDefault();
 };
 
@@ -62,10 +62,10 @@ bool CompareFloat(float a, float b);
 Quat QuatEuler(double roll, double yaw, double pitch);
 Quat QuatEulerRad(double roll, double yaw, double pitch);
 void QuatToEuler(Quat q, float &bank, float &heading, float &attitude);
-Quat FromAxisAngle(Vector axis, float angle);
+Quat FromAxisAngle(Vec3 axis, float angle);
 Transform TransformToLocalTransform(const Transform& parent, const Transform& child);
 
 Quat operator*(const Quat& p, const Quat& q);
-Vector operator*(const Quat& q, const Vector& p1);
+Vec3 operator*(const Quat& q, const Vec3& p1);
 
 #endif

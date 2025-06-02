@@ -23,7 +23,7 @@ struct Player {
 	Transform transform;
 	float pitch;
 	float yaw;
-	Vector velocity;
+	Vec3 velocity;
 	float health;
 	float transition_timer;
 	float time_underwater;
@@ -33,9 +33,9 @@ struct Player {
 };
 
 struct Sun {
-	Vector tint_brightness;
+	Vec3 tint_brightness;
 	Color colortint;	// sunColorTint
-	Vector dir;			// sunDir
+	Vec3 dir;			// sunDir
 	float brightness;	// sunBrightness
 	float spread;		// sunSpread
 	float length;		// sunLength
@@ -67,7 +67,7 @@ struct Fog {
 };
 
 struct Snow {
-	Vector dir;		// snowdir x y z
+	Vec3 dir;		// snowdir x y z
 	float spread;	// snowdir spread
 	float amount;	// snowamount
 	float speed;	// snowamount
@@ -92,8 +92,9 @@ struct Environment {
 	float slippery;		// slippery
 	float fogscale;		// fogscale
 	Snow snow;
-	Vector wind;		// wind
+	Vec3 wind;		// wind
 	float waterhurt;	// waterhurt
+	string lensdirt;	// lensdirt
 };
 
 struct Boundary {
@@ -107,7 +108,7 @@ struct Boundary {
 
 struct Fire {
 	uint32_t shape;
-	Vector position;
+	Vec3 position;
 	float max_time;
 	float time;
 	bool painted;
@@ -158,8 +159,8 @@ enum ProjectileType : uint32_t {
 };
 */
 struct Projectile {
-	Vector origin;
-	Vector direction;
+	Vec3 origin;
+	Vec3 direction;
 	float dist;
 	float max_dist;
 	uint32_t type;
@@ -184,7 +185,7 @@ struct Scene {
 	Vec<Registry> spawned_mods;
 
 	uint32_t driven_vehicle;	// driven
-	Vector shadow_volume;		// shadowVolume
+	Vec3 shadow_volume;		// shadowVolume
 	Transform spawnpoint;		// spawnpoint
 	uint32_t world_body;
 	uint32_t flashlight;
