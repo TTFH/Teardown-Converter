@@ -651,9 +651,12 @@ void TDBIN::ReadPlayer() {
 	player->transform = ReadTransform();
 	player->pitch = ReadFloat();
 	player->yaw = ReadFloat();
+	if (tdbin_version >= VERSION_1_7_0) {
+		player->orientation = ReadQuat();
+		player->camera_orientation = ReadQuat();
+	}
 	player->velocity = ReadVector();
 	player->health = ReadFloat();
-
 	player->transition_timer = ReadFloat();
 	player->time_underwater = ReadFloat();
 	player->bluetide_timer = ReadFloat();
@@ -760,6 +763,10 @@ void TDBIN::parse() {
 
 	scene.driven_vehicle = ReadInt();
 	scene.shadow_volume = ReadVector();
+	if (tdbin_version >= VERSION_1_7_0)
+		scene.gravity = ReadVector();
+	else
+		scene.gravity = Vec3(0, -10, 0);
 	scene.spawnpoint = ReadTransform();
 	scene.world_body = ReadInt();
 	scene.flashlight = ReadInt();

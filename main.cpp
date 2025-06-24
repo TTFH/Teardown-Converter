@@ -80,6 +80,7 @@ void* DecompileMap(void* param) {
 
 	fs::create_directories(data->map_folder);
 	if (!data->legacy_format) {
+		// TODO: fix name collision
 		SavePreviewImage(data->map_folder, data->level_id);
 		SaveInfoTxt(data->map_folder, data->level_name, data->level_desc);
 	}
@@ -227,19 +228,17 @@ vector<LevelInfo> LoadLevels(string filter) {
 			{ "tillaggaryd", "museum_heist", "Art Vandals", "Steal Kerstin's art from the museum since Enid found out they are up for new prizes. Bring the heavy targets to your car." },
 			{ "tillaggaryd", "museum_cam_heist", "The photo shoot", "Steal the security cameras from the museum." },
 			{ "tillaggaryd", "museum_destroy", "Out with a bang", "Destroy the museum since it's getting re-branded as Kerstin Stråbäck's Art Museum."},
-			// Hub
-			{ "mansion", "hub", "The Woo Mansion v1", "Check your phone for messages." },
-			{ "mansion", "hub0", "The Woo Mansion v2", "Check your phone for messages." },
-			{ "mansion", "hub1", "The Woo Mansion v3", "Check your phone for messages." },
-			{ "mansion", "hub2", "The Woo Mansion v4", "Check your phone for messages." },
-			{ "mansion", "hub3", "The Woo Mansion v5", "Check your phone for messages." },
-			{ "mansion", "hub4", "The Woo Mansion v6", "Check your phone for messages." },
-			{ "mansion", "hub5", "The Woo Mansion v7", "Check your phone for messages." },
 		};
 		int dlc_missions_count = sizeof(dlc_missions) / sizeof(dlc_missions[0]);
 
 		for (int i = 0; i < dlc_missions_count; i++) {
 			LevelInfo info = { dlc_missions[i][0], dlc_missions[i][1], dlc_missions[i][2], dlc_missions[i][3] };
+			levels.push_back(info);
+		}
+		for (int i = 0; i < 7; i++) {
+			string hub_id = "hub";
+			if (i > 0) hub_id += to_string(i - 1);
+			LevelInfo info = { "mansion", hub_id, "The Woo Mansion v" + to_string(i + 1), "Check your phone for messages." };
 			levels.push_back(info);
 		}
 	} else if (filter == "Time Campers") {
@@ -258,27 +257,23 @@ vector<LevelInfo> LoadLevels(string filter) {
 			{ "ravine", "ravine_motivational", "Motivational reminder", "Destroy the gunpowder supplies to demonstrate the true value of proper insurance." },
 			{ "town", "town_cars", "Four Stolen Hooves", "Bring the wheel, horse and gear to the escape vehicle. Use horses and ropes to drag the heavy targets. If possible, steal some food for the horse and some extra wire." },
 			{ "ravine", "ravine_bridge", "Choo-choosing path", "Destroy the bridge and get to the escape vehicle before the train arrives." },
-			// Hub
-			{ "hub_lockelle", "hub_lockelle", "The hub", "The normal hub in löckelle." },
-			{ "hub_wildwest", "hub1", "Western Camp v1", "Check your laptop in the camper for messages." },
-			{ "hub_wildwest", "hub2", "Western Camp v2", "Check your laptop in the camper for messages." },
-			{ "hub_wildwest", "hub3", "Western Camp v3", "Check your laptop in the camper for messages." },
-			{ "hub_wildwest", "hub4", "Western Camp v4", "Check your laptop in the camper for messages." },
-			{ "hub_wildwest", "hub5", "Western Camp v5", "Check your laptop in the camper for messages." },
-			{ "hub_wildwest", "hub6", "Western Camp v6", "Check your laptop in the camper for messages." },
-			{ "hub_wildwest", "hub7", "Western Camp v7", "Check your laptop in the camper for messages." },
-			{ "hub_wildwest", "hub8", "Western Camp v8", "Check your laptop in the camper for messages." },
-			{ "hub_wildwest", "hub9", "Western Camp v9", "Check your laptop in the camper for messages." },
 			// Others
 			{ "hub_lockelle", "start", "Löckelle Teardown Services", "Family owned demolition company and your home base. Through the computer terminal you can read messages, accept missions and upgrade you tools." },
 			{ "hub_wildwest", "main", "Main menu", "Time Campers DLC - Main menu" },
 			{ "hub_wildwest", "final", "Credits", "Time Campers DLC - Credits" },
 			{ "ravine", "timetravel", "Timetravel", "Crash animation at the ravine" },
+			// Hub
+			{ "hub_lockelle", "hub_lockelle", "The hub", "The normal hub in löckelle." },
 		};
 		int dlc_missions_count = sizeof(dlc_missions) / sizeof(dlc_missions[0]);
 
 		for (int i = 0; i < dlc_missions_count; i++) {
 			LevelInfo info = { dlc_missions[i][0], dlc_missions[i][1], dlc_missions[i][2], dlc_missions[i][3] };
+			levels.push_back(info);
+		}
+		for (int i = 0; i < 9; i++) {
+			string hub_id = "hub" + to_string(i + 1);
+			LevelInfo info = { "hub_wildwest", hub_id, "Western Camp v" + to_string(i + 1), "Check your laptop in the camper for messages." };
 			levels.push_back(info);
 		}
 	} else if (filter == "Folkrace") {
@@ -305,21 +300,6 @@ vector<LevelInfo> LoadLevels(string filter) {
 			{ "m_lobby", "demolish", "Good Ol' Wreckin'", "Destroy the houses belonging to Ingvar. Beware of security robots." },
 			{ "m_lobby", "demolish_1", "Good Ol' Wreckin'", "Destroy the houses belonging to Ingvar. Beware of security robots." },
 			{ "m_lobby", "demolish_2", "Good Ol' Wreckin'", "Destroy the houses belonging to Ingvar. Beware of security robots." },
-			// Hub
-			{ "m_lobby", "lobby_0", "Granriket v1", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_1", "Granriket v2", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_2", "Granriket v3", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_2_1", "Granriket v4", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_2_1a", "Granriket v5", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_2_1b", "Granriket v6", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_2_2", "Granriket v7", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_2_2a", "Granriket v8", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_2_2b", "Granriket v9", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_2_2c", "Granriket v10", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_3", "Granriket v11", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_3_0", "Granriket v12", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_3a", "Granriket v13", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
-			{ "m_lobby", "lobby_4", "Granriket v14", "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." },
 			// Races
 			{ "m_village", "village_derby", "Almondman's Farm Derby", "" },
 			{ "m_village", "village_derby_night", "Almondman's Farm Derby Night", "" },
@@ -330,7 +310,6 @@ vector<LevelInfo> LoadLevels(string filter) {
 			{ "m_village", "village_reverse_race", "Almondman's Farm Track 2", "" },
 			{ "m_village", "village_reverse_race_night", "Almondman's Farm Track 2 Night", "" },
 			{ "m_village", "village_reverse_race_winter", "Almondman's Farm Track 2 Winter", "" },
-
 			{ "m_docks", "docks_derby_day_1", "Glennburgh Docks Derby", "" },
 			{ "m_docks", "docks_derby_night_1", "Glennburgh Docks Derby Night", "" },
 			{ "m_docks", "docks_race_day_1", "Glennburgh Docks", "" },
@@ -339,13 +318,11 @@ vector<LevelInfo> LoadLevels(string filter) {
 			{ "m_docks", "docks_race_day_winter_2", "Glennburgh Docks Track 2 Winter", "" },
 			{ "m_docks", "docks_race_night_1", "Glennburgh Docks Night", "" },
 			{ "m_docks", "docks_race_night_2", "Glennburgh Docks Track 2 Night", "" },
-
 			{ "m_mall", "mall_derby", "Möbel Mall Derby", "" },
 			{ "m_mall", "mall_race_day", "Möbel Mall", "" },
 			{ "m_mall", "mall_race_night", "Möbel Mall Night", "" },
 			{ "m_mall", "mall_race_rev_day", "Möbel Mall Track 2", "" },
 			{ "m_mall", "mall_race_rev_night", "Möbel Mall Track 2 Night", "" },
-
 			{ "m_village", "village_woo_champ_1", "Woo's Folkrace Grand Prix 1", "" },
 			{ "m_mall", "woo_champ_2", "Woo's Folkrace Grand Prix 2", "" },
 			{ "m_mall", "woo_champ_3", "Woo's Folkrace Grand Prix 3", "" },
@@ -355,9 +332,64 @@ vector<LevelInfo> LoadLevels(string filter) {
 			LevelInfo info = { dlc_missions[i][0], dlc_missions[i][1], dlc_missions[i][2], dlc_missions[i][3] };
 			levels.push_back(info);
 		}
+		for (int i = 0; i < 14; i++) {
+			string hub_ids[14] = { "lobby_0", "lobby_1", "lobby_2", "lobby_2_1", "lobby_2_1a", "lobby_2_1b", "lobby_2_2", "lobby_2_2a", "lobby_2_2b", "lobby_2_2c", "lobby_3", "lobby_3_0", "lobby_3a", "lobby_4" };
+			LevelInfo info = { "m_lobby", hub_ids[i], "Granriket v" + to_string(i + 1), "Small and cozy Granriket. One of many similar locations in the municipality of Löckelle." };
+			levels.push_back(info);
+		}
+	} else if (filter == "The Greenwash Gambit") {
+		const char* dlc_missions[][4] = {
+			{ "ravine", "distress", "Distress signal", "Investigate the distress signal and bring back Tier-1." },
+			{ "ravine", "boats", "All aboard", "Gather the supplies left by the previous crew." },
+			{ "evilbase", "evilbasephoto", "The Photoshoot", "Photograph the objects at The recycling plant to gather intel about EFO. Corps. operation." },
+			{ "ravine", "ravinephoto", "Data mining", "Steal computers to gather information about the superfluid helium potential of the anti-gravity crystals in The Arroyo Chasm and destroy E.F.O. Corp's back-ups." },
+			{ "ravine", "powercrystals", "Crystal collection", "Bring at least three anti-gravity crystals to the escape vehicle to construct the Quantum Vortex Bomb. The facilities are guarded by armed autonomous drones at night, which will pursue anyone identified as an intruder." },
+			{ "evilbase", "spacebaseintro", "Emergency overrides", "Steal emergency override protocols for the cryogenic coolers, pressure containers and quantum vortex rotators. The manuals are behind protective glass that will trigger the alarm if broken." },
+			{ "evilbase", "spacebaseheist", "Keeping cool", "Get hold of the cryogenic coolers, pressure containers and the rotational energy storage for Tier-1 and Mainframe." },
+			{ "ravine", "ravineheist", "Gadget grabber", "Acquire a iodine-based radiation absorber, magnetic field stabilizers, and the auto-aiming scope." },
+			{ "evilbase", "spacebasedata", "Locate in space", "Hack the terminals to retrieve the current positional data for the S.C.C.L." },
+			{ "spacestation", "spacestationintro", "Send into orbit", "Disable the internal communication at the S.C.C.L by sending the receivers into space." },
+			{ "spacestation", "spacestationdestroy", "Connection lost", "Destroy the S.C.C.L to break the stabilizing connection to the black hole generator." },
+			{ "spacestation", "spacestationruins", "Fluid Recovery", "Get hold of superfluid helium needed for the Quantum Vortex Bomb. Watch out for asteroids." },
+			{ "ravine", "ravinerevisit", "Getaway under way", "Prepare the escape route through The Arroyo Chasm by destroying the checkpoints with explosives and clearing the way. If possible, also destroy some of the infrastructure." },
+			{ "evilbase", "blackhole", "Black hole no more", "Destroy the black hole generator. Make any preparations you can before damaging the tower. Drones will be alerted once the tower has been damaged." },
+			{ "evilbase", "shooter", "Full speed ahead - E.F.O. Recycling Plant", "With Tier-1 behind the wheel and you as the tail gunner, you must escape E.F.O. Corp." },
+			{ "ravine", "shooter_ravine", "Full speed ahead - The Arroyo Chasm", "With Tier-1 behind the wheel and you as the tail gunner, you must escape E.F.O. Corp." },
+			{ "hub", "shooter_hub", "Full speed ahead - The Base", "With Tier-1 behind the wheel and you as the tail gunner, you must escape E.F.O. Corp." },
+
+			{ "hub", "sandbox_hub", "The Base", "The hideout for Tier-1 and their crew, from here they launch the efforts of taking down E.F.O. Corps black hole. Kept tidy by Vac-1 and under supervision by Mainframe, but what happened to the original crew members?" },
+			{ "ravine", "sandbox_ravine", "The Arroyo Chasm", "The Arroyo Chasm is a menacing rift cutting through the surface of the planet. It is one of the few places on Vigrid-0421t where power crystals are less rare than elsewhere." },
+			{ "spacestation", "sandbox_spacestation", "S.C.C.L", "Subspace Collapse Containment Laser, the S.C.C.L is an orbiting space-station which collects cosmic energy and beams it down to the base on the planet to stabilize the black hole generator." },
+			{ "evilbase", "sandbox_evilbase", "E.F.O. Recycling Plant", "Eco-Friendly Operations Corp. is a galactic waste disposal company. In an effort to maximize profits they have constructed a huge base on the planet Vigrid-0421t where they are building an artificial black hole, in which they can dump all their clients' trash." },
+
+			{ "hub", "intro", "Silent in space", "A Löckonaut went missing during a mission to test the new Quilez exo-thruster. After four months in space, the signal from their ship suddenly went silent." },
+			{ "hub", "leave", "The Base - Takeoff", "The hideout for Tier-1 and their crew, from here they launch the efforts of taking down E.F.O. Corps black hole. Kept tidy by Vac-1 and under supervision by Mainframe, but what happened to the original crew members?" },
+			{ "hub", "return", "The Base - Landing", "The hideout for Tier-1 and their crew, from here they launch the efforts of taking down E.F.O. Corps black hole. Kept tidy by Vac-1 and under supervision by Mainframe, but what happened to the original crew members?" },
+			{ "hub_lockelle", "ending", "Missing Löckonaut Mysteriously Returns in Unknown Spacecraft", "This morning, the Löckonaut who vanished six months ago returned to Löckelle - in a completely different spacecraft. 'This is a triumph of the human spirit over adversity,' said George Shackelton, head of the Löckelle Space Agency. Authorities are puzzled by the unfamiliar craft and investigating the Löckonaut's mysterious journey." },
+
+			{ "main", "main", "Main menu", "The Greenwash Gambit DLC - Main menu" },
+			{ "credits", "shooter_credits", "Credits", "The Greenwash Gambit DLC - Credits" },
+			{ "hub_lockelle", "hub", "Löckelle sweet Löckelle", "A lake side cabin in Löckelle, far from any black hole." },
+		};
+		int dlc_missions_count = sizeof(dlc_missions) / sizeof(dlc_missions[0]);
+		for (int i = 0; i < dlc_missions_count; i++) {
+			LevelInfo info = { dlc_missions[i][0], dlc_missions[i][1], dlc_missions[i][2], dlc_missions[i][3] };
+			levels.push_back(info);
+		}
+		for (int i = 0; i < 14; i++) {
+			string hub_id = "hub" + to_string(i + 1);
+			LevelInfo info = { "hub", hub_id, "The Base v" + to_string(i + 1), "The hideout for Tier-1 and their crew, from here they launch the efforts of taking down E.F.O. Corps black hole. Kept tidy by Vac-1 and under supervision by Mainframe, but what happened to the original crew members?" };
+			levels.push_back(info);
+		}
+		for (int i = 0; i < 4; i++) {
+			string hub_id = "hub_space" + to_string(i + 1);
+			LevelInfo info = { "hub_space", hub_id, "The Shuttle v" + to_string(i + 1), "Lurking in space at a safe distance from the S.C.C.L." };
+			levels.push_back(info);
+		}
 	} else {
 		const char* others[][4] = {
 			{ "about", "about", "Credits", "" },
+			{ "menu", "menu", "Character selection", "" },
 			{ "lee", "ending10", "Lee Chemicals Part 1 Ending", "" },
 			{ "hub", "ending20", "Hub Part 2 Ending", "" },
 			{ "mansion", "ending21", "Villa Gordon Part 2 Ending", "" },
@@ -365,7 +397,6 @@ vector<LevelInfo> LoadLevels(string filter) {
 			{ "preview", "quicksave", "Quicksave", "Last Saved Level" },
 			{ "preview", "quicksavecampaign", "Quicksave Campaign", "Last Saved Campaign Level" },
 			{ "lee", "test", "Performance Test", "" },
-			{ "menu", "menu", "Character selection", "" },
 		};
 		int others_count = sizeof(others) / sizeof(others[0]);
 		for (int i = 0; i < others_count; i++) {
@@ -499,7 +530,7 @@ int main(int argc, char* argv[]) {
 	ConverterParams* params = new ConverterParams();
 
 	string selected_category = "Sandbox";
-	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Art Vandals", "Time Campers", "Folkrace", "Others" };
+	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Art Vandals", "Time Campers", "Folkrace", "The Greenwash Gambit", "Others" };
 	vector<LevelInfo> levels = LoadLevels(selected_category);
 	vector<LevelInfo>::iterator selected_level = levels.begin();
 
@@ -589,7 +620,7 @@ int main(int argc, char* argv[]) {
 
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80);
-			ImGui::Combo("##gameversion", &game_version, " 1.6.3\0");
+			ImGui::Combo("##gameversion", &game_version, " 1.7.0\0");
 			ImGui::PopItemWidth();
 
 			ImGui::Spacing();
@@ -621,8 +652,13 @@ int main(int argc, char* argv[]) {
 			ImGui::TextWrapped(selected_level->description.c_str());
 			ImGui::Dummy(ImVec2(0, 10));
 
-			if (selected_preview != selected_level->level_id) {
-				selected_preview = selected_level->level_id;
+			// Avoid conflicts with file names
+			string preview_name = selected_level->level_id;
+			if (selected_category == "The Greenwash Gambit")
+				preview_name = preview_name + "_dlc3";
+
+			if (selected_preview != preview_name) {
+				selected_preview = preview_name;
 				string texture_path = "preview/" + selected_preview + ".png";
 				preview_texture = LoadTexture(texture_path.c_str());
 			}
@@ -672,6 +708,8 @@ int main(int argc, char* argv[]) {
 					params->dlc_id = "wildwestheist";
 				else if (selected_category == "Folkrace")
 					params->dlc_id = "folkrace";
+				else if (selected_category == "The Greenwash Gambit")
+					params->dlc_id = "space";
 
 				if (!params->dlc_id.empty()) {
 					params->script_folder = game_folder;

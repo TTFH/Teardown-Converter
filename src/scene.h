@@ -23,6 +23,8 @@ struct Player {
 	Transform transform;
 	float pitch;
 	float yaw;
+	Quat orientation;
+	Quat camera_orientation;
 	Vec3 velocity;
 	float health;
 	float transition_timer;
@@ -185,7 +187,8 @@ struct Scene {
 	Vec<Registry> spawned_mods;
 
 	uint32_t driven_vehicle;	// driven
-	Vec3 shadow_volume;		// shadowVolume
+	Vec3 shadow_volume;			// shadowVolume
+	Vec3 gravity;
 	Transform spawnpoint;		// spawnpoint
 	uint32_t world_body;
 	uint32_t flashlight;

@@ -2,7 +2,7 @@ TARGET = release/teardown-converter
 
 CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -O3 -g
-CXXFLAGS += -Iimgui
+CXXFLAGS += -Iimgui -I.
 CXXFLAGS += -Wno-missing-field-initializers
 CXXFLAGS += `pkg-config --cflags glfw3`
 LIBS = `pkg-config --libs glfw3 --static` -lz
