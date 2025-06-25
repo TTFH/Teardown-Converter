@@ -376,7 +376,7 @@ vector<LevelInfo> LoadLevels(string filter) {
 			LevelInfo info = { dlc_missions[i][0], dlc_missions[i][1], dlc_missions[i][2], dlc_missions[i][3] };
 			levels.push_back(info);
 		}
-		for (int i = 0; i < 14; i++) {
+		for (int i = 0; i < 13; i++) {
 			string hub_id = "hub" + to_string(i + 1);
 			LevelInfo info = { "hub", hub_id, "The Base v" + to_string(i + 1), "The hideout for Tier-1 and their crew, from here they launch the efforts of taking down E.F.O. Corps black hole. Kept tidy by Vac-1 and under supervision by Mainframe, but what happened to the original crew members?" };
 			levels.push_back(info);
@@ -384,6 +384,15 @@ vector<LevelInfo> LoadLevels(string filter) {
 		for (int i = 0; i < 4; i++) {
 			string hub_id = "hub_space" + to_string(i + 1);
 			LevelInfo info = { "hub_space", hub_id, "The Shuttle v" + to_string(i + 1), "Lurking in space at a safe distance from the S.C.C.L." };
+			levels.push_back(info);
+		}
+	} else if (filter == "Relic Hunters") {
+		const char* dlc_missions[][4] = {
+			{ "map_id", "filename", "title", "description" },
+		};
+		int dlc_missions_count = sizeof(dlc_missions) / sizeof(dlc_missions[0]);
+		for (int i = 0; i < dlc_missions_count; i++) {
+			LevelInfo info = { dlc_missions[i][0], dlc_missions[i][1], dlc_missions[i][2], dlc_missions[i][3] };
 			levels.push_back(info);
 		}
 	} else {
@@ -530,7 +539,7 @@ int main(int argc, char* argv[]) {
 	ConverterParams* params = new ConverterParams();
 
 	string selected_category = "Sandbox";
-	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Art Vandals", "Time Campers", "Folkrace", "The Greenwash Gambit", "Others" };
+	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Art Vandals", "Time Campers", "Folkrace", "The Greenwash Gambit", "Relic Hunters", "Others" };
 	vector<LevelInfo> levels = LoadLevels(selected_category);
 	vector<LevelInfo>::iterator selected_level = levels.begin();
 
@@ -710,6 +719,8 @@ int main(int argc, char* argv[]) {
 					params->dlc_id = "folkrace";
 				else if (selected_category == "The Greenwash Gambit")
 					params->dlc_id = "space";
+				else if (selected_category == "Relic Hunters")
+					params->dlc_id = "relichunters";
 
 				if (!params->dlc_id.empty()) {
 					params->script_folder = game_folder;

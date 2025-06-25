@@ -44,6 +44,7 @@ public:
 
 	void AddElement(XMLElement* parent, XMLElement* child, uint32_t handle = 0);
 	void MoveElement(XMLElement* new_parent, XMLElement* child);
+	bool IsChildOf(XMLElement* parent, XMLElement* child);
 	void AddBoolAttribute(XMLElement* element, const char* name, bool value, bool default_value);
 	void AddAttribute(XMLElement* element, const char* name, const char* value);
 	void AddStrAttribute(XMLElement* element, const char* name, string value, string default_value = "");

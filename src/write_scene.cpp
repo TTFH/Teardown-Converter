@@ -164,8 +164,7 @@ void WriteXML::WriteEntities() {
 			xml.AddBoolAttribute(xml_vehicle, "driven", true, false);
 	}
 
-	// Iterate in reverse order, so parent scripts comes after their childrens
-	for (int i = scene.entities.getSize() - 1; i >= 0; i--)
+	for (unsigned  i = 0; i < scene.entities.getSize(); i++)
 		WriteEntity2ndPass(scene.entities[i]);
 }
 
@@ -599,10 +598,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				WriteTransform(exhaust, vehicle->exhausts[i].transform);
 			}
 
-			XMLElement* player = xml.CreateElement("location");
-			xml.AddElement(entity_element, player);
-			xml.AddAttribute(player, "tags", "player");
-			xml.AddVectorAttribute(player, "pos", vehicle->player);
+			if (!vehicle->player.isZero()) {
+				XMLElement* player = xml.CreateElement("location");
+				xml.AddElement(entity_element, player);
+				xml.AddAttribute(player, "tags", "player");
+				xml.AddVectorAttribute(player, "pos", vehicle->player);
+			}
 
 			if (!vehicle->camera.isZero()) {
 				XMLElement* camera = xml.CreateElement("location");
@@ -827,7 +828,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		}
 	} else if (entity->type == Entity::Script) {
 		Script* script = static_cast<Script*>(entity->self);
-		XMLElement* entity_element = xml.CreateElement("script");
+		XMLElement* script_element = xml.CreateElement("script");
 
 		string script_file = script->file;
 		string prefix = "data/script/";
@@ -859,31 +860,35 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 			script_file == "spawn.lua")
 			return;
 
-		xml.AddElement(xml.GetScriptsGroup(), entity_element);
+		xml.AddElement(xml.GetScriptsGroup(), script_element);
 
-		xml.AddStrAttribute(entity_element, "file", script_file);
+		xml.AddStrAttribute(script_element, "file", script_file);
 		for (unsigned int i = 0; i < script->params.getSize(); i++) {
 			string param_index = "param";
 			param_index += to_string(i);
 			string param = script->params[i].key;
 			if (script->params[i].value.length() > 0)
 				param += "=" + script->params[i].value;
-			xml.AddStrAttribute(entity_element, param_index.c_str(), param);
+			xml.AddStrAttribute(script_element, param_index.c_str(), param);
 		}
 
 		for (unsigned int j = 0; j < script->entities.getSize(); j++) {
 			uint32_t entity_handle = script->entities[j];
 			XMLElement* entity_child = xml.GetNode(entity_handle);
-			if (entity_child != NULL && strcmp(entity_child->Name(), "joint") != 0) {
-				while (entity_child->Parent() != NULL && entity_child->Parent()->ToElement() != xml.GetScene()
+			if (entity_child != NULL) {
+				XMLElement* entity_parent = NULL;
+				if (entity_child->Parent() != NULL)
+					entity_parent = entity_child->Parent()->ToElement();
+				if (xml.IsChildOf(script_element, entity_child))
+					continue; // Already moved
+				xml.MoveElement(script_element, entity_child);
+				if (entity_parent != NULL && entity_parent->ToElement() != xml.GetScene()
 					&& strcmp(entity_child->Parent()->ToElement()->Name(), "group") != 0)
-					entity_child = entity_child->Parent()->ToElement();
-				if (entity_element != entity_child)
-					xml.MoveElement(entity_element, entity_child);
+					xml.MoveElement(entity_parent, script_element);
 			}
 		}
 	}
 
-	for (int i = entity->children.getSize() - 1; i >= 0; i--)
+	for (unsigned int i = 0; i < entity->children.getSize(); i++)
 		WriteEntity2ndPass(entity->children[i]);
 }

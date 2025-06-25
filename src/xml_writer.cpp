@@ -139,6 +139,18 @@ void XML_Writer::MoveElement(XMLElement* oldparent, XMLElement* child) {
 	oldparent->InsertEndChild(child);
 }
 
+bool XML_Writer::IsChildOf(XMLElement* parent, XMLElement* child) {
+	while (child != NULL) {
+		if (child == parent)
+			return true;
+		if (child->Parent() != NULL)
+			child = child->Parent()->ToElement();
+		else
+			child = NULL;
+	}
+	return false;
+}
+
 void XML_Writer::AddAttribute(XMLElement* element, const char* name, const char* value) {
 	element->SetAttribute(name, value);
 }
