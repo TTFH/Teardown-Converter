@@ -8,6 +8,11 @@
 #include "write_scene.h"
 #include "zlib_utils.h"
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 using namespace std::filesystem;
 
 TDBIN::TDBIN() { }
@@ -740,6 +745,21 @@ void TDBIN::parse() {
 	for (int i = 0; i < 3; i++)
 		scene.version[i] = ReadByte();
 	tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
+
+#ifdef _WIN32
+	if (tdbin_version < VERSION_1_5_4) {
+		MessageBox(NULL, "The map you're trying to convert is too old, make sure to delete old .tdbin files", "Map version too old", MB_OK | MB_ICONERROR);
+		exit(EXIT_FAILURE);
+	} else if (tdbin_version > LAST_VERSION) {
+		int selection = MessageBox(NULL, "The map you're trying to convert is too new, and may cause this application to crash. Do you want to continue?", "Check for updates in Github", MB_YESNO | MB_ICONWARNING);
+		if (selection != IDYES)
+			exit(EXIT_FAILURE);
+	} else if (tdbin_version < LAST_VERSION) {
+		int selection = MessageBox(NULL, "The map you're trying to convert is not from the latest compatible version, make sure to delete old .tdbin files. Do you want to continue?", "Map version not the latest", MB_YESNO | MB_ICONWARNING);
+		if (selection != IDYES)
+			exit(EXIT_FAILURE);
+	}
+#endif
 
 	scene.level_id = ReadString();
 	scene.level_path = ReadString();

@@ -1,3 +1,4 @@
+.vscode/
 *.zip
 obj/*.o
 release/config.xml

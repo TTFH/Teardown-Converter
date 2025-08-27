@@ -78,6 +78,10 @@ MV_FILE::MV_FILE(string filename) {
 	}
 }
 
+void MV_FILE::WriteInt(int val) {
+	fwrite(&val, sizeof(int), 1, vox_file);
+}
+
 void MV_FILE::WriteDICT(DICT dict) {
 	WriteInt(dict.size());
 	for (DICT::iterator it = dict.begin(); it != dict.end(); it++) {
@@ -464,9 +468,9 @@ void MV_FILE::AddShape(MVShape shape) {
 	models.push_back(shape);
 }
 
-bool MV_FILE::GetShapeName(const MVShape& shape, string& name) {
+bool MV_FILE::GetShapeName(const MVShape& shape, string& name) const {
 	bool found = false;
-	for (vector<MVShape>::iterator it = models.begin(); it != models.end() && !found; it++)
+	for (vector<MVShape>::const_iterator it = models.begin(); it != models.end() && !found; it++)
 		if (*it == shape) {
 			found = true;
 			name = it->name;

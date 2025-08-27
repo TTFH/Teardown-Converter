@@ -15,7 +15,7 @@ constexpr int ID(char a, char b, char c, char d) {
 	return a | (b << 8) | (c << 16) | (d << 24);
 }
 
-const int VERSION = 150;
+const int VERSION = 200;
 const int VOX  = ID('V', 'O', 'X', ' ');
 const int MAIN = ID('M', 'A', 'I', 'N');
 const int SIZE = ID('S', 'I', 'Z', 'E');
@@ -91,9 +91,7 @@ private:
 	bool IsHole(uint8_t index, uint8_t type);
 	bool FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max, bool halt = false);
 
-	void WriteInt(int val) {
-		fwrite(&val, sizeof(int), 1, vox_file);
-	}
+	void WriteInt(int val);
 	void WriteDICT(DICT dict);
 	void WriteFileHeader();
 	void WriteChunkHeader(int id, int contentSize, int childrenSize);
@@ -110,7 +108,7 @@ public:
 	~MV_FILE();
 	void SaveModel(bool compress);
 	void AddShape(MVShape shape);
-	bool GetShapeName(const MVShape& shape, string& name);
+	bool GetShapeName(const MVShape& shape, string& name) const;
 	void SetColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
 	void SetMaterial(uint8_t index, uint8_t type, float reflectivity, float shinyness, float metalness, float emissive, float alpha);
 };

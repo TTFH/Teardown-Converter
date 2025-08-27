@@ -19,6 +19,7 @@ struct Vec3 {
 	bool isZero() const;
 	Vec3 normalize() const;
 	bool operator==(const Vec3& v) const;
+	bool operator!=(const Vec3& v) const;
 	Vec3 operator+(const Vec3& v) const;
 	Vec3 operator-(const Vec3& v) const;
 	Vec3 operator*(float f) const;
@@ -47,13 +48,13 @@ public:
 	Tensor3D(int sizex, int sizey, int sizez);
 	void Clear();
 
-	void FromRunLengthEncoding(RLE rle);
+	void FromRunLengthEncoding(const RLE& rle);
 	void Set(int x, int y, int z, uint8_t value);
 	uint8_t Get(int x, int y, int z) const;
-	bool IsFilledSingleColor();
-	int GetVolume();
-	int GetNonZeroCount();
-	uint8_t* ToArray();
+	bool IsFilledSingleColor() const;
+	int GetVolume() const;
+	int GetNonZeroCount() const;
+	uint8_t* ToArray() const;
 };
 
 double deg(double rad);

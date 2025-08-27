@@ -476,15 +476,12 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 			entity_element->SetName("location");
 
 			Entity* location_parent = entity->parent;
-			while (location_parent != NULL && location_parent->type != Entity::Vehicle)
+			/*while (location_parent != NULL && location_parent->type != Entity::Vehicle)
 				location_parent = location_parent->parent;
-			if (location_parent != NULL) {
-				// Location is inside a vehicle
-				entity_element = NULL;
-				break;
-			}
+			bool inside_vehicle = location_parent != NULL;
 
-			location_parent = entity->parent;
+			location_parent = entity->parent;*/
+			// TODO: refactor, ToLocalSpace(), recursive?
 			if (location_parent != NULL && location_parent->type == Entity::Shape) {
 				// The location is inside a static shape
 				Shape* parent_shape = static_cast<Shape*>(location_parent->self);
@@ -494,9 +491,20 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				// The location is inside a dynamic body
 				Entity* location_grandparent = location_parent->parent;
 				if (location_grandparent != NULL && location_grandparent->type == Entity::Body) {
-					Body* grandparent_body = static_cast<Body*>(location_grandparent->self);
-					if (grandparent_body->dynamic) {
-						Transform location_tr = TransformToLocalTransform(grandparent_body->transform, location->transform);
+					Body* parent_body = static_cast<Body*>(location_grandparent->self);
+					if (parent_body->dynamic) {
+						Transform location_tr = TransformToLocalTransform(parent_body->transform, location->transform);
+						location_tr = TransformToLocalTransform(parent_shape->transform, location_tr);
+						WriteTransform(entity_element, location_tr);
+					}
+
+					// The location is inside a vehicle
+					Entity* location_grandgrandparent = location_grandparent->parent;
+					//Entity* location_grandgrandparent = entity->parent->parent->parent; // I hate trees, too much green
+					if (location_grandgrandparent != NULL && location_grandgrandparent->type == Entity::Vehicle) {
+						Vehicle* parent_vehicle = static_cast<Vehicle*>(location_grandgrandparent->self);
+						Transform location_tr = TransformToLocalTransform(parent_vehicle->transform, location->transform);
+						location_tr = TransformToLocalTransform(parent_body->transform, location_tr);
 						location_tr = TransformToLocalTransform(parent_shape->transform, location_tr);
 						WriteTransform(entity_element, location_tr);
 					}
@@ -509,9 +517,23 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				Trigger* parent_trigger = static_cast<Trigger*>(location_parent->self);
 				Transform loc_tr = TransformToLocalTransform(parent_trigger->transform, location->transform);
 				WriteTransform(entity_element, loc_tr);
+			} else if (location_parent != NULL && location_parent->type == Entity::Location) {
+				Location* parent_location = static_cast<Location*>(location_parent->self);
+				Transform loc_tr = TransformToLocalTransform(parent_location->transform, location->transform);
+				WriteTransform(entity_element, loc_tr);
 			} else
 				WriteTransform(entity_element, location->transform);
 
+			/*if (inside_vehicle) {
+				for (unsigned int i = 0; i < entity->tags.getSize(); i++) {
+					if (entity->tags[i].name == "camera" || entity->tags[i].name == "vital" ||
+						entity->tags[i].name == "exhaust" || entity->tags[i].name == "exit" ||
+						entity->tags[i].name == "player" || entity->tags[i].name == "propeller") {
+						entity_element = NULL;
+						break;
+					}
+				}
+			}*/
 			if (parent == xml.GetScene())
 				parent = xml.GetLocationsGroup();
 		}
@@ -602,10 +624,14 @@ void WriteXML::WriteEntity(XMLElement* parent, Entity* entity) {
 				XMLElement* player = xml.CreateElement("location");
 				xml.AddElement(entity_element, player);
 				xml.AddAttribute(player, "tags", "player");
-				xml.AddVectorAttribute(player, "pos", vehicle->player);
+				//xml.AddVectorAttribute(player, "pos", vehicle->player);
+				Transform transform;
+				transform.pos = vehicle->player;
+				transform.rot = QuatEuler(0, 180, 0);
+				WriteTransform(player, transform);
 			}
 
-			if (!vehicle->camera.isZero()) {
+			if (!vehicle->camera.isZero() && vehicle->camera != vehicle->player) {
 				XMLElement* camera = xml.CreateElement("location");
 				xml.AddElement(entity_element, camera);
 				xml.AddAttribute(camera, "tags", "camera");
@@ -864,8 +890,7 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 
 		xml.AddStrAttribute(script_element, "file", script_file);
 		for (unsigned int i = 0; i < script->params.getSize(); i++) {
-			string param_index = "param";
-			param_index += to_string(i);
+			string param_index = "param" + to_string(i);
 			string param = script->params[i].key;
 			if (script->params[i].value.length() > 0)
 				param += "=" + script->params[i].value;
@@ -875,15 +900,14 @@ void WriteXML::WriteEntity2ndPass(Entity* entity) {
 		for (unsigned int j = 0; j < script->entities.getSize(); j++) {
 			uint32_t entity_handle = script->entities[j];
 			XMLElement* entity_child = xml.GetNode(entity_handle);
-			if (entity_child != NULL) {
+			if (entity_child != NULL && strcmp(entity_child->Name(), "light") != 0) {
 				XMLElement* entity_parent = NULL;
 				if (entity_child->Parent() != NULL)
 					entity_parent = entity_child->Parent()->ToElement();
 				if (xml.IsChildOf(script_element, entity_child))
 					continue; // Already moved
 				xml.MoveElement(script_element, entity_child);
-				if (entity_parent != NULL && entity_parent->ToElement() != xml.GetScene()
-					&& strcmp(entity_child->Parent()->ToElement()->Name(), "group") != 0)
+				if (entity_parent != NULL && entity_parent != xml.GetScene() && strcmp(entity_parent->Name(), "group") != 0)
 					xml.MoveElement(entity_parent, script_element);
 			}
 		}

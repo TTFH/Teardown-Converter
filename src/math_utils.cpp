@@ -34,6 +34,10 @@ bool Vec3::operator==(const Vec3& v) const {
 	return CompareFloat(x, v.x) && CompareFloat(y, v.y) && CompareFloat(z, v.z);
 }
 
+bool Vec3::operator!=(const Vec3& v) const {
+	return !(*this == v);
+}
+
 Vec3 Vec3::operator+(const Vec3& v) const {
 	return Vec3(x + v.x, y + v.y, z + v.z);
 }
@@ -181,11 +185,11 @@ void Tensor3D::Clear() {
 	data = NULL;
 }
 
-void Tensor3D::FromRunLengthEncoding(RLE rle) {
+void Tensor3D::FromRunLengthEncoding(const RLE& rle) {
 	uint8_t* array = new uint8_t[GetVolume()];
 
 	int k = 0;
-	for (RLE::iterator it = rle.begin(); it != rle.end(); it++) {
+	for (RLE::const_iterator it = rle.begin(); it != rle.end(); it++) {
 		uint8_t run_length = it->first;
 		uint8_t entry = it->second;
 		for (unsigned int j = 0; j <= run_length; j++)
@@ -209,7 +213,7 @@ uint8_t Tensor3D::Get(int x, int y, int z) const {
 	return data[x][y][z];
 }
 
-bool Tensor3D::IsFilledSingleColor() {
+bool Tensor3D::IsFilledSingleColor() const {
 	uint8_t color = data[0][0][0];
 	for (int x = 0; x < sizex; x++)
 		for (int y = 0; y < sizey; y++)
@@ -219,11 +223,11 @@ bool Tensor3D::IsFilledSingleColor() {
 	return true;
 }
 
-int Tensor3D::GetVolume() {
+int Tensor3D::GetVolume() const {
 	return sizex * sizey * sizez;
 }
 
-int Tensor3D::GetNonZeroCount() {
+int Tensor3D::GetNonZeroCount() const {
 	int count = 0;
 	for (int x = 0; x < sizex; x++)
 		for (int y = 0; y < sizey; y++)
@@ -233,7 +237,7 @@ int Tensor3D::GetNonZeroCount() {
 	return count;
 }
 
-uint8_t* Tensor3D::ToArray() {
+uint8_t* Tensor3D::ToArray() const {
 	int volume = GetVolume();
 	if (volume == 0) return NULL;
 	uint8_t* array = new uint8_t[volume];
