@@ -8,9 +8,9 @@ CXXFLAGS += `pkg-config --cflags glfw3`
 LIBS = `pkg-config --libs glfw3 --static` -lz
 
 SOURCES = main.cpp glad/glad.c lib/tinyxml2.cpp
-SOURCES += src/binary_reader.cpp src/entity.cpp src/lua_table.cpp src/math_utils.cpp
-SOURCES += src/parser.cpp src/scene.cpp src/vox_writer.cpp src/write_scene.cpp
-SOURCES += src/xml_writer.cpp src/zlib_utils.cpp
+SOURCES += src/binary_reader.cpp src/entity.cpp src/levels.cpp src/lua_table.cpp
+SOURCES += src/math_utils.cpp src/misc_utils.cpp src/parser.cpp src/scene.cpp
+SOURCES += src/vox_writer.cpp src/write_scene.cpp src/xml_writer.cpp src/zlib_utils.cpp
 SOURCES += imgui/imgui.cpp imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp
 SOURCES += imgui/backends/imgui_impl_glfw.cpp imgui/backends/imgui_impl_opengl3.cpp
 SOURCES += file_dialog/ImGuiFileDialog.cpp

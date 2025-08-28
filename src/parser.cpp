@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <filesystem>
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -11,8 +10,7 @@
 #include "parser.h"
 #include "write_scene.h"
 #include "zlib_utils.h"
-
-using namespace std::filesystem;
+#include "misc_utils.h"
 
 TDBIN::TDBIN() { }
 
@@ -863,10 +861,8 @@ void ParseFile(ConverterParams params) {
 		printf("It's most likely the second.\n");
 		exit(EXIT_FAILURE);
 	}
-	if (!exists(params.map_folder)) {
-		create_directories(params.map_folder);
-		create_directories(params.map_folder + (params.legacy_format ? "custom" : "vox"));
-	}
+	create_folder(params.map_folder);
+	create_folder(params.map_folder + (params.legacy_format ? "custom" : "vox"));
 	progress = 0.25;
 	printf("Generating XML file...\n");
 	parser.WriteScene();

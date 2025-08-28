@@ -134,19 +134,16 @@ void MV_FILE::WriteXYZI(MVShape shape) {
 
 void MV_FILE::WriteTDCZ(MVShape shape) {
 	uint8_t* voxel_array = shape.voxels.ToArray();
-	// TODO: dynamic allocation
-	int compressed_size = shape.voxels.GetVolume() + shape.voxels.GetNonZeroCount() + 10;
-	uint8_t* compressed_data = new uint8_t[compressed_size];
-	ZlibBlockCompress(voxel_array, shape.voxels.GetVolume(), 9, compressed_data, compressed_size);
-
-	WriteChunkHeader(TDCZ, 3 * sizeof(int) + compressed_size, 0);
-	WriteInt(shape.voxels.sizex);
-	WriteInt(shape.voxels.sizey);
-	WriteInt(shape.voxels.sizez);
-	fwrite(compressed_data, sizeof(uint8_t), compressed_size, vox_file);
-
+	vector<uint8_t> compressed_data;
+	if (ZlibBlockCompress(voxel_array, shape.voxels.GetVolume(), 9, compressed_data)) {
+		WriteChunkHeader(TDCZ, 3 * sizeof(int) + compressed_data.size(), 0);
+		WriteInt(shape.voxels.sizex);
+		WriteInt(shape.voxels.sizey);
+		WriteInt(shape.voxels.sizez);
+		fwrite(compressed_data.data(), sizeof(uint8_t), compressed_data.size(), vox_file);
+	} else
+		printf("[Warning] Failed to compress shape %s\n", shape.name.c_str());
 	delete[] voxel_array;
-	delete[] compressed_data;
 }
 
 void MV_FILE::WriteMain_nTRN() {
@@ -422,13 +419,13 @@ void MV_FILE::WriteNOTE() {
 		for (int i = 0; i < 32; i++)
 			notes.push_back(td_notes[i]);
 	if (!repaired)
-		printf("Corrupted row(s) in file %s\n", filename.c_str());
+		printf("[Warning] Corrupted row(s) in file %s\n", filename.c_str());
 
-	int note_chunck_size = 4 + 4 * 32;
+	int note_chunk_size = 4 + 4 * 32;
 	for (int i = 0; i < 32; i++)
-		note_chunck_size += notes[i].length();
+		note_chunk_size += notes[i].length();
 
-	WriteChunkHeader(NOTE, note_chunck_size, 0);
+	WriteChunkHeader(NOTE, note_chunk_size, 0);
 	WriteInt(32);
 	for (int i = 0; i < 32; i++) {
 		WriteInt(notes[i].length());

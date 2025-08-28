@@ -164,12 +164,11 @@ void WriteXML::WriteEntities() {
 			xml.AddBoolAttribute(xml_vehicle, "driven", true, false);
 	}
 
-	for (unsigned  i = 0; i < scene.entities.getSize(); i++)
+	for (unsigned i = 0; i < scene.entities.getSize(); i++)
 		WriteEntity2ndPass(scene.entities[i]);
 }
 
 void WriteXML::WriteShape(XMLElement*& parent_element, XMLElement*& entity_element, const Entity* entity) {
-	(void)parent_element;
 	assert(entity->type == Entity::Shape);
 	Shape* shape = static_cast<Shape*>(entity->self);
 	uint32_t handle = entity->handle;
@@ -227,7 +226,7 @@ void WriteXML::WriteShape(XMLElement*& parent_element, XMLElement*& entity_eleme
 		if (parent_body->dynamic && parent_entity->children.getSize() == 1 && parent_entity->tags.getSize() == 0) {
 			XMLElement* grandparent_element = parent_element->Parent()->ToElement();
 			grandparent_element->DeleteChild(parent_element);
-			parent_element = grandparent_element;
+			parent_element = grandparent_element; // is this a Futurama joke?
 			WriteTransform(entity_element, parent_body->transform);
 			is_prop = true;
 		}
@@ -543,6 +542,8 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 						WriteTransform(entity_element, local_transform);
 					}
 					break;
+					case Entity::Trigger:
+					break;
 					case Entity::Joint:
 						entity_element = NULL; // Rope ends
 					break;
@@ -551,7 +552,11 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 					break;
 				}
 
-			if (entity->tags.getSize() == 1) {
+			entity_parent = entity->parent;
+			while (entity_parent != NULL && entity_parent->type != Entity::Vehicle)
+				entity_parent = entity_parent->parent;
+			bool inside_vehicle = entity_parent != NULL;
+			if (inside_vehicle && entity->tags.getSize() == 1) {
 				if (entity->tags[0].name == "camera" || entity->tags[0].name == "vital" ||
 					entity->tags[0].name == "exhaust" || entity->tags[0].name == "exit" ||
 					entity->tags[0].name == "propeller")
