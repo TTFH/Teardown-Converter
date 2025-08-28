@@ -9,7 +9,6 @@ using namespace std;
 
 class Reader {
 public:
-	// TODO: ReadByteArray(int size);
 	virtual uint8_t ReadByte() = 0;
 	virtual uint16_t ReadWord() = 0;
 	virtual uint32_t ReadInt() = 0;

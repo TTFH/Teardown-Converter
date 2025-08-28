@@ -92,7 +92,7 @@ Quat QuatEulerRad(double roll, double yaw, double pitch) {
 // Safe range:
 // x, y = [0, 360], z = [-90, 90]
 // x, y = (-180, 180), z = (-90, 90)
-void QuatToEuler(Quat q, float &bank, float &heading, float &attitude) {
+void QuatToEuler(Quat q, float& bank, float& heading, float& attitude) {
 	double x = q.x, y = q.y, z = q.z, w = q.w;
 	double s = 2 * x * y + 2 * z * w;
 	if (s >= 0.999) {

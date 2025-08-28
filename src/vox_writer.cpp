@@ -134,7 +134,8 @@ void MV_FILE::WriteXYZI(MVShape shape) {
 
 void MV_FILE::WriteTDCZ(MVShape shape) {
 	uint8_t* voxel_array = shape.voxels.ToArray();
-	int compressed_size = shape.voxels.GetVolume() + shape.voxels.GetNonZeroCount() + 10; // Rought estimate
+	// TODO: dynamic allocation
+	int compressed_size = shape.voxels.GetVolume() + shape.voxels.GetNonZeroCount() + 10;
 	uint8_t* compressed_data = new uint8_t[compressed_size];
 	ZlibBlockCompress(voxel_array, shape.voxels.GetVolume(), 9, compressed_data, compressed_size);
 

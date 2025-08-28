@@ -196,7 +196,7 @@ struct Shape {
 	uint8_t origin;
 	uint32_t animator;
 
-	Transform old_transform;	// helper for screen positon
+	Transform original_tr;
 };
 
 struct Light {

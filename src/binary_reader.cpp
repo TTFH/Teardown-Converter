@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <assert.h>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 #include "binary_reader.h"
 
 FileReader::FileReader() {
@@ -10,6 +15,9 @@ FileReader::FileReader() {
 void FileReader::InitReader(const char* path) {
 	file = fopen(path, "rb");
 	if (file == NULL) {
+	#ifdef _WIN32
+		MessageBoxA(NULL, "Could not open map file, check the game path", "File not found", MB_OK | MB_ICONERROR);
+	#endif
 		printf("[ERROR] Could not open %s for reading\n", path);
 		exit(EXIT_FAILURE);
 	}

@@ -62,7 +62,7 @@ double rad(double deg);
 bool CompareFloat(float a, float b);
 Quat QuatEuler(double roll, double yaw, double pitch);
 Quat QuatEulerRad(double roll, double yaw, double pitch);
-void QuatToEuler(Quat q, float &bank, float &heading, float &attitude);
+void QuatToEuler(Quat q, float& bank, float& heading, float& attitude);
 Quat FromAxisAngle(Vec3 axis, float angle);
 Transform TransformToLocalTransform(const Transform& parent, const Transform& child);
 

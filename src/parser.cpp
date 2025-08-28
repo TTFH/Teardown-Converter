@@ -1,17 +1,16 @@
-#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <filesystem>
 
-#include "parser.h"
-#include "write_scene.h"
-#include "zlib_utils.h"
-
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
+
+#include "parser.h"
+#include "write_scene.h"
+#include "zlib_utils.h"
 
 using namespace std::filesystem;
 

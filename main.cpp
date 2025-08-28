@@ -62,6 +62,7 @@ void copy_folder(string origin, string destination) {
 }
 
 void SavePreviewImage(string map_folder, string level_id) {
+	// TODO: use .jpeg files
 	// Convert to JPEG
 	string input_image = "preview/" + level_id + ".png";
 	string output_path = map_folder + "preview.jpg";
@@ -80,7 +81,7 @@ void* DecompileMap(void* param) {
 
 	fs::create_directories(data->map_folder);
 	if (!data->legacy_format) {
-		// TODO: fix name collision
+		// TODO: fix image name collision
 		SavePreviewImage(data->map_folder, data->level_id);
 		SaveInfoTxt(data->map_folder, data->level_name, data->level_desc);
 	}
