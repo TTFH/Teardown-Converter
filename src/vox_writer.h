@@ -87,8 +87,6 @@ private:
 	vector<MV_Material> materials;
 	long int childrenSize_ptr;
 
-	bool IsSnow(uint8_t index, uint8_t type);
-	bool IsHole(uint8_t index, uint8_t type);
 	bool FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max, bool halt = false);
 
 	void WriteInt(int val);
@@ -109,6 +107,7 @@ public:
 	void SaveModel(bool compress);
 	void AddShape(MVShape shape);
 	bool GetShapeName(const MVShape& shape, string& name) const;
+	void SetColor(uint8_t index, Color color);
 	void SetColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
 	void SetMaterial(uint8_t index, uint8_t type, float reflectivity, float shinyness, float metalness, float emissive, float alpha);
 };

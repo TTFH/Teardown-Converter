@@ -198,20 +198,6 @@ void MV_FILE::WriteRGBA() {
 	fwrite(&palette[0], sizeof(MV_Entry), 1, vox_file);
 }
 
-bool MV_FILE::IsSnow(uint8_t index, uint8_t type) {
-	return type == Material::Unphysical &&
-			palette[palette_map[index]].r == 229 &&
-			palette[palette_map[index]].g == 229 &&
-			palette[palette_map[index]].b == 229;
-}
-
-bool MV_FILE::IsHole(uint8_t index, uint8_t type) {
-	return type == Material::Unphysical &&
-			palette[palette_map[index]].r == 255 &&
-			palette[palette_map[index]].g == 0 &&
-			palette[palette_map[index]].b == 0;
-}
-
 static bool IsInRange(uint8_t index, uint8_t i_min, uint8_t i_max) {
 	return index >= i_min && index <= i_max;
 }
@@ -315,11 +301,7 @@ void MV_FILE::WriteIMAP() {
 			FixMapping(it->material_index, 185, 192);
 		else if (it->material_type == Material::None)
 			FixMapping(it->material_index, 193, 224);
-		else if (IsSnow(it->material_index, it->material_type))
-			FixMapping(it->material_index, 254, 254);
-		else if (IsHole(it->material_index, it->material_type))
-			FixMapping(it->material_index, 255, 255);
-		else // Unphysical
+		else if (it->material_index != 254 && it->material_index != 255)
 			FixMapping(it->material_index, 225, 240);
 	}
 
@@ -474,6 +456,14 @@ bool MV_FILE::GetShapeName(const MVShape& shape, string& name) const {
 			name = it->name;
 		}
 	return found;
+}
+
+void MV_FILE::SetColor(uint8_t index, Color color) {
+	if (is_index_used[index]) return;
+	uint8_t r = 255.0 * color.r;
+	uint8_t g = 255.0 * color.g;
+	uint8_t b = 255.0 * color.b;
+	palette[index] = { r, g, b, 255 };
 }
 
 void MV_FILE::SetColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {

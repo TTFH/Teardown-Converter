@@ -168,6 +168,17 @@ void WriteXML::WriteEntities() {
 		WriteEntity2ndPass(scene.entities[i]);
 }
 
+static bool isSnow(int index, const Material& material) {
+	bool is_snow = index == 254;
+	if (is_snow) {
+		assert(material.type == Material::Unphysical);
+		assert(int(255.0 * material.rgba.r) == 229);
+		assert(int(255.0 * material.rgba.g) == 229);
+		assert(int(255.0 * material.rgba.b) == 229);
+	}
+	return is_snow;
+}
+
 void WriteXML::WriteShape(XMLElement*& parent_element, XMLElement*& entity_element, const Entity* entity) {
 	assert(entity->type == Entity::Shape);
 	Shape* shape = static_cast<Shape*>(entity->self);
@@ -273,11 +284,10 @@ void WriteXML::WriteShape(XMLElement*& parent_element, XMLElement*& entity_eleme
 					uint8_t index = voxels.Get(x, y, z);
 					if (index != 0) {
 						Material palette_entry = palette.materials[index];
-						if (params.remove_snow && palette_entry.type == Material::Unphysical &&
-							int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
+						if (params.remove_snow && isSnow(index, palette_entry))
 							mvshape.voxels.Set(x, y, z, 0);
 
-						vox_file->SetColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
+						vox_file->SetColor(index, palette_entry.rgba);
 						vox_file->SetMaterial(index, palette_entry.type, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
 					}
 				}
@@ -348,13 +358,10 @@ void WriteXML::WriteCompound(uint32_t handle, const Tensor3D& voxels, MV_FILE* c
 				uint8_t index = voxels.Get(x, y, z);
 				if (index != 0) {
 					Material palette_entry = palette.materials[index];
-					if (params.remove_snow && palette_entry.type == Material::Unphysical &&
-						int(255.0 * palette_entry.rgba.r) == 229 && int(255.0 * palette_entry.rgba.g) == 229 && int(255.0 * palette_entry.rgba.b) == 229)
-						mvshape.voxels.Set(x - offsetx, y - offsety, z - offsetz, 0);
-					else
+					if (!params.remove_snow || !isSnow(index, palette_entry))
 						mvshape.voxels.Set(x - offsetx, y - offsety, z - offsetz, index);
 
-					compound_vox->SetColor(index, 255.0 * palette_entry.rgba.r, 255.0 * palette_entry.rgba.g, 255.0 * palette_entry.rgba.b);
+					compound_vox->SetColor(index, palette_entry.rgba);
 					compound_vox->SetMaterial(index, palette_entry.type, palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, palette_entry.rgba.a);
 					empty = false;
 				}
@@ -614,10 +621,11 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 					float rope_length = rope_dir.length();
 					float slack = joint->rope->slack - rope_length;
 					xml.AddFloatAttribute(entity_element, "slack", slack, "0");
-				}
 
-				xml.AddFloatAttribute(entity_element, "strength", joint->rope->strength, "1");
-				xml.AddFloatAttribute(entity_element, "maxstretch", joint->rope->maxstretch, "0");
+					xml.AddFloatAttribute(entity_element, "strength", joint->rope->strength, "1");
+					xml.AddFloatAttribute(entity_element, "maxstretch", joint->rope->maxstretch, "0");
+				} else
+					entity_element = NULL; // Ignore empty ropes
 
 				if (parent == xml.GetScene())
 					parent = xml.GetRopesGroup();
@@ -952,7 +960,7 @@ void WriteXML::WriteEntity2ndPass(const Entity* entity) {
 			uint32_t entity_handle = script->entities[j];
 			XMLElement* entity_child = xml.GetNode(entity_handle);
 			// TODO: improve logic
-			if (entity_child != NULL && strcmp(entity_child->Name(), "light") != 0) {
+			if (entity_child != NULL && strcmp(entity_child->Name(), "light") != 0&& strcmp(entity_child->Name(), "rope") != 0) {
 				XMLElement* entity_parent = NULL;
 				if (entity_child->Parent() != NULL)
 					entity_parent = entity_child->Parent()->ToElement();
