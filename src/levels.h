@@ -1,5 +1,5 @@
-#ifndef _LEVELS_H
-#define _LEVELS_H
+#ifndef LEVELS_H
+#define LEVELS_H
 
 #include <string>
 #include <vector>

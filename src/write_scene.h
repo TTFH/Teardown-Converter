@@ -20,12 +20,12 @@ private:
 	ConverterParams params;
 	map<uint32_t, MV_FILE*> vox_files;
 
-	void WriteEntity2ndPass(const Entity*);
-	void WriteEntity(XMLElement*, const Entity*);
-	void WriteTransform(XMLElement*, const Transform&);
-	void WriteShape(XMLElement*&, XMLElement*&, const Entity*);
+	void WriteEntity2ndPass(const Entity* entity);
+	void WriteEntity(XMLElement* parent, const Entity* entity);
+	void WriteTransform(XMLElement* element, const Transform& tr);
+	void WriteShape(XMLElement*& parent_element, XMLElement*& entity_element, const Entity* entity);
 	void WriteVertices(XMLElement* parent, const Vec<Vertex>& vertices);
-	void WriteCompound(uint32_t, const Tensor3D&, MV_FILE*, string, XMLElement*, const Shape*, int, int, int);
+	void WriteCompound(uint32_t, Tensor3D* voxels, MV_FILE*, string, XMLElement*, const Shape*, int, int, int);
 public:
 	WriteXML(ConverterParams params);
 	~WriteXML();

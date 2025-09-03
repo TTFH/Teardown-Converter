@@ -1,4 +1,4 @@
-// dear imgui, v1.92.0 WIP
+// dear imgui, v1.92.3 WIP
 // (widgets code)
 
 /*
@@ -135,7 +135,7 @@ static const ImU64          IM_U64_MAX = (2ULL * 9223372036854775807LL + 1);
 
 // For InputTextEx()
 static bool     InputTextFilterCharacter(ImGuiContext* ctx, unsigned int* p_char, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data, bool input_source_is_clipboard = false);
-static int      InputTextCalcTextLenAndLineCount(const char* text_begin, const char** out_text_end);
+static int      InputTextCalcTextLenAndLineCount(ImGuiContext* ctx, const char* text_begin, const char** out_text_end);
 static ImVec2   InputTextCalcTextSize(ImGuiContext* ctx, const char* text_begin, const char* text_end, const char** remaining = NULL, ImVec2* out_offset = NULL, bool stop_on_new_line = false);
 
 //-------------------------------------------------------------------------
@@ -617,7 +617,8 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
     bool pressed = false;
     bool hovered = ItemHoverable(bb, id, item_flags);
 
-    // Special mode for Drag and Drop where holding button pressed for a long time while dragging another item triggers the button
+    // Special mode for Drag and Drop used by openables (tree nodes, tabs etc.)
+    // where holding the button pressed for a long time while drag a payload item triggers the button.
     if (g.DragDropActive && (flags & ImGuiButtonFlags_PressedOnDragDropHold) && !(g.DragDropSourceFlags & ImGuiDragDropFlags_SourceNoHoldToOpenOthers))
         if (IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
         {
@@ -1069,7 +1070,8 @@ bool ImGui::ScrollbarEx(const ImRect& bb_frame, ImGuiID id, ImGuiAxis axis, ImS6
     const bool allow_interaction = (alpha >= 1.0f);
 
     ImRect bb = bb_frame;
-    bb.Expand(ImVec2(-ImClamp(IM_TRUNC((bb_frame_width - 2.0f) * 0.5f), 0.0f, 3.0f), -ImClamp(IM_TRUNC((bb_frame_height - 2.0f) * 0.5f), 0.0f, 3.0f)));
+    float padding = IM_TRUNC(ImMin(style.ScrollbarPadding, ImMin(bb_frame_width, bb_frame_height) * 0.5f));
+    bb.Expand(-padding);
 
     // V denote the main, longer axis of the scrollbar (= height for a vertical scrollbar)
     const float scrollbar_size_v = (axis == ImGuiAxis_X) ? bb.GetWidth() : bb.GetHeight();
@@ -1873,27 +1875,31 @@ static int IMGUI_CDECL ShrinkWidthItemComparer(const void* lhs, const void* rhs)
 
 // Shrink excess width from a set of item, by removing width from the larger items first.
 // Set items Width to -1.0f to disable shrinking this item.
-void ImGui::ShrinkWidths(ImGuiShrinkWidthItem* items, int count, float width_excess)
+void ImGui::ShrinkWidths(ImGuiShrinkWidthItem* items, int count, float width_excess, float width_min)
 {
     if (count == 1)
     {
         if (items[0].Width >= 0.0f)
-            items[0].Width = ImMax(items[0].Width - width_excess, 1.0f);
+            items[0].Width = ImMax(items[0].Width - width_excess, width_min);
         return;
     }
-    ImQsort(items, (size_t)count, sizeof(ImGuiShrinkWidthItem), ShrinkWidthItemComparer);
+    ImQsort(items, (size_t)count, sizeof(ImGuiShrinkWidthItem), ShrinkWidthItemComparer); // Sort largest first, smallest last.
     int count_same_width = 1;
-    while (width_excess > 0.0f && count_same_width < count)
+    while (width_excess > 0.001f && count_same_width < count)
     {
         while (count_same_width < count && items[0].Width <= items[count_same_width].Width)
             count_same_width++;
         float max_width_to_remove_per_item = (count_same_width < count && items[count_same_width].Width >= 0.0f) ? (items[0].Width - items[count_same_width].Width) : (items[0].Width - 1.0f);
+        max_width_to_remove_per_item = ImMin(items[0].Width - width_min, max_width_to_remove_per_item);
         if (max_width_to_remove_per_item <= 0.0f)
             break;
-        float width_to_remove_per_item = ImMin(width_excess / count_same_width, max_width_to_remove_per_item);
+        float base_width_to_remove_per_item = ImMin(width_excess / count_same_width, max_width_to_remove_per_item);
         for (int item_n = 0; item_n < count_same_width; item_n++)
-            items[item_n].Width -= width_to_remove_per_item;
-        width_excess -= width_to_remove_per_item * count_same_width;
+        {
+            float width_to_remove_for_this_item = ImMin(base_width_to_remove_per_item, items[item_n].Width - width_min);
+            items[item_n].Width -= width_to_remove_for_this_item;
+            width_excess -= width_to_remove_for_this_item;
+        }
     }
 
     // Round width and redistribute remainder
@@ -3979,20 +3985,22 @@ bool ImGui::InputTextWithHint(const char* label, const char* hint, char* buf, si
 }
 
 // This is only used in the path where the multiline widget is inactive.
-static int InputTextCalcTextLenAndLineCount(const char* text_begin, const char** out_text_end)
+static int InputTextCalcTextLenAndLineCount(ImGuiContext*, const char* text_begin, const char** out_text_end)
 {
     int line_count = 0;
     const char* s = text_begin;
-    while (true)
     {
-        const char* s_eol = strchr(s, '\n');
-        line_count++;
-        if (s_eol == NULL)
+        while (true)
         {
-            s = s + ImStrlen(s);
-            break;
+            const char* s_eol = strchr(s, '\n');
+            line_count++;
+            if (s_eol == NULL)
+            {
+                s = s + ImStrlen(s);
+                break;
+            }
+            s = s_eol + 1;
         }
-        s = s_eol + 1;
     }
     *out_text_end = s;
     return line_count;
@@ -4691,7 +4699,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         // Take a copy of the initial buffer value.
         // From the moment we focused we are normally ignoring the content of 'buf' (unless we are in read-only mode)
         const int buf_len = (int)ImStrlen(buf);
-        IM_ASSERT(buf_len + 1 <= buf_size && "Is your input buffer properly zero-terminated?");
+        IM_ASSERT(((buf_len + 1 <= buf_size) || (buf_len == 0 && buf_size == 0)) && "Is your input buffer properly zero-terminated?");
         state->TextToRevertTo.resize(buf_len + 1);    // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
         memcpy(state->TextToRevertTo.Data, buf, buf_len + 1);
 
@@ -4983,7 +4991,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         {
             // Determine if we turn Enter into a \n character
             bool ctrl_enter_for_new_line = (flags & ImGuiInputTextFlags_CtrlEnterForNewLine) != 0;
-            if (!is_multiline || is_gamepad_validate || (ctrl_enter_for_new_line && !io.KeyCtrl) || (!ctrl_enter_for_new_line && io.KeyCtrl))
+            if (!is_multiline || is_gamepad_validate || (ctrl_enter_for_new_line != io.KeyCtrl))
             {
                 validated = true;
                 if (io.ConfigInputTextEnterKeepActive && !is_multiline)
@@ -5268,7 +5276,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         RenderFrame(frame_bb.Min, frame_bb.Max, GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
     }
 
-    const ImVec4 clip_rect(frame_bb.Min.x, frame_bb.Min.y, frame_bb.Min.x + inner_size.x, frame_bb.Min.y + inner_size.y); // Not using frame_bb.Max because we have adjusted size
+    const ImRect clip_rect(frame_bb.Min.x, frame_bb.Min.y, frame_bb.Min.x + inner_size.x, frame_bb.Min.y + inner_size.y); // Not using frame_bb.Max because we have adjusted size
     ImVec2 draw_pos = is_multiline ? draw_window->DC.CursorPos : frame_bb.Min + style.FramePadding;
     ImVec2 text_size(0.0f, 0.0f);
 
@@ -5297,7 +5305,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
     }
 
     // Render text. We currently only render selection when the widget is active or while scrolling.
-    // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
+    // FIXME: This is one of the messiest piece of the whole codebase.
     if (render_cursor || render_selection)
     {
         IM_ASSERT(state != NULL);
@@ -5323,14 +5331,17 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
             const char* selmin_ptr = render_selection ? text_begin + ImMin(state->Stb->select_start, state->Stb->select_end) : NULL;
 
             // Count lines and find line number for cursor and selection ends
+            // FIXME: Switch to zero-based index to reduce confusion.
             int line_count = 1;
             if (is_multiline)
             {
-                for (const char* s = text_begin; (s = (const char*)ImMemchr(s, '\n', (size_t)(text_end - s))) != NULL; s++)
                 {
-                    if (cursor_line_no == -1 && s >= cursor_ptr) { cursor_line_no = line_count; }
-                    if (selmin_line_no == -1 && s >= selmin_ptr) { selmin_line_no = line_count; }
-                    line_count++;
+                    for (const char* s = text_begin; (s = (const char*)ImMemchr(s, '\n', (size_t)(text_end - s))) != NULL; s++)
+                    {
+                        if (cursor_line_no == -1 && s >= cursor_ptr) { cursor_line_no = line_count; }
+                        if (selmin_line_no == -1 && s >= selmin_ptr) { selmin_line_no = line_count; }
+                        line_count++;
+                    }
                 }
             }
             if (cursor_line_no == -1)
@@ -5400,9 +5411,9 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
             ImVec2 rect_pos = draw_pos + select_start_offset - draw_scroll;
             for (const char* p = text_selected_begin; p < text_selected_end; )
             {
-                if (rect_pos.y > clip_rect.w + g.FontSize)
+                if (rect_pos.y > clip_rect.Max.y + g.FontSize)
                     break;
-                if (rect_pos.y < clip_rect.y)
+                if (rect_pos.y < clip_rect.Min.y)
                 {
                     p = (const char*)ImMemchr((void*)p, '\n', text_selected_end - p);
                     p = p ? p + 1 : text_selected_end;
@@ -5410,7 +5421,8 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
                 else
                 {
                     ImVec2 rect_size = InputTextCalcTextSize(&g, p, text_selected_end, &p, NULL, true);
-                    if (rect_size.x <= 0.0f) rect_size.x = IM_TRUNC(g.FontBaked->GetCharAdvance((ImWchar)' ') * 0.50f); // So we can see selected empty lines
+                    if (rect_size.x <= 0.0f)
+                        rect_size.x = IM_TRUNC(g.FontBaked->GetCharAdvance((ImWchar)' ') * 0.50f); // So we can see selected empty lines
                     ImRect rect(rect_pos + ImVec2(0.0f, bg_offy_up - g.FontSize), rect_pos + ImVec2(rect_size.x, bg_offy_dn));
                     rect.ClipWith(clip_rect);
                     if (rect.Overlaps(clip_rect))
@@ -5426,7 +5438,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         if (is_multiline || (buf_display_end - buf_display) < buf_display_max_length)
         {
             ImU32 col = GetColorU32(is_displaying_hint ? ImGuiCol_TextDisabled : ImGuiCol_Text);
-            draw_window->DrawList->AddText(g.Font, g.FontSize, draw_pos - draw_scroll, col, buf_display, buf_display_end, 0.0f, is_multiline ? NULL : &clip_rect);
+            draw_window->DrawList->AddText(g.Font, g.FontSize, draw_pos - draw_scroll, col, buf_display, buf_display_end, 0.0f, is_multiline ? NULL : &clip_rect.AsVec4());
         }
 
         // Draw blinking cursor
@@ -5457,7 +5469,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
     {
         // Render text only (no selection, no cursor)
         if (is_multiline)
-            text_size = ImVec2(inner_size.x, InputTextCalcTextLenAndLineCount(buf_display, &buf_display_end) * g.FontSize); // We don't need width
+            text_size = ImVec2(inner_size.x, InputTextCalcTextLenAndLineCount(&g, buf_display, &buf_display_end) * g.FontSize); // We don't need width
         else if (!is_displaying_hint && g.ActiveId == id)
             buf_display_end = buf_display + state->TextLen;
         else if (!is_displaying_hint)
@@ -5471,7 +5483,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
 
             const ImVec2 draw_scroll = /*state ? ImVec2(state->Scroll.x, 0.0f) :*/ ImVec2(0.0f, 0.0f); // Preserve scroll when inactive?
             ImU32 col = GetColorU32(is_displaying_hint ? ImGuiCol_TextDisabled : ImGuiCol_Text);
-            draw_window->DrawList->AddText(g.Font, g.FontSize, draw_pos - draw_scroll, col, buf_display, buf_display_end, 0.0f, is_multiline ? NULL : &clip_rect);
+            draw_window->DrawList->AddText(g.Font, g.FontSize, draw_pos - draw_scroll, col, buf_display, buf_display_end, 0.0f, is_multiline ? NULL : &clip_rect.AsVec4());
         }
     }
 
@@ -8922,6 +8934,7 @@ void ImGui::EndMenuBar()
 
     PopClipRect();
     PopID();
+    IM_MSVC_WARNING_SUPPRESS(6011); // Static Analysis false positive "warning C6011: Dereferencing NULL pointer 'window'"
     window->DC.MenuBarOffset.x = window->DC.CursorPos.x - window->Pos.x; // Save horizontal position so next append can reuse it. This is kinda equivalent to a per-layer CursorPos.
 
     // FIXME: Extremely confusing, cleanup by (a) working on WorkRect stack system (b) not using a Group confusingly here.
@@ -9401,6 +9414,7 @@ struct ImGuiTabBarSection
 {
     int                 TabCount;               // Number of tabs in this section.
     float               Width;                  // Sum of width of tabs in this section (after shrinking down)
+    float               WidthAfterShrinkMinWidth;
     float               Spacing;                // Horizontal spacing at the end of the section.
 
     ImGuiTabBarSection() { memset(this, 0, sizeof(*this)); }
@@ -9472,8 +9486,8 @@ bool    ImGui::BeginTabBar(const char* str_id, ImGuiTabBarFlags flags)
     ImGuiTabBar* tab_bar = g.TabBars.GetOrAddByKey(id);
     ImRect tab_bar_bb = ImRect(window->DC.CursorPos.x, window->DC.CursorPos.y, window->WorkRect.Max.x, window->DC.CursorPos.y + g.FontSize + g.Style.FramePadding.y * 2);
     tab_bar->ID = id;
-    tab_bar->SeparatorMinX = tab_bar->BarRect.Min.x - IM_TRUNC(window->WindowPadding.x * 0.5f);
-    tab_bar->SeparatorMaxX = tab_bar->BarRect.Max.x + IM_TRUNC(window->WindowPadding.x * 0.5f);
+    tab_bar->SeparatorMinX = tab_bar_bb.Min.x - IM_TRUNC(window->WindowPadding.x * 0.5f);
+    tab_bar->SeparatorMaxX = tab_bar_bb.Max.x + IM_TRUNC(window->WindowPadding.x * 0.5f);
     //if (g.NavWindow && IsWindowChildOf(g.NavWindow, window, false, false))
     flags |= ImGuiTabBarFlags_IsFocused;
     return BeginTabBarEx(tab_bar, tab_bar_bb, flags);
@@ -9593,6 +9607,10 @@ static void ImGui::TabBarLayout(ImGuiTabBar* tab_bar)
     ImGuiContext& g = *GImGui;
     tab_bar->WantLayout = false;
 
+    // Track selected tab when resizing our parent down
+    const bool scroll_to_selected_tab = (tab_bar->BarRectPrevWidth > tab_bar->BarRect.GetWidth());
+    tab_bar->BarRectPrevWidth = tab_bar->BarRect.GetWidth();
+
     // Garbage collect by compacting list
     // Detect if we need to sort out tab list (e.g. in rare case where a tab changed section)
     int tab_dst_n = 0;
@@ -9669,6 +9687,9 @@ static void ImGui::TabBarLayout(ImGuiTabBar* tab_bar)
     int shrink_buffer_indexes[3] = { 0, sections[0].TabCount + sections[2].TabCount, sections[0].TabCount };
     g.ShrinkWidthBuffer.resize(tab_bar->Tabs.Size);
 
+    // Minimum shrink width
+    const float shrink_min_width = (tab_bar->Flags & ImGuiTabBarFlags_FittingPolicyMixed) ? g.Style.TabMinWidthShrink : 1.0f;
+
     // Compute ideal tabs widths + store them into shrink buffer
     ImGuiTabItem* most_recently_selected_tab = NULL;
     int curr_section_n = -1;
@@ -9691,10 +9712,13 @@ static void ImGui::TabBarLayout(ImGuiTabBar* tab_bar)
         const char* tab_name = TabBarGetTabName(tab_bar, tab);
         const bool has_close_button_or_unsaved_marker = (tab->Flags & ImGuiTabItemFlags_NoCloseButton) == 0 || (tab->Flags & ImGuiTabItemFlags_UnsavedDocument);
         tab->ContentWidth = (tab->RequestedWidth >= 0.0f) ? tab->RequestedWidth : TabItemCalcSize(tab_name, has_close_button_or_unsaved_marker).x;
+        if ((tab->Flags & ImGuiTabItemFlags_Button) == 0)
+            tab->ContentWidth = ImMax(tab->ContentWidth, g.Style.TabMinWidthBase);
 
         int section_n = TabItemGetSectionIdx(tab);
         ImGuiTabBarSection* section = &sections[section_n];
         section->Width += tab->ContentWidth + (section_n == curr_section_n ? g.Style.ItemInnerSpacing.x : 0.0f);
+        section->WidthAfterShrinkMinWidth += ImMin(tab->ContentWidth, shrink_min_width) + (section_n == curr_section_n ? g.Style.ItemInnerSpacing.x : 0.0f);
         curr_section_n = section_n;
 
         // Store data so we can build an array sorted by width if we need to shrink tabs down
@@ -9706,19 +9730,28 @@ static void ImGui::TabBarLayout(ImGuiTabBar* tab_bar)
     }
 
     // Compute total ideal width (used for e.g. auto-resizing a window)
+    float width_all_tabs_after_min_width_shrink = 0.0f;
     tab_bar->WidthAllTabsIdeal = 0.0f;
     for (int section_n = 0; section_n < 3; section_n++)
+    {
         tab_bar->WidthAllTabsIdeal += sections[section_n].Width + sections[section_n].Spacing;
+        width_all_tabs_after_min_width_shrink += sections[section_n].WidthAfterShrinkMinWidth + sections[section_n].Spacing;
+    }
 
     // Horizontal scrolling buttons
-    // (note that TabBarScrollButtons() will alter BarRect.Max.x)
-    if ((tab_bar->WidthAllTabsIdeal > tab_bar->BarRect.GetWidth() && tab_bar->Tabs.Size > 1) && !(tab_bar->Flags & ImGuiTabBarFlags_NoTabListScrollingButtons) && (tab_bar->Flags & ImGuiTabBarFlags_FittingPolicyScroll))
+    // Important: note that TabBarScrollButtons() will alter BarRect.Max.x.
+    const bool can_scroll = (tab_bar->Flags & ImGuiTabBarFlags_FittingPolicyScroll) || (tab_bar->Flags & ImGuiTabBarFlags_FittingPolicyMixed);
+    const float width_all_tabs_to_use_for_scroll = (tab_bar->Flags & ImGuiTabBarFlags_FittingPolicyScroll) ? tab_bar->WidthAllTabs : width_all_tabs_after_min_width_shrink;
+    tab_bar->ScrollButtonEnabled = ((width_all_tabs_to_use_for_scroll > tab_bar->BarRect.GetWidth() && tab_bar->Tabs.Size > 1) && !(tab_bar->Flags & ImGuiTabBarFlags_NoTabListScrollingButtons) && can_scroll);
+    if (tab_bar->ScrollButtonEnabled)
         if (ImGuiTabItem* scroll_and_select_tab = TabBarScrollingButtons(tab_bar))
         {
             scroll_to_tab_id = scroll_and_select_tab->ID;
             if ((scroll_and_select_tab->Flags & ImGuiTabItemFlags_Button) == 0)
                 tab_bar->SelectedTabId = scroll_to_tab_id;
         }
+    if (scroll_to_tab_id == 0 && scroll_to_selected_tab)
+        scroll_to_tab_id = tab_bar->SelectedTabId;
 
     // Shrink widths if full tabs don't fit in their allocated space
     float section_0_w = sections[0].Width + sections[0].Spacing;
@@ -9732,11 +9765,12 @@ static void ImGui::TabBarLayout(ImGuiTabBar* tab_bar)
         width_excess = (section_0_w + section_2_w) - tab_bar->BarRect.GetWidth(); // Excess used to shrink leading/trailing section
 
     // With ImGuiTabBarFlags_FittingPolicyScroll policy, we will only shrink leading/trailing if the central section is not visible anymore
-    if (width_excess >= 1.0f && ((tab_bar->Flags & ImGuiTabBarFlags_FittingPolicyResizeDown) || !central_section_is_visible))
+    const bool can_shrink = (tab_bar->Flags & ImGuiTabBarFlags_FittingPolicyShrink) || (tab_bar->Flags & ImGuiTabBarFlags_FittingPolicyMixed);
+    if (width_excess >= 1.0f && (can_shrink || !central_section_is_visible))
     {
         int shrink_data_count = (central_section_is_visible ? sections[1].TabCount : sections[0].TabCount + sections[2].TabCount);
         int shrink_data_offset = (central_section_is_visible ? sections[0].TabCount + sections[2].TabCount : 0);
-        ShrinkWidths(g.ShrinkWidthBuffer.Data + shrink_data_offset, shrink_data_count, width_excess);
+        ShrinkWidths(g.ShrinkWidthBuffer.Data + shrink_data_offset, shrink_data_count, width_excess, shrink_min_width);
 
         // Apply shrunk values into tabs and sections
         for (int tab_n = shrink_data_offset; tab_n < shrink_data_offset + shrink_data_count; tab_n++)
@@ -9791,7 +9825,7 @@ static void ImGui::TabBarLayout(ImGuiTabBar* tab_bar)
     // Apply request requests
     if (scroll_to_tab_id != 0)
         TabBarScrollToTab(tab_bar, scroll_to_tab_id, sections);
-    else if ((tab_bar->Flags & ImGuiTabBarFlags_FittingPolicyScroll) && IsMouseHoveringRect(tab_bar->BarRect.Min, tab_bar->BarRect.Max, true) && IsWindowContentHoverable(g.CurrentWindow))
+    else if (tab_bar->ScrollButtonEnabled && IsMouseHoveringRect(tab_bar->BarRect.Min, tab_bar->BarRect.Max, true) && IsWindowContentHoverable(g.CurrentWindow))
     {
         const float wheel = g.IO.MouseWheelRequestAxisSwap ? g.IO.MouseWheel : g.IO.MouseWheelH;
         const ImGuiKey wheel_key = g.IO.MouseWheelRequestAxisSwap ? ImGuiKey_MouseWheelY : ImGuiKey_MouseWheelX;
@@ -10065,7 +10099,7 @@ static ImGuiTabItem* ImGui::TabBarScrollingButtons(ImGuiTabBar* tab_bar)
 
     PushStyleColor(ImGuiCol_Text, arrow_col);
     PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-    PushItemFlag(ImGuiItemFlags_ButtonRepeat, true);
+    PushItemFlag(ImGuiItemFlags_ButtonRepeat | ImGuiItemFlags_NoNav, true);
     const float backup_repeat_delay = g.IO.KeyRepeatDelay;
     const float backup_repeat_rate = g.IO.KeyRepeatRate;
     g.IO.KeyRepeatDelay = 0.250f;

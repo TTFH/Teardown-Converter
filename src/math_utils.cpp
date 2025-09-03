@@ -151,31 +151,7 @@ Tensor3D::Tensor3D(int sizex, int sizey, int sizez) {
 				data[i][j][k] = 0x00;
 }
 
-/*
-Cycle of life:
-This can probably be automatized by defining a custom copy constructor
-but it may cause performance loss due to overhead.
-
-WriteShape: Init from RLE
-if voxbox
-	clear
-else if vox
-	if duplicated
-		clear
-	else
-		add to shape list
-else
-	for each part in compound
-		copy part
-		if duplicated
-			clear copy
-		else
-			add copy to shape list
-	clear
-
-~MV_FILE: Clear shape list
-*/
-void Tensor3D::Clear() {
+Tensor3D::~Tensor3D() {
 	for (int i = 0; i < sizex; i++) {
 		for (int j = 0; j < sizey; j++)
 			delete[] data[i][j];

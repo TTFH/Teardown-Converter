@@ -11,8 +11,6 @@ using namespace tinyxml2;
 
 struct Color;
 
-string FloatToString(float value);
-
 class XML_Writer {
 private:
 	XMLDocument* main_xml;

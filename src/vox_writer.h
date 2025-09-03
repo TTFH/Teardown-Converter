@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+#include "scene.h"
+#include "entity.h"
+
 using namespace std;
 
 typedef map<string, string> DICT;
@@ -22,22 +25,14 @@ const int SIZE = ID('S', 'I', 'Z', 'E');
 const int XYZI = ID('X', 'Y', 'Z', 'I');
 const int TDCZ = ID('T', 'D', 'C', 'Z');
 const int RGBA = ID('R', 'G', 'B', 'A');
+const int nGRP = ID('n', 'G', 'R', 'P');
 const int nTRN = ID('n', 'T', 'R', 'N');
 const int nSHP = ID('n', 'S', 'H', 'P');
-
-const int IMAP = ID('I', 'M', 'A', 'P');
 const int MATL = ID('M', 'A', 'T', 'L');
-const int nGRP = ID('n', 'G', 'R', 'P');
-const int LAYR = ID('L', 'A', 'Y', 'R');
-const int rOBJ = ID('r', 'O', 'B', 'J');
-const int rCAM = ID('r', 'C', 'A', 'M');
+const int IMAP = ID('I', 'M', 'A', 'P');
 const int NOTE = ID('N', 'O', 'T', 'E');
 
-struct MV_Entry {
-	uint8_t r, g, b, a;
-};
-
-enum MV_MaterialType {
+enum MV_MatType {
 	DIFFUSE,
 	METAL,
 	GLASS,
@@ -45,9 +40,9 @@ enum MV_MaterialType {
 };
 
 struct MV_Material {
-	uint8_t material_index;
-	uint8_t material_type;
-	MV_MaterialType render_type;
+	uint8_t index;
+	uint8_t td_type;
+	MV_MatType type;
 	union {
 		struct {
 			float roughness;
@@ -64,52 +59,55 @@ struct MV_Material {
 	} properties;
 };
 
-struct Voxel {
+struct MV_Entry {
+	uint8_t r, g, b, a;
+};
+
+struct MV_Voxel {
 	uint8_t x, y, z, index;
 };
 
-struct MVShape {
+struct MV_Shape {
 	string name;
 	int pos_x, pos_y, pos_z;
-	Tensor3D voxels;
-	bool operator==(const MVShape& other) const;
+	Tensor3D* voxels;
+	bool operator==(const MV_Shape& other) const;
 };
 
 class MV_FILE {
 private:
 	FILE* vox_file;
 	string filename;
+	long int children_size_ptr;
+
+	bool is_index_used[256];
 	MV_Entry palette[256];
 	uint8_t palette_map[256];
-	bool is_index_used[256];
-	bool is_corrupted = false;
-	vector<MVShape> models;
-	vector<MV_Material> materials;
-	long int childrenSize_ptr;
 
-	bool FixMapping(uint8_t index, uint8_t i_min, uint8_t i_max, bool halt = false);
+	vector<MV_Shape> models;
+	vector<MV_Material> materials;
 
 	void WriteInt(int val);
 	void WriteDICT(DICT dict);
 	void WriteFileHeader();
-	void WriteChunkHeader(int id, int contentSize, int childrenSize);
-	void WriteSIZE(MVShape shape);
-	void WriteXYZI(MVShape shape);
-	void WriteTDCZ(MVShape shape);
-	void WriteMain_nTRN();
+	void WriteChunkHeader(int id, int content_size, int children_size);
+
+	void WriteSIZE(const MV_Shape& shape);
+	void WriteXYZI(const MV_Shape& shape);
+	void WriteTDCZ(const MV_Shape& shape);
+	void Write_nTRN();
 	void WriteRGBA();
 	void WriteIMAP();
-	void WriteMATL(MV_Material mat);
+	void WriteMATL(const MV_Material& mat);
 	void WriteNOTE();
 public:
 	MV_FILE(string filename);
 	~MV_FILE();
 	void SaveModel(bool compress);
-	void AddShape(MVShape shape);
-	bool GetShapeName(const MVShape& shape, string& name) const;
-	void SetColor(uint8_t index, Color color);
-	void SetColor(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
-	void SetMaterial(uint8_t index, uint8_t type, float reflectivity, float shinyness, float metalness, float emissive, float alpha);
+	void AddShape(const MV_Shape& shape);
+	bool GetShapeName(const MV_Shape& shape, string& name) const;
+	void SetColor(uint8_t index, const Color& color);
+	void SetMaterial(uint8_t index, const Material& material);
 };
 
 #endif

@@ -1,30 +1,13 @@
-#include <math.h>
 #include <stdint.h>
-#include <map>
 #include <string>
-#include <sstream>
-#include <iomanip>
-#include <iostream>
 
 #include "entity.h"
 #include "xml_writer.h"
+#include "misc_utils.h"
 #include "../lib/tinyxml2.h"
 
 using namespace std;
 using namespace tinyxml2;
-
-string FloatToString(float value) {
-	if (fabs(value) < 0.001) value = 0;
-	stringstream ss;
-	ss << fixed << setprecision(3) << value;
-	string str = ss.str();
-	if (str.find('.') != string::npos) {
-		str = str.substr(0, str.find_last_not_of('0') + 1);
-		if (str.find('.') == str.size() - 1)
-			str = str.substr(0, str.size() - 1);
-	}
-	return str;
-}
 
 XML_Writer::XML_Writer() {
 	main_xml = new XMLDocument();

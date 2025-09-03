@@ -1,6 +1,8 @@
 #ifndef BINARY_READER_H
 #define BINARY_READER_H
 
+#include <string>
+#include <stdio.h>
 #include <stdint.h>
 
 #include "scene.h"

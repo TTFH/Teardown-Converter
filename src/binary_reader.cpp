@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <assert.h>
 
 #ifdef _WIN32

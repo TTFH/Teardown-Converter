@@ -46,7 +46,9 @@ public:
 	int sizex, sizey, sizez;
 
 	Tensor3D(int sizex, int sizey, int sizez);
-	void Clear();
+	Tensor3D(const Tensor3D&) = delete;
+	Tensor3D& operator=(const Tensor3D&) = delete;
+	~Tensor3D();
 
 	void FromRunLengthEncoding(const RLE& rle);
 	void Set(int x, int y, int z, uint8_t value);
