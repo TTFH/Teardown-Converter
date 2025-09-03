@@ -12,6 +12,41 @@ using namespace std;
 
 const char* MaterialPrefix = "$TD_";
 
+static const char* td_notes[32] = {
+	"snow/hole",
+	"reserved",
+	"unphysical",
+	"unphysical",
+	"reserved",
+	"reserved",
+	"reserved",
+	"reserved",
+	"ice",
+	"hardmasonry",
+	"hardmetal",
+	"plastic",
+	"plastic",
+	"heavymetal",
+	"heavymetal",
+	"metal",
+	"metal",
+	"plaster",
+	"plaster",
+	"masonry",
+	"masonry",
+	"masonry",
+	"masonry",
+	"wood",
+	"wood",
+	"rock",
+	"rock",
+	"dirt",
+	"dirt",
+	"foliage",
+	"foliage",
+	"glass"
+};
+
 bool MV_Shape::operator==(const MV_Shape& other) const {
 	if (voxels->sizex != other.voxels->sizex || voxels->sizey != other.voxels->sizey || voxels->sizez != other.voxels->sizez)
 		return false;
@@ -27,14 +62,15 @@ MV_FILE::MV_FILE(string filename) {
 	this->filename = filename;
 	vox_file = NULL;
 
-	palette[0] = { 0, 0, 0, 255 };
-	for (int i = 1; i < 256; i++)
-		palette[i] = { 75, 75, 75, 255};
-
 	for (int i = 0; i < 256; i++) {
+		palette[i] = { 75, 75, 75, 255};
+		material[i] = { (uint8_t)i, Material::None, DIFFUSE, {} };
 		is_index_used[i] = false;
 		palette_map[i] = i;
 	}
+	palette[0] = { 0, 0, 0, 255 };
+	for (int i = 0; i < ROWS; i++)
+		notes[i] = td_notes[i];
 }
 
 void MV_FILE::WriteInt(int val) {
@@ -103,17 +139,16 @@ void MV_FILE::WriteTDCZ(const MV_Shape& shape) {
 	delete[] voxel_array;
 }
 
-void MV_FILE::Write_nTRN() {
-	int num_models = models.size();
-	WriteChunkHeader(nTRN, 28, 0);
-	WriteInt(0); // node_id
+void MV_FILE::Write_nSHP(int i) {
+	WriteChunkHeader(nSHP, 20, 0);
+	WriteInt(2 * i + 1); // node_id
+	WriteInt(0); // node_attr
+	WriteInt(1); // num_models
+	WriteInt(i - 1); // ref_model_id
 	WriteInt(0); // Empty DICT (nodeAttribs)
-	WriteInt(1); // child_node_id
-	WriteInt(-1); // reserved_id
-	WriteInt(-1); // layer_id
-	WriteInt(1); // num_frames
-	WriteInt(0); // Empty DICT (frames)
+}
 
+void MV_FILE::Write_nGRP(int num_models) {
 	WriteChunkHeader(nGRP, 4 * (3 + num_models), 0);
 	WriteInt(1); // node_id
 	WriteInt(0); // node_attr
@@ -123,30 +158,28 @@ void MV_FILE::Write_nTRN() {
 
 	for (int i = 1; i <= num_models; i++) {
 		string pos = to_string(models[i - 1].pos_x) + " " + to_string(models[i - 1].pos_y) + " " + to_string(models[i - 1].pos_z);
-
-		WriteChunkHeader(nTRN, 38 + pos.length() + 13 + models[i - 1].name.length(), 0);
-		WriteInt(2 * i); // node_id
-
-		DICT node_attr;
-		node_attr["_name"] = models[i - 1].name;
-		WriteDICT(node_attr);
-
-		WriteInt(2 * i + 1); // child_node_id
-		WriteInt(-1); // reserved_id
-		WriteInt(0); // layer_id
-		WriteInt(1); // num_frames
-
-		DICT frame_attr;
-		frame_attr["_t"] = pos;
-		WriteDICT(frame_attr);
-
-		WriteChunkHeader(nSHP, 20, 0);
-		WriteInt(2 * i + 1); // node_id
-		WriteInt(0); // node_attr
-		WriteInt(1); // num_models
-		WriteInt(i - 1); // ref_model_id
-		WriteInt(0); // Empty DICT (nodeAttribs)
+		Write_nTRN(i, pos);
 	}
+}
+
+void MV_FILE::Write_nTRN(int i, string pos) {
+	WriteChunkHeader(nTRN, 38 + pos.length() + 13 + models[i - 1].name.length(), 0);
+	WriteInt(2 * i); // node_id
+
+	DICT node_attr;
+	node_attr["_name"] = models[i - 1].name;
+	WriteDICT(node_attr);
+
+	WriteInt(2 * i + 1); // child_node_id
+	WriteInt(-1); // reserved_id
+	WriteInt(0); // layer_id
+	WriteInt(1); // num_frames
+
+	DICT frame_attr;
+	frame_attr["_t"] = pos;
+	WriteDICT(frame_attr);
+
+	Write_nSHP(i);
 }
 
 void MV_FILE::WriteRGBA() {
@@ -195,48 +228,7 @@ void MV_FILE::WriteMATL(const MV_Material& mat) {
 	WriteDICT(material_attr);
 }
 
-static const char* td_notes[32] = {
-	"snow/hole",
-	"reserved",
-	"unphysical",
-	"unphysical",
-	"reserved",
-	"reserved",
-	"reserved",
-	"reserved",
-	"ice",
-	"hardmasonry",
-	"hardmetal",
-	"plastic",
-	"plastic",
-	"heavymetal",
-	"heavymetal",
-	"metal",
-	"metal",
-	"plaster",
-	"plaster",
-	"masonry",
-	"masonry",
-	"masonry",
-	"masonry",
-	"wood",
-	"wood",
-	"rock",
-	"rock",
-	"dirt",
-	"dirt",
-	"foliage",
-	"foliage",
-	"glass"
-};
-
 void MV_FILE::WriteNOTE() {
-	const int ROWS = 32;
-	vector<string> notes;
-	notes.reserve(ROWS);
-	for (int i = 0; i < ROWS; i++)
-		notes.push_back(td_notes[i]);
-
 	int note_chunk_size = 4 + 4 * ROWS;
 	for (int i = 0; i < ROWS; i++)
 		note_chunk_size += notes[i].length();
@@ -264,11 +256,25 @@ void MV_FILE::SaveModel(bool compress) {
 		else
 			WriteXYZI(models[i]);
 	}
-	Write_nTRN();
+
+	int num_models = models.size();
+	if (num_models > 1) {
+		WriteChunkHeader(nTRN, 28, 0);
+		WriteInt(0); // node_id
+		WriteInt(0); // Empty DICT (nodeAttribs)
+		WriteInt(1); // child_node_id
+		WriteInt(-1); // reserved_id
+		WriteInt(-1); // layer_id
+		WriteInt(1); // num_frames
+		WriteInt(0); // Empty DICT (frames)
+		Write_nGRP(num_models);
+	}
+
 	WriteRGBA();
 	WriteIMAP();
-	for (vector<MV_Material>::iterator it = materials.begin(); it != materials.end(); it++)
-		WriteMATL(*it);
+	for (int i = 0; i < 256; i++)
+		if (is_index_used[i])
+			WriteMATL(material[i]);
 	WriteNOTE();
 
 	// Update childrenSize in the MAIN chunk
@@ -292,43 +298,18 @@ bool MV_FILE::GetShapeName(const MV_Shape& shape, string& name) const {
 	return found;
 }
 
-void MV_FILE::SetColor(uint8_t index, const Color& color) {
+void MV_FILE::SetEntry(uint8_t index, const Material& material) {
 	if (is_index_used[index]) return;
+	const Color& color = material.rgba;
 	uint8_t r = 255.0 * color.r;
 	uint8_t g = 255.0 * color.g;
 	uint8_t b = 255.0 * color.b;
-	palette[index] = { r, g, b, 255 };
-}
 
-/*
-_type = "_metal"
-reflectivity = _sp - 1.0
-shinyness = 1.0 - _rough
-metalness = _metal
-emissive = 0.0
-alpha = 1.0
-
-_type = "_glass"
-reflectivity = 0.1
-shinyness = 1.0 - _rough
-metalness = 0.0
-emissive = 0.0
-alpha = _alpha != 1.0 ? 0.5 : 1.0
-
-_type = "_emit"
-reflectivity = 0.1
-shinyness = 1.0
-metalness = 0.0
-emissive = _emit * 10 ^ _flux
-alpha = 1.0
-*/
-void MV_FILE::SetMaterial(uint8_t index, const Material& material) {
-	if (is_index_used[index]) return;
 	MV_Material mat;
 	mat.index = index;
 	mat.td_type = material.type;
 
-	if (material.rgba.a != 1.0) {
+	if (color.a != 1.0) {
 		mat.type = GLASS;
 		mat.properties.glass.roughness = 1.0 - material.shinyness;
 	} else if (material.emissive > 0) {
@@ -351,8 +332,9 @@ void MV_FILE::SetMaterial(uint8_t index, const Material& material) {
 		mat.properties.metal.metallic = material.metalness;
 	} else
 		mat.type = DIFFUSE;
-	materials.push_back(mat);
 
+	palette[index] = { r, g, b, 255 };
+	this->material[index] = mat;
 	is_index_used[index] = true;
 }
 

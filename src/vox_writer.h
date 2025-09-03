@@ -79,13 +79,14 @@ private:
 	FILE* vox_file;
 	string filename;
 	long int children_size_ptr;
+	vector<MV_Shape> models;
+	static constexpr int ROWS = 32;
+	string notes[ROWS];
 
 	bool is_index_used[256];
 	MV_Entry palette[256];
+	MV_Material material[256];
 	uint8_t palette_map[256];
-
-	vector<MV_Shape> models;
-	vector<MV_Material> materials;
 
 	void WriteInt(int val);
 	void WriteDICT(DICT dict);
@@ -95,7 +96,9 @@ private:
 	void WriteSIZE(const MV_Shape& shape);
 	void WriteXYZI(const MV_Shape& shape);
 	void WriteTDCZ(const MV_Shape& shape);
-	void Write_nTRN();
+	void Write_nTRN(int i, string pos);
+	void Write_nGRP(int num_models);
+	void Write_nSHP(int i);
 	void WriteRGBA();
 	void WriteIMAP();
 	void WriteMATL(const MV_Material& mat);
@@ -106,8 +109,7 @@ public:
 	void SaveModel(bool compress);
 	void AddShape(const MV_Shape& shape);
 	bool GetShapeName(const MV_Shape& shape, string& name) const;
-	void SetColor(uint8_t index, const Color& color);
-	void SetMaterial(uint8_t index, const Material& material);
+	void SetEntry(uint8_t index, const Material& material);
 };
 
 #endif
