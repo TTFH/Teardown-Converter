@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdlib.h>
 #include <string>
 #include <sstream>
 #include <filesystem>
@@ -8,9 +9,17 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "lib/stb_image_write.h"
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <Lmcons.h>
+#include <shlobj.h>
+#include <knownfolders.h>
+#endif
+
 #include "misc_utils.h"
 
-namespace fs = std::filesystem;
+namespace fs = filesystem;
 
 void copy_file(string origin, string destination) {
 	if (fs::exists(origin) && !fs::exists(destination))
@@ -25,6 +34,49 @@ void copy_folder(string origin, string destination) {
 void create_folder(string name) {
 	if (!fs::exists(name))
 		fs::create_directories(name);
+}
+
+string GetUsername() {
+#ifdef _WIN32
+	char username[UNLEN + 1];
+    DWORD username_len = sizeof(username);
+	GetUserNameA(username, &username_len);
+	return string(username);
+#else
+	return string(getenv("USER"));
+#endif
+}
+
+static string WideToUtf8(const wstring& wstr) {
+	if (wstr.empty()) return string();
+	int length = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), nullptr, 0, nullptr, nullptr);
+	string result(length, 0);
+	WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), result.data(), length, nullptr, nullptr);
+	return result;
+}
+
+string GetMyDocuments() {
+#ifdef _WIN32
+	PWSTR path = nullptr;
+	SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &path);
+	string documents_path = WideToUtf8(path);
+	CoTaskMemFree(path);
+	return documents_path;
+#else
+	return string(getenv("HOME")) + "/Documents";
+#endif
+}
+
+string GetAppDataLocal() {
+#ifdef _WIN32
+	PWSTR path = nullptr;
+	SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &path);
+	string appdata_path = WideToUtf8(path);
+	CoTaskMemFree(path);
+	return appdata_path;
+#else
+	return string(getenv("HOME")) + "/.local/share";
+#endif
 }
 
 string GetFilename(const char* path) {

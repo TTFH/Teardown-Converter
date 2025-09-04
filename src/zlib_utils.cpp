@@ -5,8 +5,6 @@
 
 #include "zlib_utils.h"
 
-using namespace std;
-
 static const size_t BLOCK_SIZE = 8 * 1024; // 8 KiB
 static const size_t CHUNK_SIZE = 32 * 1024; // 32 KiB
 
@@ -46,7 +44,7 @@ bool ZlibBlockCompress(const uint8_t* source, size_t source_len, int level, vect
 	return true;
 }
 
-bool ZlibUncompress(const uint8_t* source, const size_t source_len, std::vector<uint8_t>& dest) {
+bool ZlibUncompress(const uint8_t* source, const size_t source_len, vector<uint8_t>& dest) {
 	z_stream stream;
 	stream.zalloc = Z_NULL;
 	stream.zfree  = Z_NULL;

@@ -9,8 +9,6 @@
 #include "vox_writer.h"
 #include "zlib_utils.h"
 
-using namespace std;
-
 static const char* MaterialPrefix = "$TD_";
 
 static const char* td_notes[32] = {
@@ -364,34 +362,35 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 
 	// Mark materials already in the correct row
 	for (int i = 0; i < 256; i++) {
-		if (is_index_used[i]) {
-			string note = GetIndexNote(i);
-			if (note == MaterialName[material[i].td_type]) {
-				fixed[i] = true;
-				occupied[i] = true;
-			}
+		if (is_index_used[i] && GetIndexNote(i) == MaterialName[material[i].td_type]) {
+			fixed[i] = true;
+			occupied[i] = true;
 		}
 	}
+	fixed[0] = true; // empty
 	fixed[254] = true; // snow
 	fixed[255] = true; // hole
+	occupied[0] = true;
 	occupied[254] = true;
 	occupied[255] = true;
+
+	auto swap_mapping = [this](int i, int j) {
+		uint8_t temp = palette_map[i];
+		palette_map[i] = palette_map[j];
+		palette_map[j] = temp;
+	};
 
 	// Move materials to an empty space in a correct row
 	for (int i = 0; i < 256; i++) {
 		if (is_index_used[i] && !fixed[i]) {
 			string mat_name = MaterialName[material[i].td_type];
+			// TODO: fix moved element!
 			for (int j = 0; j < 256; j++) {
-				if (!occupied[j]) {
-					string note = GetIndexNote(j);
-					if (note == mat_name) {
-						fixed[i] = true;
-						occupied[j] = true;
-						uint8_t temp = palette_map[i];
-						palette_map[i] = palette_map[j];
-						palette_map[j] = temp;
-						break;
-					}
+				if (!occupied[j] && GetIndexNote(j) == mat_name) {
+					fixed[i] = true;
+					occupied[j] = true;
+					swap_mapping(i, j);
+					break;
 				}
 			}
 		}
@@ -406,7 +405,7 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 				bool row_empty = true;
 				for (int k = 0; k < 8; k++) {
 					int idx = 8 * j + k + 1;
-					if (idx < 256 && is_index_used[idx] && occupied[idx]) {
+					if (idx < 256 && occupied[idx]) {
 						row_empty = false;
 						break;
 					}
@@ -416,10 +415,7 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 					int starting_index = 8 * j + 1;
 					fixed[i] = true;
 					occupied[starting_index] = true;
-					//target_index[i] = starting_index;
-					uint8_t temp = palette_map[i];
-					palette_map[i] = palette_map[starting_index];
-					palette_map[starting_index] = temp;
+					swap_mapping(i, starting_index);
 					notes[note_idx] = MaterialPrefix + string(mat_name);
 
 					// Move materials of the same type to this new row
@@ -431,9 +427,7 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 									if (!occupied[m]) {
 										fixed[l] = true;
 										occupied[m] = true;
-										uint8_t temp = palette_map[l];
-										palette_map[l] = palette_map[m];
-										palette_map[m] = temp;
+										swap_mapping(l, m);
 										// Pigeon paradise!
 										// (because of the nesting, get it?)
 										break;
@@ -452,10 +446,8 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 	bool mapped[256];
 	for (int i = 0; i < 256; i++)
 		mapped[i] = false;
-	for (int i = 0; i < 256; i++) {
-		int j = palette_map[i];
-		mapped[j] = true;
-	}
+	for (int i = 0; i < 256; i++)
+		mapped[palette_map[i]] = true;
 	for (int i = 0; i < 256; i++)
 		if (!mapped[i])
 			throw logic_error("Index " + to_string(i) + " not mapped");
@@ -473,7 +465,8 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 				note = note.substr(strlen(MaterialPrefix));
 			string mat_name = MaterialName[material[i].td_type];
 			if (note != mat_name)
-				throw logic_error("Index " + to_string(i) + " mapped to " + to_string(j) + " with wrong note '" + note + "' for material " + mat_name);
+				throw logic_error("Index " + to_string(i) + " mapped to " + to_string(j)
+				+ " with incorrect row " + note + " for material " + mat_name);
 		}
 	}
 }

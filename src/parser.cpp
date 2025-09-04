@@ -856,7 +856,7 @@ void ParseFile(ConverterParams params) {
 	WriteXML parser(params);
 	try {
 		parser.parse();
-	} catch(const std::bad_alloc& e) {
+	} catch(const bad_alloc& e) {
 		printf("You're a few terabytes low on RAM or this application crashed.\n");
 		printf("It's most likely the second.\n");
 		exit(EXIT_FAILURE);

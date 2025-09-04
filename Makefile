@@ -29,7 +29,7 @@ endif
 
 ifeq ($(OS), Windows_NT)
 	ECHO_MESSAGE = "MinGW"
-	LIBS += -lopengl32 -limm32 -static icon.res
+	LIBS += -lopengl32 -limm32 -luuid -lole32 -static icon.res
 endif
 
 ifeq ($(UNAME_S), Darwin)

@@ -2,8 +2,6 @@
 
 #include "math_utils.h"
 
-using namespace std;
-
 double deg(double rad) {
 	return rad * 180.0 / PI;
 }

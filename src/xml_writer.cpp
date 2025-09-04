@@ -6,9 +6,6 @@
 #include "misc_utils.h"
 #include "../lib/tinyxml2.h"
 
-using namespace std;
-using namespace tinyxml2;
-
 XML_Writer::XML_Writer() {
 	main_xml = new XMLDocument();
 	scene = main_xml->NewElement("scene");

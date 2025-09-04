@@ -6,6 +6,6 @@ release/teardown-converter
 release/teardown-converter.exe
 release/*.bin
 release/*.tdbin
-release/*.txt
-release/*.xml
-release/*.vox
+release/**/*.txt
+release/**/*.xml
+release/**/*.vox

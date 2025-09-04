@@ -11,6 +11,9 @@ void copy_file(string origin, string destination);
 void copy_folder(string origin, string destination);
 void create_folder(string name);
 
+string GetUsername();
+string GetMyDocuments();
+string GetAppDataLocal();
 string GetFilename(const char* path);
 string FloatToString(float value);
 

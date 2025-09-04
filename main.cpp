@@ -20,7 +20,6 @@
 
 #include "lib/tinyxml2.h"
 
-using namespace std;
 using namespace tinyxml2;
 
 atomic<float> progress = 0;
@@ -86,8 +85,13 @@ int main(int argc, char* argv[]) {
 	style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
 
 #ifdef _WIN32
-	char quicksave_folder[256] = "C:\\Users\\User\\AppData\\Local\\Teardown";
-	char mods_folder[256] = "C:\\Users\\User\\Documents\\Teardown\\mods";
+	string appdata_path = GetAppDataLocal();
+	string documents_path = GetMyDocuments();
+	char quicksave_folder[256];
+	char mods_folder[256];
+	strcpy(quicksave_folder, (appdata_path + "\\Teardown").c_str());
+	strcpy(mods_folder, (documents_path + "\\Teardown\\mods").c_str());
+
 	char game_folder[256] = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown";
 	//const char* quicksave_folder_legacy = "C:\\Users\\user\\Documents\\Teardown";
 	//const char* mods_folder_legacy = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown\\create";
