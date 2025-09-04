@@ -59,7 +59,7 @@ struct MV_Material {
 	} properties;
 };
 
-struct MV_Entry {
+struct MV_Color {
 	uint8_t r, g, b, a;
 };
 
@@ -84,9 +84,12 @@ private:
 	string notes[ROWS];
 
 	bool is_index_used[256];
-	MV_Entry palette[256];
+	MV_Color palette[256];
 	MV_Material material[256];
 	uint8_t palette_map[256];
+
+	string GetIndexNote(int index);
+	void FIX_PALETTE_MAPPING();
 
 	void WriteInt(int val);
 	void WriteDICT(DICT dict);
@@ -96,8 +99,8 @@ private:
 	void WriteSIZE(const MV_Shape& shape);
 	void WriteXYZI(const MV_Shape& shape);
 	void WriteTDCZ(const MV_Shape& shape);
+	void Write_nGRP();
 	void Write_nTRN(int i, string pos);
-	void Write_nGRP(int num_models);
 	void Write_nSHP(int i);
 	void WriteRGBA();
 	void WriteIMAP();
@@ -109,6 +112,7 @@ public:
 	void SaveModel(bool compress);
 	void AddShape(const MV_Shape& shape);
 	bool GetShapeName(const MV_Shape& shape, string& name) const;
+	// TODO: use MV_Color / MV_Material and move convertion to a different file
 	void SetEntry(uint8_t index, const Material& material);
 };
 

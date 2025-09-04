@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string.h>
 #include <stdint.h>
 #include <vector>
 #include <string>
@@ -10,7 +11,7 @@
 
 using namespace std;
 
-const char* MaterialPrefix = "$TD_";
+static const char* MaterialPrefix = "$TD_";
 
 static const char* td_notes[32] = {
 	"snow/hole",
@@ -148,20 +149,6 @@ void MV_FILE::Write_nSHP(int i) {
 	WriteInt(0); // Empty DICT (nodeAttribs)
 }
 
-void MV_FILE::Write_nGRP(int num_models) {
-	WriteChunkHeader(nGRP, 4 * (3 + num_models), 0);
-	WriteInt(1); // node_id
-	WriteInt(0); // node_attr
-	WriteInt(num_models); // node_childrens
-	for (int i = num_models; i > 0; i--)
-		WriteInt(2 * i); // child_node
-
-	for (int i = 1; i <= num_models; i++) {
-		string pos = to_string(models[i - 1].pos_x) + " " + to_string(models[i - 1].pos_y) + " " + to_string(models[i - 1].pos_z);
-		Write_nTRN(i, pos);
-	}
-}
-
 void MV_FILE::Write_nTRN(int i, string pos) {
 	WriteChunkHeader(nTRN, 38 + pos.length() + 13 + models[i - 1].name.length(), 0);
 	WriteInt(2 * i); // node_id
@@ -182,16 +169,36 @@ void MV_FILE::Write_nTRN(int i, string pos) {
 	Write_nSHP(i);
 }
 
+void MV_FILE::Write_nGRP() {
+	int num_models = models.size();
+	WriteChunkHeader(nGRP, 4 * (3 + num_models), 0);
+	WriteInt(1); // node_id
+	WriteInt(0); // node_attr
+	WriteInt(num_models); // node_childrens
+	for (int i = num_models; i > 0; i--)
+		WriteInt(2 * i); // child_node
+
+	for (int i = 1; i <= num_models; i++) {
+		string pos = to_string(models[i - 1].pos_x) + " " + to_string(models[i - 1].pos_y) + " " + to_string(models[i - 1].pos_z);
+		Write_nTRN(i, pos);
+	}
+}
+
 void MV_FILE::WriteRGBA() {
 	WriteChunkHeader(RGBA, 1024, 0);
-	fwrite(&palette[1], sizeof(MV_Entry), 255, vox_file);
-	fwrite(&palette[0], sizeof(MV_Entry), 1, vox_file);
+	fwrite(&palette[1], sizeof(MV_Color), 255, vox_file);
+	fwrite(&palette[0], sizeof(MV_Color), 1, vox_file);
 }
 
 void MV_FILE::WriteIMAP() {
+	try {
+		FIX_PALETTE_MAPPING();
+	} catch (logic_error& e) {
+		printf("[ERROR] Could not fix palette mapping for file %s: %s\n", filename.c_str(), e.what());
+	}
 	int i = 0;
 	bool is_mapped = false;
-	while (!is_mapped && i < 256) {
+	while (i < 256 && !is_mapped) {
 		if (palette_map[i] != i)
 			is_mapped = true;
 		i++;
@@ -257,18 +264,15 @@ void MV_FILE::SaveModel(bool compress) {
 			WriteXYZI(models[i]);
 	}
 
-	int num_models = models.size();
-	if (num_models > 1) {
-		WriteChunkHeader(nTRN, 28, 0);
-		WriteInt(0); // node_id
-		WriteInt(0); // Empty DICT (nodeAttribs)
-		WriteInt(1); // child_node_id
-		WriteInt(-1); // reserved_id
-		WriteInt(-1); // layer_id
-		WriteInt(1); // num_frames
-		WriteInt(0); // Empty DICT (frames)
-		Write_nGRP(num_models);
-	}
+	WriteChunkHeader(nTRN, 28, 0);
+	WriteInt(0); // node_id
+	WriteInt(0); // Empty DICT (nodeAttribs)
+	WriteInt(1); // child_node_id
+	WriteInt(-1); // reserved_id
+	WriteInt(-1); // layer_id
+	WriteInt(1); // num_frames
+	WriteInt(0); // Empty DICT (frames)
+	Write_nGRP();
 
 	WriteRGBA();
 	WriteIMAP();
@@ -342,4 +346,134 @@ MV_FILE::~MV_FILE() {
 	for (vector<MV_Shape>::iterator it = models.begin(); it != models.end(); it++)
 		delete it->voxels;
 	models.clear();
+}
+
+string MV_FILE::GetIndexNote(int index) {
+	if (index == 0) index = 256;
+	int row = (ROWS - 1) - (index - 1) / 8;
+	return notes[row];
+}
+
+void MV_FILE::FIX_PALETTE_MAPPING() {
+	bool fixed[256];
+	bool occupied[256];
+	for (int i = 0; i < 256; i++) {
+		fixed[i] = false;
+		occupied[i] = false;
+	}
+
+	// Mark materials already in the correct row
+	for (int i = 0; i < 256; i++) {
+		if (is_index_used[i]) {
+			string note = GetIndexNote(i);
+			if (note == MaterialName[material[i].td_type]) {
+				fixed[i] = true;
+				occupied[i] = true;
+			}
+		}
+	}
+	fixed[254] = true; // snow
+	fixed[255] = true; // hole
+	occupied[254] = true;
+	occupied[255] = true;
+
+	// Move materials to an empty space in a correct row
+	for (int i = 0; i < 256; i++) {
+		if (is_index_used[i] && !fixed[i]) {
+			string mat_name = MaterialName[material[i].td_type];
+			for (int j = 0; j < 256; j++) {
+				if (!occupied[j]) {
+					string note = GetIndexNote(j);
+					if (note == mat_name) {
+						fixed[i] = true;
+						occupied[j] = true;
+						uint8_t temp = palette_map[i];
+						palette_map[i] = palette_map[j];
+						palette_map[j] = temp;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	// Move materials to a renamed empty row
+	for (int i = 0; i < 256; i++) {
+		if (is_index_used[i] && !fixed[i]) {
+			string mat_name = MaterialName[material[i].td_type];
+			// Check if row is empty
+			for (int j = 0; j < ROWS; j++) {
+				bool row_empty = true;
+				for (int k = 0; k < 8; k++) {
+					int idx = 8 * j + k + 1;
+					if (idx < 256 && is_index_used[idx] && occupied[idx]) {
+						row_empty = false;
+						break;
+					}
+				}
+				if (row_empty) {
+					int note_idx = ROWS - 1 - j;
+					int starting_index = 8 * j + 1;
+					fixed[i] = true;
+					occupied[starting_index] = true;
+					//target_index[i] = starting_index;
+					uint8_t temp = palette_map[i];
+					palette_map[i] = palette_map[starting_index];
+					palette_map[starting_index] = temp;
+					notes[note_idx] = MaterialPrefix + string(mat_name);
+
+					// Move materials of the same type to this new row
+					for (int l = 0; l < 256; l++) {
+						if (is_index_used[l] && !fixed[l]) {
+							string mat_name2 = MaterialName[material[l].td_type];
+							if (mat_name2 == mat_name) {
+								for (int m = starting_index; m < starting_index + 8; m++) {
+									if (!occupied[m]) {
+										fixed[l] = true;
+										occupied[m] = true;
+										uint8_t temp = palette_map[l];
+										palette_map[l] = palette_map[m];
+										palette_map[m] = temp;
+										// Pigeon paradise!
+										// (because of the nesting, get it?)
+										break;
+									}
+								}
+							}
+						}
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	// Check valid permutation
+	bool mapped[256];
+	for (int i = 0; i < 256; i++)
+		mapped[i] = false;
+	for (int i = 0; i < 256; i++) {
+		int j = palette_map[i];
+		mapped[j] = true;
+	}
+	for (int i = 0; i < 256; i++)
+		if (!mapped[i])
+			throw logic_error("Index " + to_string(i) + " not mapped");
+
+	uint8_t reverse_map[256];
+	for (int i = 0; i < 256; i++)
+		reverse_map[palette_map[i]] = i;
+
+	// Check correct mapping
+	for (int i = 0; i < 254; i++) { // Last two are correct by default
+		if (is_index_used[i]) {
+			int j = reverse_map[i];
+			string note = GetIndexNote(j);
+			if (note.find(MaterialPrefix) == 0)
+				note = note.substr(strlen(MaterialPrefix));
+			string mat_name = MaterialName[material[i].td_type];
+			if (note != mat_name)
+				throw logic_error("Index " + to_string(i) + " mapped to " + to_string(j) + " with wrong note '" + note + "' for material " + mat_name);
+		}
+	}
 }

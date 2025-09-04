@@ -7,8 +7,8 @@
 
 using namespace std;
 
-const size_t BLOCK_SIZE = 8 * 1024; // 8 KiB
-const size_t CHUNK_SIZE = 32 * 1024; // 32 KiB
+static const size_t BLOCK_SIZE = 8 * 1024; // 8 KiB
+static const size_t CHUNK_SIZE = 32 * 1024; // 32 KiB
 
 bool ZlibBlockCompress(const uint8_t* source, size_t source_len, int level, vector<uint8_t>& dest) {
 	z_stream stream;

@@ -14,7 +14,7 @@
 #include "write_scene.h"
 #include "../lib/tinyxml2.h"
 
-const Material HOLE = {
+static const Material HOLE = {
 	Material::Unphysical,
 	{ 1.0, 0.0, 0.0, 1.0 },
 	0.1,
