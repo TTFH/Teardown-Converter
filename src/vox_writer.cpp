@@ -355,9 +355,11 @@ string MV_FILE::GetIndexNote(int index) {
 void MV_FILE::FIX_PALETTE_MAPPING() {
 	bool fixed[256];
 	bool occupied[256];
+	uint8_t reverse_map[256];
 	for (int i = 0; i < 256; i++) {
 		fixed[i] = false;
 		occupied[i] = false;
+		reverse_map[i] = i;
 	}
 
 	// Mark materials already in the correct row
@@ -374,17 +376,23 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 	occupied[254] = true;
 	occupied[255] = true;
 
-	auto swap_mapping = [this](int i, int j) {
-		uint8_t temp = palette_map[i];
-		palette_map[i] = palette_map[j];
-		palette_map[j] = temp;
+	auto swap_mapping = [this, &reverse_map](int i, int j) {
+		int index_i = reverse_map[i];
+		int index_j = j; //reverse_map[j];
+
+		uint8_t palette_map_i = palette_map[index_i];
+		uint8_t palette_map_j = palette_map[index_j];
+		palette_map[index_i] = palette_map_j;
+		palette_map[index_j] = palette_map_i;
+
+		reverse_map[palette_map_i] = index_j;
+		reverse_map[palette_map_j] = index_i;
 	};
 
 	// Move materials to an empty space in a correct row
 	for (int i = 0; i < 256; i++) {
 		if (is_index_used[i] && !fixed[i]) {
 			string mat_name = MaterialName[material[i].td_type];
-			// TODO: fix moved element!
 			for (int j = 0; j < 256; j++) {
 				if (!occupied[j] && GetIndexNote(j) == mat_name) {
 					fixed[i] = true;
@@ -420,18 +428,15 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 
 					// Move materials of the same type to this new row
 					for (int l = 0; l < 256; l++) {
-						if (is_index_used[l] && !fixed[l]) {
-							string mat_name2 = MaterialName[material[l].td_type];
-							if (mat_name2 == mat_name) {
-								for (int m = starting_index; m < starting_index + 8; m++) {
-									if (!occupied[m]) {
-										fixed[l] = true;
-										occupied[m] = true;
-										swap_mapping(l, m);
-										// Pigeon paradise!
-										// (because of the nesting, get it?)
-										break;
-									}
+						if (is_index_used[l] && !fixed[l] && material[l].td_type == material[i].td_type) {
+							for (int m = starting_index; m < starting_index + 8; m++) {
+								if (m < 256 && !occupied[m]) {
+									fixed[l] = true;
+									occupied[m] = true;
+									swap_mapping(l, m);
+									// Pigeon paradise!
+									// (because of the nesting, get it?)
+									break;
 								}
 							}
 						}
@@ -452,12 +457,8 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 		if (!mapped[i])
 			throw logic_error("Index " + to_string(i) + " not mapped");
 
-	uint8_t reverse_map[256];
-	for (int i = 0; i < 256; i++)
-		reverse_map[palette_map[i]] = i;
-
 	// Check correct mapping
-	for (int i = 0; i < 254; i++) { // Last two are correct by default
+	for (int i = 1; i < 254; i++) { // The other indices are correct
 		if (is_index_used[i]) {
 			int j = reverse_map[i];
 			string note = GetIndexNote(j);
