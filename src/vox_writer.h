@@ -40,7 +40,6 @@ enum MV_MatType {
 };
 
 struct MV_Material {
-	uint8_t index;
 	uint8_t td_type;
 	MV_MatType type;
 	union {
@@ -104,7 +103,7 @@ private:
 	void Write_nSHP(int i);
 	void WriteRGBA();
 	void WriteIMAP();
-	void WriteMATL(const MV_Material& mat);
+	void WriteMATL(uint8_t index, const MV_Material& mat);
 	void WriteNOTE();
 public:
 	MV_FILE(string filename);

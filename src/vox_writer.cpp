@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 #include "scene.h"
 #include "misc_utils.h"
@@ -63,7 +64,7 @@ MV_FILE::MV_FILE(string filename) {
 
 	for (int i = 0; i < 256; i++) {
 		palette[i] = { 75, 75, 75, 255};
-		material[i] = { (uint8_t)i, Material::None, DIFFUSE, {} };
+		material[i] = { Material::None, DIFFUSE, {} };
 		is_index_used[i] = false;
 		palette_map[i] = i;
 	}
@@ -208,7 +209,7 @@ void MV_FILE::WriteIMAP() {
 	fwrite(&palette_map[0], sizeof(uint8_t), 1, vox_file);
 }
 
-void MV_FILE::WriteMATL(const MV_Material& mat) {
+void MV_FILE::WriteMATL(uint8_t index, const MV_Material& mat) {
 	DICT material_attr;
 	if (mat.type == METAL) {
 		material_attr["_type"] = "_metal";
@@ -229,7 +230,7 @@ void MV_FILE::WriteMATL(const MV_Material& mat) {
 		matl_size += it->first.length() + it->second.length();
 
 	WriteChunkHeader(MATL, matl_size, 0);
-	WriteInt(mat.index);
+	WriteInt(index);
 	WriteDICT(material_attr);
 }
 
@@ -276,7 +277,7 @@ void MV_FILE::SaveModel(bool compress) {
 	WriteIMAP();
 	for (int i = 0; i < 256; i++)
 		if (is_index_used[i])
-			WriteMATL(material[i]);
+			WriteMATL(i, material[i]);
 	WriteNOTE();
 
 	// Update childrenSize in the MAIN chunk
@@ -308,7 +309,6 @@ void MV_FILE::SetEntry(uint8_t index, const Material& material) {
 	uint8_t b = 255.0 * color.b;
 
 	MV_Material mat;
-	mat.index = index;
 	mat.td_type = material.type;
 
 	if (color.a != 1.0) {
