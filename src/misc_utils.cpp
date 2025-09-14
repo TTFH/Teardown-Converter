@@ -4,11 +4,6 @@
 #include <sstream>
 #include <filesystem>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "lib/stb_image.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "lib/stb_image_write.h"
-
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -18,6 +13,11 @@
 #endif
 
 #include "misc_utils.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "lib/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "lib/stb_image_write.h"
 
 namespace fs = filesystem;
 

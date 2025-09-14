@@ -14,15 +14,42 @@
 #include "write_scene.h"
 #include "../lib/tinyxml2.h"
 
-static const Material HOLE = {
-	Material::Unphysical,
-	{ 1.0, 0.0, 0.0, 1.0 },
-	0.1,
-	1.0,
-	0.0,
-	0.0,
-	false
-};
+MV_Color ToMV(const Color& color) {
+	uint8_t r = 255.0 * color.r;
+	uint8_t g = 255.0 * color.g;
+	uint8_t b = 255.0 * color.b;
+	return { r, g, b, 255 };
+}
+
+MV_Material ToMV(const Material& material) {
+	MV_Material mat;
+	mat.td_type = material.type;
+	const Color& color = material.rgba;
+	if (color.a < 1.0) {
+		mat.type = GLASS;
+		mat.properties.glass.roughness = 1.0 - material.shinyness;
+	} else if (material.emissive > 0) {
+		mat.type = EMIT;
+		int flux = 0;
+		if (material.emissive > 100.0)
+			flux = 4;
+		else if (material.emissive > 10.0)
+			flux = 3;
+		else if (material.emissive > 1.0)
+			flux = 2;
+		else if (material.emissive > 0.1)
+			flux = 1;
+		mat.properties.emit.emission = material.emissive / pow(10, flux - 1);
+		mat.properties.emit.power = flux;
+	} else if (material.reflectivity > 0 || material.shinyness > 0 || material.metalness > 0) {
+		mat.type = METAL;
+		mat.properties.metal.roughness = 1.0 - material.shinyness;
+		mat.properties.metal.specular = 1.0 + material.reflectivity;
+		mat.properties.metal.metallic = material.metalness;
+	} else
+		mat.type = DIFFUSE;
+	return mat;
+}
 
 WriteXML::WriteXML(ConverterParams params) : params(params) {
 	InitScene(params.bin_path.c_str());
@@ -229,7 +256,7 @@ void WriteXML::WriteShape(XMLElement*& parent_element, XMLElement*& entity_eleme
 	shape->transform = shape_transform;
 
 	bool is_prop = false;
-	if (shape_transform.isDefault()) {
+	/*if (shape_transform.isDefault()) {
 		Entity* parent_entity = entity->parent;
 		assert(parent_entity != NULL);
 		assert(parent_entity->type == Entity::Body);
@@ -241,7 +268,8 @@ void WriteXML::WriteShape(XMLElement*& parent_element, XMLElement*& entity_eleme
 			WriteTransform(entity_element, parent_body->transform);
 			is_prop = true;
 		}
-	}
+	}*/
+	(void)parent_element;
 
 	entity_element->SetName("vox");
 	if (!is_prop) WriteTransform(entity_element, shape_transform);
@@ -250,7 +278,7 @@ void WriteXML::WriteShape(XMLElement*& parent_element, XMLElement*& entity_eleme
 	xml.AddFloatAttribute(entity_element, "density", shape->density, "1");
 	xml.AddFloatAttribute(entity_element, "strength", shape->strength, "1");
 	xml.AddBoolAttribute(entity_element, "collide", collide, true);
-	//xml.AddBoolAttribute(entity_element, "prop", is_prop, false);
+	xml.AddBoolAttribute(entity_element, "prop", is_prop, false);
 
 	string vox_folder = params.legacy_format ? "custom/" : "vox/";
 	string vox_filename = params.map_folder + vox_folder + "palette" + to_string(shape->voxels.palette) + ".vox";
@@ -286,16 +314,16 @@ void WriteXML::WriteShape(XMLElement*& parent_element, XMLElement*& entity_eleme
 						Material palette_entry = palette.materials[index];
 						if (params.remove_snow && index == 254)
 							mvshape.voxels->Set(x, y, z, 0);
-						vox_file->SetEntry(index, palette_entry);
+						vox_file->SetEntry(index, ToMV(palette_entry.rgba), ToMV(palette_entry));
 					}
 				}
 
-		if (params.remove_snow && !is_wheel_shape) {
+		if (params.remove_snow && is_wheel_shape) {
 			if (mvshape.voxels->Get(0, 0, 0) == 0)
 				mvshape.voxels->Set(0, 0, 0, 255);
 			if (mvshape.voxels->Get(sizex - 1, sizey - 1, sizez - 1) == 0)
 				mvshape.voxels->Set(sizex - 1, sizey - 1, sizez - 1, 255);
-			vox_file->SetEntry(255, HOLE);
+			vox_file->SetEntry(255, HOLE_COLOR, HOLE_MATERIAL);
 		}
 
 		bool duplicated = vox_file->GetShapeName(mvshape, vox_object);
@@ -317,7 +345,7 @@ void WriteXML::WriteShape(XMLElement*& parent_element, XMLElement*& entity_eleme
 	}
 }
 
-void WriteXML::WriteCompound(uint32_t handle, Tensor3D* voxels, MV_FILE* compound_vox, string vox_file, XMLElement* compound_xml, const Shape* shape, int i, int j, int k) {
+void WriteXML::WriteCompound(uint32_t handle, const Tensor3D* shape_voxels, MV_FILE* compound_vox, string vox_file, XMLElement* compound_xml, const Shape* shape, int i, int j, int k) {
 	XMLElement* shape_xml = xml.CreateElement("vox");
 	const Palette& palette = scene.palettes[shape->voxels.palette];
 
@@ -345,18 +373,18 @@ void WriteXML::WriteCompound(uint32_t handle, Tensor3D* voxels, MV_FILE* compoun
 	MV_Shape mvshape = { vox_object, mv_pos_x, mv_pos_y, mv_pos_z, new Tensor3D(part_sizex, part_sizey, part_sizez) };
 	mvshape.voxels->Set(0, 0, 0, 255);
 	mvshape.voxels->Set(part_sizex - 1, part_sizey - 1, part_sizez - 1, 255);
-	compound_vox->SetEntry(255, HOLE);
+	compound_vox->SetEntry(255, HOLE_COLOR, HOLE_MATERIAL);
 
 	bool empty = true;
 	for (int z = offsetz; z < part_sizez + offsetz; z++)
 		for (int y = offsety; y < part_sizey + offsety; y++)
 			for (int x = offsetx; x < part_sizex + offsetx; x++) {
-				uint8_t index = voxels->Get(x, y, z);
+				uint8_t index = shape_voxels->Get(x, y, z);
 				if (index != 0) {
 					const Material& palette_entry = palette.materials[index];
 					if (!params.remove_snow || index != 254)
 						mvshape.voxels->Set(x - offsetx, y - offsety, z - offsetz, index);
-					compound_vox->SetEntry(index, palette_entry);
+					compound_vox->SetEntry(index, ToMV(palette_entry.rgba), ToMV(palette_entry));
 					empty = false;
 				}
 			}

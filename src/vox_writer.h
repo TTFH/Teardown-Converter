@@ -7,9 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "scene.h"
-#include "entity.h"
-
 using namespace std;
 
 typedef map<string, string> DICT;
@@ -32,7 +29,7 @@ const int MATL = ID('M', 'A', 'T', 'L');
 const int IMAP = ID('I', 'M', 'A', 'P');
 const int NOTE = ID('N', 'O', 'T', 'E');
 
-enum MV_MatType {
+enum MV_MaterialType {
 	DIFFUSE,
 	METAL,
 	GLASS,
@@ -41,7 +38,7 @@ enum MV_MatType {
 
 struct MV_Material {
 	uint8_t td_type;
-	MV_MatType type;
+	MV_MaterialType type;
 	union {
 		struct {
 			float roughness;
@@ -77,9 +74,10 @@ class MV_FILE {
 private:
 	FILE* vox_file;
 	string filename;
+	bool write_imap;
 	long int children_size_ptr;
 	vector<MV_Shape> models;
-	static constexpr int ROWS = 32;
+	static const int ROWS = 32;
 	string notes[ROWS];
 
 	bool is_index_used[256];
@@ -106,13 +104,20 @@ private:
 	void WriteMATL(uint8_t index, const MV_Material& mat);
 	void WriteNOTE();
 public:
-	MV_FILE(string filename);
+	MV_FILE(string filename, bool write_imap = true);
 	~MV_FILE();
-	void SaveModel(bool compress);
+	void SaveModel(bool compress = false);
 	void AddShape(const MV_Shape& shape);
 	bool GetShapeName(const MV_Shape& shape, string& name) const;
-	// TODO: use MV_Color / MV_Material and move convertion to a different file
-	void SetEntry(uint8_t index, const Material& material);
+	void SetEntry(uint8_t index, const MV_Color& color, MV_Material mat);
 };
+
+const int SNOW_INDEX = 254;
+const MV_Color SNOW_COLOR = { 230, 230, 230, 255 };
+const MV_Material SNOW_MATERIAL = { Material::Unphysical, METAL, { 0.8f, 1.1f, 0.0f } };
+
+const uint8_t HOLE_INDEX = 255;
+const MV_Color HOLE_COLOR = { 255, 0, 0, 255 };
+const MV_Material HOLE_MATERIAL = { Material::None, GLASS, { 1.0f } };
 
 #endif

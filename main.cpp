@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -8,6 +9,7 @@
 #include "src/parser.h"
 #include "src/levels.h"
 #include "src/misc_utils.h"
+#include "src/vox_writer.h"
 
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
@@ -50,6 +52,70 @@ void* DecompileMap(void* param) {
 	return NULL;
 }
 
+MV_Color HSVtoRGB(float h, float s, float v) {
+	float c = v * s;
+	float x = c * (1 - abs(fmod(h / 60.0f, 2) - 1));
+	float m = v - c;
+
+	float r_prime, g_prime, b_prime;
+	if (h >= 0 && h < 60) {
+		r_prime = c; g_prime = x; b_prime = 0;
+	} else if (h >= 60 && h < 120) {
+		r_prime = x; g_prime = c; b_prime = 0;
+	} else if (h >= 120 && h < 180) {
+		r_prime = 0; g_prime = c; b_prime = x;
+	} else if (h >= 180 && h < 240) {
+		r_prime = 0; g_prime = x; b_prime = c;
+	} else if (h >= 240 && h < 300) {
+		r_prime = x; g_prime = 0; b_prime = c;
+	} else {
+		r_prime = c; g_prime = 0; b_prime = x;
+	}
+
+	uint8_t r = 255.0 * (r_prime + m);
+	uint8_t g = 255.0 * (g_prime + m);
+	uint8_t b = 255.0 * (b_prime + m);
+	return { r, g, b, 1 };
+}
+
+vector<MV_Color> GenerateColorSpectrum(int n) {
+	vector<MV_Color> spectrum;
+	spectrum.reserve(n);
+
+	float start_hue = 300.0f;
+	float end_hue = 0.0f;
+	float saturation = 0.9f;
+	float value = 0.9f;
+
+	for (int i = 0; i < n; i++) {
+		float t = (n == 1) ? 0.0f : (float)i / (n - 1);
+		float hue = start_hue + t * (end_hue - start_hue);
+		spectrum.push_back(HSVtoRGB(hue, saturation, value));
+	}
+	return spectrum;
+}
+
+void CreateTestPalette() {
+	MV_FILE vox_file("palette.vox", false);
+	vector<MV_Color> spectrum = GenerateColorSpectrum(256);
+	for (int i = 1; i < 254; i++)
+		vox_file.SetEntry(i, spectrum[i], { Material::None, DIFFUSE, {} });
+	vox_file.SetEntry(SNOW_INDEX, SNOW_COLOR, SNOW_MATERIAL);
+	vox_file.SetEntry(HOLE_INDEX, HOLE_COLOR, HOLE_MATERIAL);
+
+	Tensor3D* voxels = new Tensor3D(8 * 8, 8, 8 * 32);
+	for (int i = 0; i < 255; i++) {
+		for (int x = 0; x < 8; x++)
+			for (int y = 0; y < 8; y++)
+				for (int z = 0; z < 8; z++)
+					voxels->Set(x + 8 * (i % 8), y, z + 8 * (i / 8), i + 1);
+	}
+
+	MV_Shape mvshape = { "", 0, 0, 128, voxels };
+	vox_file.AddShape(mvshape);
+	vox_file.SaveModel();
+}
+
 int main(int argc, char* argv[]) {
 #ifdef _WIN32
 	_setmaxstdio(2048);
@@ -62,8 +128,11 @@ int main(int argc, char* argv[]) {
 			ParseFile(params);
 			SaveInfoTxt(params.map_folder, "Converted", "Converted map");
 			return 0;
-		} else
+		} else {
 			printf("CLI Usage: %s quicksave.bin\n", argv[0]);
+			CreateTestPalette();
+			return 0;
+		}
 	}
 
 	GLFWwindow* window = InitOpenGL("Teardown Converter", 700, 600);

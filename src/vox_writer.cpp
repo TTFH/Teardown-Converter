@@ -58,8 +58,9 @@ bool MV_Shape::operator==(const MV_Shape& other) const {
 	return true;
 }
 
-MV_FILE::MV_FILE(string filename) {
+MV_FILE::MV_FILE(string filename, bool write_imap) {
 	this->filename = filename;
+	this->write_imap = write_imap;
 	vox_file = NULL;
 
 	for (int i = 0; i < 256; i++) {
@@ -190,6 +191,7 @@ void MV_FILE::WriteRGBA() {
 }
 
 void MV_FILE::WriteIMAP() {
+	if (!write_imap) return;
 	try {
 		FIX_PALETTE_MAPPING();
 	} catch (logic_error& e) {
@@ -301,42 +303,10 @@ bool MV_FILE::GetShapeName(const MV_Shape& shape, string& name) const {
 	return found;
 }
 
-void MV_FILE::SetEntry(uint8_t index, const Material& material) {
-	if (is_index_used[index]) return;
-	const Color& color = material.rgba;
-	uint8_t r = 255.0 * color.r;
-	uint8_t g = 255.0 * color.g;
-	uint8_t b = 255.0 * color.b;
-
-	MV_Material mat;
-	mat.td_type = material.type;
-
-	if (color.a != 1.0) {
-		mat.type = GLASS;
-		mat.properties.glass.roughness = 1.0 - material.shinyness;
-	} else if (material.emissive > 0) {
-		mat.type = EMIT;
-		int flux = 0;
-		if (material.emissive > 100.0)
-			flux = 4;
-		else if (material.emissive > 10.0)
-			flux = 3;
-		else if (material.emissive > 1.0)
-			flux = 2;
-		else if (material.emissive > 0.1)
-			flux = 1;
-		mat.properties.emit.emission = material.emissive / pow(10, flux - 1);
-		mat.properties.emit.power = flux;
-	} else if (material.reflectivity > 0 || material.shinyness > 0 || material.metalness > 0) {
-		mat.type = METAL;
-		mat.properties.metal.roughness = 1.0 - material.shinyness;
-		mat.properties.metal.specular = 1.0 + material.reflectivity;
-		mat.properties.metal.metallic = material.metalness;
-	} else
-		mat.type = DIFFUSE;
-
-	palette[index] = { r, g, b, 255 };
-	this->material[index] = mat;
+void MV_FILE::SetEntry(uint8_t index, const MV_Color& color, MV_Material mat) {
+	if (index == 0 || is_index_used[index]) return;
+	palette[index] = color;
+	material[index] = mat;
 	is_index_used[index] = true;
 }
 
@@ -349,6 +319,7 @@ MV_FILE::~MV_FILE() {
 string MV_FILE::GetIndexNote(int index) {
 	if (index == 0) index = 256;
 	int row = (ROWS - 1) - (index - 1) / 8;
+	if (row == 0) return "none";
 	return notes[row];
 }
 
@@ -458,7 +429,7 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 			throw logic_error("Index " + to_string(i) + " not mapped");
 
 	// Check correct mapping
-	for (int i = 1; i < 254; i++) { // The other indices are correct
+	for (int i = 1; i < 254; i++) { // Last two indices are correct
 		if (is_index_used[i]) {
 			int j = reverse_map[i];
 			string note = GetIndexNote(j);
