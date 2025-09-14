@@ -10,7 +10,7 @@ It allows to convert maps from the binary .tdbin format into editable .xml and .
 > You can download this tool from the [Releases page](https://github.com/TTFH/Teardown-Converter/releases) on GitHub.
 
 > [!Tip]
-> You may encounter red voxels in the editor, these are added to keep the original shape size when splitting compounds or removing snow from vehicle wheels.
+> You may encounter red voxels in the editor, these are added to keep the original shape size when splitting compounds or removing snow.
 > To hide these red voxels, press Shift + V in the editor to toggle their visibility.
 
 > [!Important]

@@ -120,6 +120,8 @@ void XML_Writer::MoveElement(XMLElement* oldparent, XMLElement* child) {
 }
 
 bool XML_Writer::IsChildOf(XMLElement* parent, XMLElement* child) {
+	if (parent == NULL || child == NULL)
+		return false;
 	while (child != NULL) {
 		if (child == parent)
 			return true;
