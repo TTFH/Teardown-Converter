@@ -32,8 +32,7 @@ void copy_folder(string origin, string destination) {
 }
 
 void create_folder(string name) {
-	if (!fs::exists(name))
-		fs::create_directories(name);
+	fs::create_directories(name);
 }
 
 string GetUsername() {

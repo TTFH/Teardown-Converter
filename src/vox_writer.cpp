@@ -395,7 +395,7 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 					fixed[i] = true;
 					occupied[starting_index] = true;
 					swap_mapping(i, starting_index);
-					notes[note_idx] = MaterialPrefix + string(mat_name);
+					notes[note_idx] = MaterialPrefix + mat_name;
 
 					// Move materials of the same type to this new row
 					for (int l = 0; l < 256; l++) {

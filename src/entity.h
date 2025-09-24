@@ -43,12 +43,12 @@ public:
 	}
 	T operator[](uint32_t index) const {
 		if (index > size - 1)
-			throw out_of_range("Position out of range");
+			throw out_of_range("Index out of range");
 		return data[index];
 	}
 	T& operator[](uint32_t index) {
 		if (index > size - 1)
-			throw out_of_range("Position out of range");
+			throw out_of_range("Index out of range");
 		return data[index];
 	}
 };
