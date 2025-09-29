@@ -158,7 +158,7 @@ Tensor3D::~Tensor3D() {
 		delete[] data[i];
 	}
 	delete[] data;
-	data = NULL;
+	data = nullptr;
 }
 
 void Tensor3D::FromRunLengthEncoding(const RLE& rle) {
@@ -215,7 +215,7 @@ int Tensor3D::GetNonZeroCount() const {
 
 uint8_t* Tensor3D::ToArray() const {
 	int volume = GetVolume();
-	if (volume == 0) return NULL;
+	if (volume == 0) return nullptr;
 	uint8_t* array = new uint8_t[volume];
 	int i = 0;
 	for (int z = 0; z < sizez; z++)

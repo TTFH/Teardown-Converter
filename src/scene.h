@@ -58,13 +58,14 @@ struct Skybox {
 };
 
 struct Fog {
-	uint8_t type;
+	static const uint8_t Classic = 0;
+	static const uint8_t Linear = 1;
+	static const uint8_t Exp = 2;
+	static const uint8_t Exp2 = 3;
+
+	uint8_t type;	// fogType
 	Color color;	// fogColor
-	Vec4 fog_params; // fogParams
-	/*float start;
-	float distance;	// end = start + distance
-	float amount;
-	float exponent;*/
+	Vec4 params;	// fogParams (start, end/density, amount, exponent)
 	float height_offset;
 };
 

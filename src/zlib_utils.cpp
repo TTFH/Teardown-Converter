@@ -78,7 +78,7 @@ bool ZlibUncompress(const uint8_t* source, const size_t source_len, vector<uint8
 
 void UncompressFile(const char* input_file, const char* output_file) {
 	FILE* bin_file = fopen(input_file, "rb");
-	if (bin_file == NULL) return;
+	if (bin_file == nullptr) return;
 
 	fseek(bin_file, 0, SEEK_END);
 	size_t compressed_size = ftell(bin_file);
@@ -91,7 +91,7 @@ void UncompressFile(const char* input_file, const char* output_file) {
 	vector<uint8_t> uncompressed_data;
 	if (ZlibUncompress(compressed_data, compressed_size, uncompressed_data)) {
 		FILE* tdbin_file = fopen(output_file, "wb");
-		if (tdbin_file != NULL) {
+		if (tdbin_file != nullptr) {
 			fwrite(uncompressed_data.data(), sizeof(uint8_t), uncompressed_data.size(), tdbin_file);
 			fclose(tdbin_file);
 		}
@@ -101,7 +101,7 @@ void UncompressFile(const char* input_file, const char* output_file) {
 
 bool IsFileCompressed(const char* filename) {
 	FILE* test_file = fopen(filename, "rb");
-	if (test_file == NULL) return false;
+	if (test_file == nullptr) return false;
 	uint8_t header[5];
 	fread(header, sizeof(uint8_t), 5, test_file);
 	fclose(test_file);

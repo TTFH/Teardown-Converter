@@ -24,7 +24,9 @@ public:
 	Registry ReadRegistry();
 	Color ReadColor();
 	Vertex ReadVertex();
-	Vec3 ReadVector();
+	Vec2 ReadVec2();
+	Vec3 ReadVec3();
+	Vec4 ReadVec4();
 	Quat ReadQuat();
 	Transform ReadTransform();
 	void ReadBuffer(uint8_t* buffer, int size);

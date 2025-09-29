@@ -61,7 +61,7 @@ bool MV_Shape::operator==(const MV_Shape& other) const {
 MV_FILE::MV_FILE(string filename, bool write_imap) {
 	this->filename = filename;
 	this->write_imap = write_imap;
-	vox_file = NULL;
+	vox_file = nullptr;
 
 	for (int i = 0; i < 256; i++) {
 		palette[i] = { 75, 75, 75, 255};
@@ -251,7 +251,7 @@ void MV_FILE::WriteNOTE() {
 
 void MV_FILE::SaveModel(bool compress) {
 	vox_file = fopen(filename.c_str(), "wb+");
-	if (vox_file == NULL) {
+	if (vox_file == nullptr) {
 		printf("[ERROR] Could not open %s for writing\n", filename.c_str());
 		return;
 	}

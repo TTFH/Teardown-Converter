@@ -93,8 +93,8 @@ struct Color {
 };
 
 struct Sound {
-	string path;
-	float volume;
+	string path;	// or name
+	float volume;	// or pitch
 };
 
 // ------------------------------------
@@ -291,7 +291,7 @@ struct Joint {
 	float rotstrength;			// rotstrength
 	float rotspring;			// rotspring
 	Quat hinge_rot;
-	float limits[2];			// limits (in degrees for hinge, meters for prismatic)
+	Vec2 limits;				// limits (in degrees for hinge, meters for prismatic)
 	float max_velocity;
 	float strength;
 	float size;					// size
@@ -301,11 +301,6 @@ struct Joint {
 	float disconnect_dist;		// Used for planks 0.8
 	Rope* rope;
 	~Joint();
-};
-
-struct VehicleSound {
-	string name;
-	float pitch;
 };
 
 struct VehicleProperties {
@@ -322,7 +317,7 @@ struct VehicleProperties {
 	float steerassist;	// steerassist
 	float assist_multiplier;
 	float antiroll;		// antiroll
-	VehicleSound sound;	// sound
+	Sound sound;		// sound
 };
 
 struct Exhaust {
@@ -380,7 +375,7 @@ struct Wheel {
 	Transform transform2;	// in the wheel body local space
 	float steer;			// steer
 	float drive;			// drive
-	float travel[2];		// travel
+	Vec2 travel;			// travel
 	float radius;
 	float width;
 	float angular_speed;
@@ -390,7 +385,7 @@ struct Wheel {
 
 struct Screen {
 	Transform transform;
-	float size[2];			// size
+	Vec2 size;				// size
 	float bulge;			// bulge
 	uint32_t resolution[2];	// resolution
 	string script;			// script
@@ -424,7 +419,7 @@ struct Trigger {
 	Transform transform;
 	uint32_t type;				// type
 	float sphere_size;			// size
-	float box_size[3];			// size = 2.0 * this
+	Vec3 box_size;				// size = 2.0 * this
 	float polygon_size;			// size
 	Vec<Vertex> polygon_vertices;
 	TriggerSound sound;

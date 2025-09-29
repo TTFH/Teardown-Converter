@@ -57,7 +57,7 @@ static string WideToUtf8(const wstring& wstr) {
 string GetMyDocuments() {
 #ifdef _WIN32
 	PWSTR path = nullptr;
-	SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &path);
+	SHGetKnownFolderPath(FOLDERID_Documents, 0, nullptr, &path);
 	string documents_path = WideToUtf8(path);
 	CoTaskMemFree(path);
 	return documents_path;
@@ -69,7 +69,7 @@ string GetMyDocuments() {
 string GetAppDataLocal() {
 #ifdef _WIN32
 	PWSTR path = nullptr;
-	SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &path);
+	SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &path);
 	string appdata_path = WideToUtf8(path);
 	CoTaskMemFree(path);
 	return appdata_path;
@@ -114,8 +114,8 @@ GLFWwindow* InitOpenGL(const char* window_title, int width, int height) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
 	glfwWindowHint(GLFW_SAMPLES, 1); // MSAA
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	GLFWwindow* window = glfwCreateWindow(width, height, window_title, NULL, NULL);
-	if (window == NULL) {
+	GLFWwindow* window = glfwCreateWindow(width, height, window_title, nullptr, nullptr);
+	if (window == nullptr) {
 		printf("[GLFW] Failed to initialize OpenGL\n");
 		glfwTerminate();
 		exit(EXIT_FAILURE);
@@ -149,7 +149,7 @@ GLuint LoadTexture(const char* path) {
 void SaveImageJPG(string input_image, string output_image) {
 	int width, height, channels;
 	uint8_t* image = stbi_load(input_image.c_str(), &width, &height, &channels, 0);
-	if (image == NULL) {
+	if (image == nullptr) {
 		printf("[WARNING] Image %s not found.\n", input_image.c_str());
 		return;
 	}

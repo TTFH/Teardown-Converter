@@ -49,7 +49,7 @@ void* DecompileMap(void* param) {
 			copy_folder(data->script_folder + "script", data->map_folder + "script");
 	}
 	ParseFile(*data);
-	return NULL;
+	return nullptr;
 }
 
 MV_Color HSVtoRGB(float h, float s, float v) {
@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
 #endif
 
 	XMLDocument config_file;
-	XMLElement* config_root = NULL;
+	XMLElement* config_root = nullptr;
 	if (config_file.LoadFile("config.xml") == XML_SUCCESS) {
 		config_root = config_file.RootElement();
 		strcpy(quicksave_folder, config_root->FindAttribute("quicksave_folder")->Value());
@@ -214,7 +214,7 @@ int main(int argc, char* argv[]) {
 		ImGui::NewFrame();
 
 		{
-			ImGui::Begin("Convert TDBIN file", NULL, dialog_flags);
+			ImGui::Begin("Convert TDBIN file", nullptr, dialog_flags);
 
 			ImGui::Text("Quicksave folder:");
 			ImGui::SameLine();
@@ -398,7 +398,7 @@ int main(int argc, char* argv[]) {
 
 				string tdbin = params->bin_path + ".tdbin";
 				FILE* already_decompressed = fopen(tdbin.c_str(), "rb");
-				if (already_decompressed != NULL) {
+				if (already_decompressed != nullptr) {
 					printf("A decompressed file was found for the current level.\n");
 					params->bin_path += ".tdbin";
 					fclose(already_decompressed);
@@ -415,7 +415,7 @@ int main(int argc, char* argv[]) {
 				params->compress_vox = use_tdcz;
 				params->legacy_format = save_as_legacy;
 
-				pthread_create(&parse_thread, NULL, DecompileMap, params);
+				pthread_create(&parse_thread, nullptr, DecompileMap, params);
 			}
 			ImGui::PopStyleColor(3);
 
@@ -441,10 +441,10 @@ int main(int argc, char* argv[]) {
 		glfwSwapBuffers(window);
 	}
 
-	pthread_join(parse_thread, NULL);
+	pthread_join(parse_thread, nullptr);
 	delete params;
 
-	if (config_root == NULL) {
+	if (config_root == nullptr) {
 		config_root = config_file.NewElement("config");
 		config_file.InsertFirstChild(config_root);
 	}

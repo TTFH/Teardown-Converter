@@ -8,14 +8,14 @@
 #include "binary_reader.h"
 
 FileReader::FileReader() {
-	file = NULL;
+	file = nullptr;
 }
 
 void FileReader::InitReader(const char* path) {
 	file = fopen(path, "rb");
-	if (file == NULL) {
+	if (file == nullptr) {
 	#ifdef _WIN32
-		MessageBoxA(NULL, "Could not open map file, check the game path", "File not found", MB_OK | MB_ICONERROR);
+		MessageBoxA(nullptr, "Could not open map file, check the game path", "File not found", MB_OK | MB_ICONERROR);
 	#endif
 		printf("[ERROR] Could not open %s for reading\n", path);
 		exit(EXIT_FAILURE);
@@ -102,11 +102,27 @@ Vertex Reader::ReadVertex() {
 	return vertex;
 }
 
-Vec3 Reader::ReadVector() {
+Vec2 Reader::ReadVec2() {
+	Vec2 vec;
+	vec.x = ReadFloat();
+	vec.y = ReadFloat();
+	return vec;
+}
+
+Vec3 Reader::ReadVec3() {
 	Vec3 vec;
 	vec.x = ReadFloat();
 	vec.y = ReadFloat();
 	vec.z = ReadFloat();
+	return vec;
+}
+
+Vec4 Reader::ReadVec4() {
+	Vec4 vec;
+	vec.x = ReadFloat();
+	vec.y = ReadFloat();
+	vec.z = ReadFloat();
+	vec.w = ReadFloat();
 	return vec;
 }
 
@@ -121,7 +137,7 @@ Quat Reader::ReadQuat() {
 
 Transform Reader::ReadTransform() {
 	Transform transform;
-	transform.pos = ReadVector();
+	transform.pos = ReadVec3();
 	transform.rot = ReadQuat();
 	return transform;
 }

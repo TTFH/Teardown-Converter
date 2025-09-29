@@ -41,7 +41,7 @@ struct Transform {
 
 class Tensor3D {
 private:
-	uint8_t*** data = NULL;
+	uint8_t*** data = nullptr;
 public:
 	int sizex, sizey, sizez;
 

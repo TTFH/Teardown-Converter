@@ -324,7 +324,7 @@ vector<LevelInfo> LoadLevels(string filter) {
 void SaveInfoTxt(string map_folder, string level_name, string level_desc) {
 	string info_path = map_folder + "info.txt";
 	FILE* info_file = fopen(info_path.c_str(), "w");
-	if (info_file == NULL) {
+	if (info_file == nullptr) {
 		printf("[ERROR] Could not create info.txt\n");
 		return;
 	}
