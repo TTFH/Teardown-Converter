@@ -89,14 +89,15 @@ string GetFilename(const char* path) {
 }
 
 string FloatToString(float value) {
-	if (fabs(value) < 0.001) value = 0;
-	stringstream ss;
+	if (fabs(value) < 0.0005)  
+		value = 0;
+	ostringstream ss;
 	ss << fixed << setprecision(3) << value;
 	string str = ss.str();
 	if (str.find('.') != string::npos) {
-		str = str.substr(0, str.find_last_not_of('0') + 1);
-		if (str.find('.') == str.size() - 1)
-			str = str.substr(0, str.size() - 1);
+		str.erase(str.find_last_not_of('0') + 1);
+		if (str.back() == '.')
+			str.pop_back();
 	}
 	return str;
 }

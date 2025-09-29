@@ -22,9 +22,7 @@ private:
 
 	void WriteEntity2ndPass(const Entity* entity);
 	void WriteEntity(XMLElement* parent, const Entity* entity);
-	void WriteTransform(XMLElement* element, const Transform& tr);
 	void WriteShape(XMLElement* entity, Shape* shape, uint32_t handle);
-	void WriteVertices(XMLElement* element, const Vec<Vertex>& vertices);
 	void WriteCompound(XMLElement*, uint32_t, const Tensor3D*, const Palette&, MV_FILE*, string, int, int, int);
 public:
 	WriteXML(ConverterParams params);

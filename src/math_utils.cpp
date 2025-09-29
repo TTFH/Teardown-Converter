@@ -90,7 +90,8 @@ Quat QuatEulerRad(double roll, double yaw, double pitch) {
 // Safe range:
 // x, y = [0, 360], z = [-90, 90]
 // x, y = (-180, 180), z = (-90, 90)
-void QuatToEuler(Quat q, float& bank, float& heading, float& attitude) {
+Vec3 QuatToEuler(Quat q) {
+	float bank, heading, attitude;
 	double x = q.x, y = q.y, z = q.z, w = q.w;
 	double s = 2 * x * y + 2 * z * w;
 	if (s >= 0.999) {
@@ -109,6 +110,7 @@ void QuatToEuler(Quat q, float& bank, float& heading, float& attitude) {
 	bank = deg(bank);
 	heading = deg(heading);
 	attitude = deg(attitude);
+	return Vec3(bank, heading, attitude);
 }
 
 Quat FromAxisAngle(Vec3 axis, float angle) {

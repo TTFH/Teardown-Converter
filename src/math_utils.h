@@ -14,7 +14,7 @@ struct Vec3 {
 	float x, y, z;
 	Vec3() : x(0), y(0), z(0) {}
 	Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
-	Vec3(float v[3]) : x(v[0]), y(v[1]), z(v[2]) {}
+	//Vec3(float v[3]) : x(v[0]), y(v[1]), z(v[2]) {}
 	float length() const;
 	bool isZero() const;
 	Vec3 normalize() const;
@@ -64,7 +64,7 @@ double rad(double deg);
 bool CompareFloat(float a, float b);
 Quat QuatEuler(double roll, double yaw, double pitch);
 Quat QuatEulerRad(double roll, double yaw, double pitch);
-void QuatToEuler(Quat q, float& bank, float& heading, float& attitude);
+Vec3 QuatToEuler(Quat q);
 Quat FromAxisAngle(Vec3 axis, float angle);
 Transform TransformToLocalTransform(const Transform& parent, const Transform& child);
 

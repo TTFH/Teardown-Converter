@@ -6,97 +6,137 @@
 #include "misc_utils.h"
 #include "../lib/tinyxml2.h"
 
+static const char* GroupName[] = {
+	"Props",
+	"Locations",
+	"Water",
+	"Ropes",
+	"Vehicles",
+	"Triggers",
+	"Scripts"
+};
+
 XML_Writer::XML_Writer() {
-	main_xml = new XMLDocument();
-	scene = main_xml->NewElement("scene");
-	main_xml->InsertFirstChild(scene);
-}
+	scene = main_xml.NewElement("scene");
+	main_xml.InsertEndChild(scene);
 
-void XML_Writer::PostInit() {
-	props = main_xml->NewElement("group");
-	AddStrAttribute(props, "name", "Props");
-	AddElement(scene, props);
-
-	locations = main_xml->NewElement("group");
-	AddStrAttribute(locations, "name", "Locations");
-	AddElement(scene, locations);
-
-	water = main_xml->NewElement("group");
-	AddStrAttribute(water, "name", "Water");
-	AddElement(scene, water);
-
-	ropes = main_xml->NewElement("group");
-	AddStrAttribute(ropes, "name", "Ropes");
-	AddElement(scene, ropes);
-
-	vehicles = main_xml->NewElement("group");
-	AddStrAttribute(vehicles, "name", "Vehicles");
-	AddElement(scene, vehicles);
-
-	triggers = main_xml->NewElement("group");
-	AddStrAttribute(triggers, "name", "Triggers");
-	AddElement(scene, triggers);
-
-	scripts = main_xml->NewElement("group");
-	AddStrAttribute(scripts, "name", "Scripts");
-	AddElement(scene, scripts);
-}
-
-void XML_Writer::ClearEmptyGroups() {
-	if (props->NoChildren())
-		scene->DeleteChild(props);
-	if (locations->NoChildren())
-		scene->DeleteChild(locations);
-	if (water->NoChildren())
-		scene->DeleteChild(water);
-	if (ropes->NoChildren())
-		scene->DeleteChild(ropes);
-	if (vehicles->NoChildren())
-		scene->DeleteChild(vehicles);
-	if (triggers->NoChildren())
-		scene->DeleteChild(triggers);
-	if (scripts->NoChildren())
-		scene->DeleteChild(scripts);
-}
-
-XML_Writer::~XML_Writer() {
-	delete main_xml;
+	for (unsigned int i = 0; i < GROUP_COUNT; i++) {
+		XMLElement* group = main_xml.NewElement("group");
+		group->SetAttribute("name", GroupName[i]);
+		main_xml.InsertEndChild(group);
+	}
 }
 
 void XML_Writer::SaveFile(const char* filename) {
-	main_xml->SaveFile(filename);
+	for (unsigned int i = 0; i < GROUP_COUNT; i++)
+		if (groups[i]->NoChildren())
+			scene->DeleteChild(groups[i]);
+	main_xml.SaveFile(filename);
 }
 
+XMLElement* XML_Writer::AddSceneElement(const char* name) {
+	XMLElement* element = main_xml.NewElement(name);
+	scene->InsertEndChild(element);
+	return element;
+}
+
+XMLElement* XML_Writer::AddChildElement(XMLElement* parent, const char* name) {
+	XMLElement* element = main_xml.NewElement(name);
+	parent->InsertEndChild(element);
+	return element;
+}
+
+void XML_Writer::AddSceneAttributes(uint8_t version[3], Vec3 shadow_volume) {
+	string version_str = to_string(version[0]) + "." + to_string(version[1]) + "." + to_string(version[2]);
+	scene->SetAttribute("version", version_str.c_str());
+	AddVec3Attribute(scene, "shadowVolume", shadow_volume, "100 25 100");
+}
+
+void XML_Writer::AddTransformAttribute(XMLElement* element, const Transform& tr) {
+	AddVec3Attribute(element, "pos", tr.pos, "0 0 0");
+	AddVec3Attribute(element, "rot", QuatToEuler(tr.rot), "0 0 0");
+}
+
+void XML_Writer::AddVerticesAttribute(XMLElement* element, const Vec<Vertex>& vertices) {
+	for (unsigned int i = 0; i < vertices.getSize(); i++) {
+		XMLElement* vertex = main_xml.NewElement("vertex");
+		element->InsertEndChild(vertex);
+		AddVec2Attribute(vertex, "pos", vertices[i], "0 0");
+	}
+}
+
+void XML_Writer::AddTextureAttribute(XMLElement* element, const char* name, Texture value) {
+	string buffer = to_string(value.tile);
+	if (value.weight != 1.0)
+		buffer += " " + FloatToString(value.weight);
+	if (value.tile != 0)
+		element->SetAttribute(name, buffer.c_str());
+}
+
+void XML_Writer::AddBoolAttribute(XMLElement* element, const char* name, bool value, bool default_value) {
+	if (value != default_value)
+		element->SetAttribute(name, value);
+}
+
+void XML_Writer::AddVec2Attribute(XMLElement* element, const char* name, Vec2 value, string default_value) {
+	string buffer = FloatToString(value.x) + " " + FloatToString(value.y);
+	if (buffer != default_value)
+		element->SetAttribute(name, buffer.c_str());
+}
+
+void XML_Writer::AddVec3Attribute(XMLElement* element, const char* name, Vec3 value, string default_value) {
+	string buffer = FloatToString(value.x) + " " + FloatToString(value.y) + " " + FloatToString(value.z);
+	if (buffer != default_value)
+		element->SetAttribute(name, buffer.c_str());
+}
+
+void XML_Writer::AddVec4Attribute(XMLElement* element, const char* name, Vec4 value, string default_value) {
+	string buffer = FloatToString(value.x) + " " + FloatToString(value.y) + " " + FloatToString(value.z) + " " + FloatToString(value.w);
+	if (buffer != default_value)
+		element->SetAttribute(name, buffer.c_str());
+}
+
+void XML_Writer::AddColorAttribute(XMLElement* element, const char* name, Color value, string default_value) {
+	string buffer = FloatToString(value.r) + " " + FloatToString(value.g) + " " + FloatToString(value.b);
+	if (value.a != 0.0 && value.a != 1.0)
+		buffer += " " + FloatToString(value.a);
+	if (buffer != default_value)
+		element->SetAttribute(name, buffer.c_str());
+}
+
+void XML_Writer::AddSoundAttribute(XMLElement* element, const char* name, Sound value, string default_value) {
+	string buffer = value.path;
+	if (value.volume != 1.0)
+		buffer += " " + FloatToString(value.volume);
+	if (buffer != default_value)
+		element->SetAttribute(name, buffer.c_str());
+}
+
+void XML_Writer::AddFloatAttribute(XMLElement* element, const char* name, float value, string default_value) {
+	string buffer = FloatToString(value);
+	if (buffer != default_value)
+		element->SetAttribute(name, buffer.c_str());
+}
+
+void XML_Writer::AddStringAttribute(XMLElement* element, const char* name, string value, string default_value) {
+	if (value != default_value)
+		element->SetAttribute(name, value.c_str());
+}
+
+
+
+
+
+
+
+
+/*
 XMLElement* XML_Writer::GetScene() {
 	return scene;
 }
 
-XMLElement* XML_Writer::GetDynamicGroup() {
-	return props;
-}
-
-XMLElement* XML_Writer::GetLocationsGroup() {
-	return locations;
-}
-
-XMLElement* XML_Writer::GetWaterGroup() {
-	return water;
-}
-
-XMLElement* XML_Writer::GetRopesGroup() {
-	return ropes;
-}
-
-XMLElement* XML_Writer::GetVehiclesGroup() {
-	return vehicles;
-}
-
-XMLElement* XML_Writer::GetTriggersGroup() {
-	return triggers;
-}
-
-XMLElement* XML_Writer::GetScriptsGroup() {
-	return scripts;
+XMLElement* XML_Writer::GetGroup(GroupType type) {
+	return groups[type];
 }
 
 XMLElement* XML_Writer::GetNode(uint32_t handle) {
@@ -143,7 +183,7 @@ void XML_Writer::AddBoolAttribute(XMLElement* element, const char* name, bool va
 }
 
 void XML_Writer::AddFloatAttribute(XMLElement* element, const char* name, float value, string default_value) {
-	if (default_value == "" || FloatToString(value) != default_value)
+	if (FloatToString(value) != default_value)
 		element->SetAttribute(name, FloatToString(value).c_str());
 }
 
@@ -172,13 +212,13 @@ void XML_Writer::AddStrFloatAttribute(XMLElement* element, const char* name, str
 
 void XML_Writer::AddVectorAttribute(XMLElement* element, const char* name, Vec3 value, string default_value) {
 	string buffer = FloatToString(value.x) + " " + FloatToString(value.y) + " " + FloatToString(value.z);
-	if (default_value == "" || buffer != default_value)
+	if (buffer != default_value)
 		element->SetAttribute(name, buffer.c_str());
 }
 
 void XML_Writer::AddFloat2Attribute(XMLElement* element, const char* name, float value1, float value2, string default_value) {
 	string buffer = FloatToString(value1) + " " + FloatToString(value2);
-	if (default_value == "" || buffer != default_value)
+	if (buffer != default_value)
 		element->SetAttribute(name, buffer.c_str());
 }
 
@@ -189,7 +229,7 @@ void XML_Writer::AddFloat3Attribute(XMLElement* element, const char* name, float
 
 void XML_Writer::AddFloat4Attribute(XMLElement* element, const char* name, float value1, float value2, float value3, float value4, string default_value) {
 	string buffer = FloatToString(value1) + " " + FloatToString(value2) + " " + FloatToString(value3) + " " + FloatToString(value4);
-	if (default_value == "" || buffer != default_value)
+	if (buffer != default_value)
 		element->SetAttribute(name, buffer.c_str());
 }
 
@@ -201,7 +241,7 @@ void XML_Writer::AddFloatNAttribute(XMLElement* element, const char* name, const
 		buffer += " " + FloatToString(value[2]);
 	if (count > 3)
 		buffer += " " + FloatToString(value[3]);
-	if (default_value == "" || buffer != default_value)
+	if (buffer != default_value)
 		element->SetAttribute(name, buffer.c_str());
 }
 
@@ -209,6 +249,7 @@ void XML_Writer::AddColorAttribute(XMLElement* element, const char* name, Color 
 	string buffer = FloatToString(value.r) + " " + FloatToString(value.g) + " " + FloatToString(value.b);
 	if (value.a != 0.0 && value.a != 1.0)
 		buffer += " " + FloatToString(value.a);
-	if (default_value == "" || buffer != default_value)
+	if (buffer != default_value)
 		element->SetAttribute(name, buffer.c_str());
 }
+*/

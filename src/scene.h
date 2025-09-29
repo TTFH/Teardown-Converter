@@ -60,19 +60,17 @@ struct Skybox {
 struct Fog {
 	uint8_t type;
 	Color color;	// fogColor
-	// fogParams:
-	float start;
+	Vec4 fog_params; // fogParams
+	/*float start;
 	float distance;	// end = start + distance
 	float amount;
-	float exponent;
+	float exponent;*/
 	float height_offset;
 };
 
 struct Snow {
-	Vec3 dir;		// snowdir x y z
-	float spread;	// snowdir spread
-	float amount;	// snowamount
-	float speed;	// snowamount
+	Vec4 dir;		// snowdir (x, y, z, spread)
+	Vec2 amount;	// snowamount (amount, speed)
 	bool onground;	// snowonground
 };
 
@@ -85,7 +83,7 @@ struct Environment {
 	};
 
 	Skybox skybox;
-	float exposure[2];	// exposure
+	Vec2 exposure;		// exposure
 	float brightness;	// brightness
 	Fog fog;
 	Water water;
@@ -94,7 +92,7 @@ struct Environment {
 	float slippery;		// slippery
 	float fogscale;		// fogscale
 	Snow snow;
-	Vec3 wind;		// wind
+	Vec3 wind;			// wind
 	float waterhurt;	// waterhurt
 	string lensdirt;	// lensdirt
 };

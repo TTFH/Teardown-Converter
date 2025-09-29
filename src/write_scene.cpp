@@ -62,31 +62,13 @@ WriteXML::~WriteXML() {
 }
 
 void WriteXML::WriteScene() {
-	string version = to_string(scene.version[0]) + "." + to_string(scene.version[1]) + "." + to_string(scene.version[2]);
-	xml.AddStrAttribute(xml.GetScene(), "version", version);
-	xml.AddVectorAttribute(xml.GetScene(), "shadowVolume", scene.shadow_volume, "100 25 100");
-}
-
-void WriteXML::WriteTransform(XMLElement* element, const Transform& tr) {
-	xml.AddVectorAttribute(element, "pos", tr.pos, "0 0 0");
-	float rotation[3];
-	QuatToEuler(tr.rot, rotation[0], rotation[1], rotation[2]);
-	xml.AddFloatNAttribute(element, "rot", rotation, 3, "0 0 0");
-}
-
-void WriteXML::WriteVertices(XMLElement* element, const Vec<Vertex>& vertices) {
-	for (unsigned int i = 0; i < vertices.getSize(); i++) {
-		XMLElement* vertex = xml.CreateElement("vertex");
-		xml.AddElement(element, vertex);
-		xml.AddFloat2Attribute(vertex, "pos", vertices[i].x, vertices[i].y);
-	}
+	xml.AddSceneAttributes(scene.version, scene.shadow_volume);
 }
 
 void WriteXML::WriteSpawnpoint() {
-	XMLElement* spawnpoint = xml.CreateElement("spawnpoint");
-	xml.AddElement(xml.GetScene(), spawnpoint);
+	XMLElement* spawnpoint = xml.AddSceneElement("spawnpoint");
 	scene.spawnpoint.rot = scene.spawnpoint.rot * QuatEuler(0, 180, 0);
-	WriteTransform(spawnpoint, scene.spawnpoint);
+	xml.AddTransformAttribute(spawnpoint, scene.spawnpoint);
 }
 
 void WriteXML::WriteEnvironment() {
@@ -95,8 +77,7 @@ void WriteXML::WriteEnvironment() {
 	Environment::Water* water = &scene.environment.water;
 	Snow* snow = &scene.environment.snow;
 
-	XMLElement* environment = xml.CreateElement("environment");
-	xml.AddElement(xml.GetScene(), environment);
+	XMLElement* environment = xml.AddSceneElement("environment");
 
 	string skybox_texture = skybox->texture;
 	string prefix = "data/env/";
@@ -109,44 +90,44 @@ void WriteXML::WriteEnvironment() {
 			skybox_texture = skybox_texture.substr(prefix.size());
 	}
 
-	xml.AddStrAttribute(environment, "skybox", skybox_texture, "cloudy.dds");
+	fog->fog_params.y += fog->fog_params.x; // end = start + distance
+
+	xml.AddStringAttribute(environment, "skybox", skybox_texture, "cloudy.dds");
 	xml.AddColorAttribute(environment, "skyboxtint", skybox->tint, "1 1 1");
 	xml.AddFloatAttribute(environment, "skyboxbrightness", skybox->brightness, "1");
 	xml.AddFloatAttribute(environment, "skyboxrot", deg(skybox->rot), "0");
-	xml.AddVectorAttribute(environment, "skyboxaxis", Vec3(0, 1, 0), "0 1 0");
-	xml.AddStrAttribute(environment, "lensdirt", scene.environment.lensdirt, "");
+	xml.AddVec3Attribute(environment, "skyboxaxis", Vec3(0, 1, 0), "0 1 0");
+	xml.AddStringAttribute(environment, "lensdirt", scene.environment.lensdirt);
 	xml.AddColorAttribute(environment, "constant", skybox->constant, "0.003 0.003 0.003");
 	xml.AddFloatAttribute(environment, "ambient", skybox->ambient, "1");
 	xml.AddFloatAttribute(environment, "ambientexponent", skybox->ambientexponent, "1.3");
-	xml.AddStrAttribute(environment, "fog", FogType[fog->type], "classic");
+	xml.AddStringAttribute(environment, "fog", FogType[fog->type], "classic");
 	xml.AddColorAttribute(environment, "fogColor", fog->color, "1 1 1");
-	xml.AddFloat4Attribute(environment, "fogParams", fog->start, fog->start + fog->distance, fog->amount, fog->exponent, "40 100 0.9 4");
+	xml.AddVec4Attribute(environment, "fogParams", fog->fog_params, "40 100 0.9 4");
 	xml.AddFloatAttribute(environment, "fogHeightOffset", fog->height_offset, "0");
 	xml.AddFloatAttribute(environment, "sunBrightness", skybox->sun.brightness, "0");
 	xml.AddColorAttribute(environment, "sunColorTint", skybox->sun.colortint, "1 1 1");
-	if (skybox->sun.auto_dir)
-		xml.AddStrAttribute(environment, "sunDir", "auto");
-	else
-		xml.AddVectorAttribute(environment, "sunDir", skybox->sun.dir);
+	if (!skybox->sun.auto_dir)
+		xml.AddVec3Attribute(environment, "sunDir", skybox->sun.dir, "auto");
 	xml.AddFloatAttribute(environment, "sunSpread", skybox->sun.spread, "0");
 	xml.AddFloatAttribute(environment, "sunLength", skybox->sun.length, "32");
 	xml.AddFloatAttribute(environment, "sunFogScale", skybox->sun.fogscale, "1");
 	xml.AddFloatAttribute(environment, "sunGlare", skybox->sun.glare, "1");
-	xml.AddFloatNAttribute(environment, "exposure", scene.environment.exposure, 2, "0 10");
+	xml.AddVec2Attribute(environment, "exposure", scene.environment.exposure, "0 10");
 	xml.AddFloatAttribute(environment, "brightness", scene.environment.brightness, "1");
 	xml.AddFloatAttribute(environment, "wetness", water->wetness, "0");
 	xml.AddFloatAttribute(environment, "puddleamount", water->puddleamount, "0");
 	xml.AddFloatAttribute(environment, "puddlesize", 0.01 / water->puddlesize, "0.5");
 	xml.AddFloatAttribute(environment, "rain", water->rain, "0");
 	xml.AddBoolAttribute(environment, "nightlight", scene.environment.nightlight, true);
-	xml.AddStrFloatAttribute(environment, "ambience", scene.environment.ambience.path, scene.environment.ambience.volume, "outdoor/field.ogg");
+	xml.AddSoundAttribute(environment, "ambience", scene.environment.ambience, "outdoor/field.ogg");
 	xml.AddFloatAttribute(environment, "fogscale", scene.environment.fogscale, "1");
 	xml.AddFloatAttribute(environment, "slippery", scene.environment.slippery, "0");
 	xml.AddFloatAttribute(environment, "waterhurt", scene.environment.waterhurt, "0");
-	xml.AddFloat4Attribute(environment, "snowdir", snow->dir.x, snow->dir.y, snow->dir.z, snow->spread, "0 -1 0 0.2");
-	xml.AddFloat2Attribute(environment, "snowamount", snow->amount, snow->speed, "0 0");
+	xml.AddVec4Attribute(environment, "snowdir", snow->dir, "0 -1 0 0.2");
+	xml.AddVec2Attribute(environment, "snowamount", snow->amount, "0 0");
 	xml.AddBoolAttribute(environment, "snowonground", snow->onground && !params.remove_snow, false);
-	xml.AddVectorAttribute(environment, "wind", scene.environment.wind, "0 0 0");
+	xml.AddVec3Attribute(environment, "wind", scene.environment.wind, "0 0 0");
 
 	params.remove_snow = params.remove_snow && snow->onground; // Only remove snow if there is snow to remove
 }
@@ -156,22 +137,17 @@ void WriteXML::WriteBoundary() {
 	if (vertex_count == 0)
 		return;
 
-	XMLElement* boundary = xml.CreateElement("boundary");
-	xml.AddElement(xml.GetScene(), boundary);
-
+	XMLElement* boundary = xml.AddSceneElement("boundary");
 	xml.AddFloatAttribute(boundary, "padleft", -scene.boundary.padleft, "5");
 	xml.AddFloatAttribute(boundary, "padright", scene.boundary.padright, "5");
 	xml.AddFloatAttribute(boundary, "padtop", -scene.boundary.padtop, "5");
 	xml.AddFloatAttribute(boundary, "padbottom", scene.boundary.padbottom, "5");
 	xml.AddFloatAttribute(boundary, "maxheight", scene.boundary.maxheight, "0");
-
-	WriteVertices(boundary, scene.boundary.vertices);
+	xml.AddVerticesAttribute(boundary, scene.boundary.vertices);
 }
 
 void WriteXML::WritePostProcessing() {
-	XMLElement* postprocessing = xml.CreateElement("postprocessing");
-	xml.AddElement(xml.GetScene(), postprocessing);
-
+	XMLElement* postprocessing = xml.AddSceneElement("postprocessing");
 	xml.AddFloatAttribute(postprocessing, "saturation", scene.postpro.saturation, "1");
 	xml.AddColorAttribute(postprocessing, "colorbalance", scene.postpro.colorbalance, "1 1 1");
 	xml.AddFloatAttribute(postprocessing, "brightness", scene.postpro.brightness, "1");
@@ -180,7 +156,6 @@ void WriteXML::WritePostProcessing() {
 }
 
 void WriteXML::SaveXML() {
-	xml.ClearEmptyGroups();
 	string main_xml_path = params.map_folder + (params.legacy_format ? "custom.xml" : "main.xml");
 	xml.SaveFile(main_xml_path.c_str());
 }
@@ -191,8 +166,6 @@ void WriteXML::SaveVoxFiles() {
 }
 
 void WriteXML::WriteEntities() {
-	xml.PostInit();
-
 	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
 		WriteEntity(xml.GetScene(), scene.entities[i]);
 
@@ -202,7 +175,7 @@ void WriteXML::WriteEntities() {
 			xml.AddBoolAttribute(xml_vehicle, "driven", true, false);
 	}
 
-	for (unsigned i = 0; i < scene.entities.getSize(); i++)
+	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
 		WriteEntity2ndPass(scene.entities[i]);
 }
 
@@ -232,17 +205,17 @@ void WriteXML::WriteShape(XMLElement* entity_element, Shape* shape, uint32_t han
 		const Material& palette_entry = palette.materials[index];
 
 		entity_element->SetName("voxbox");
-		if (!is_prop) WriteTransform(entity_element, shape_transform);
-		xml.AddIntFloatAttribute(entity_element, "texture", shape->texture_tile, shape->texture_weight);
-		xml.AddIntFloatAttribute(entity_element, "blendtexture", shape->blendtexture_tile, shape->blendtexture_weight);
+		if (!is_prop) xml.AddTransformAttribute(entity_element, shape_transform);
+		xml.AddTextureAttribute(entity_element, "texture", shape->texture);
+		xml.AddTextureAttribute(entity_element, "blendtexture", shape->blendtexture);
 		xml.AddFloatAttribute(entity_element, "density", shape->density, "1");
 		xml.AddFloatAttribute(entity_element, "strength", shape->strength, "1");
 		xml.AddBoolAttribute(entity_element, "collide", collide, true);
 		xml.AddBoolAttribute(entity_element, "prop", is_prop, false);
-		xml.AddFloat3Attribute(entity_element, "size", sizex, sizey, sizez);
-		xml.AddStrAttribute(entity_element, "material", MaterialName[palette_entry.type], "none");
+		xml.AddVec3Attribute(entity_element, "size", Vec3(sizex, sizey, sizez), "50 30 20");
+		xml.AddStringAttribute(entity_element, "material", MaterialName[palette_entry.type], "none");
 		xml.AddColorAttribute(entity_element, "color", palette_entry.rgba, "1 1 1");
-		xml.AddFloat4Attribute(entity_element, "pbr", palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive, "0 0 0 0");
+		xml.AddVec4Attribute(entity_element, "pbr", Vec4(palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive), "0 0 0 0");
 		delete voxels;
 		return;
 	}
@@ -253,10 +226,9 @@ void WriteXML::WriteShape(XMLElement* entity_element, Shape* shape, uint32_t han
 	shape_transform.rot = shape_transform.rot * QuatEuler(90, 0, 0);
 	shape->transform = shape_transform;
 
-	entity_element->SetName("vox");
-	if (!is_prop) WriteTransform(entity_element, shape_transform);
-	xml.AddIntFloatAttribute(entity_element, "texture", shape->texture_tile, shape->texture_weight);
-	xml.AddIntFloatAttribute(entity_element, "blendtexture", shape->blendtexture_tile, shape->blendtexture_weight);
+	if (!is_prop) xml.AddTransformAttribute(entity_element, shape_transform);
+	xml.AddTextureAttribute(entity_element, "texture", shape->texture);
+	xml.AddTextureAttribute(entity_element, "blendtexture", shape->blendtexture);
 	xml.AddFloatAttribute(entity_element, "density", shape->density, "1");
 	xml.AddFloatAttribute(entity_element, "strength", shape->strength, "1");
 	xml.AddBoolAttribute(entity_element, "collide", collide, true);
@@ -301,8 +273,9 @@ void WriteXML::WriteShape(XMLElement* entity_element, Shape* shape, uint32_t han
 		else
 			delete voxels;
 
-		xml.AddStrAttribute(entity_element, "file", vox_path);
-		xml.AddStrAttribute(entity_element, "object", vox_object);
+		entity_element->SetName("vox");
+		xml.AddStringAttribute(entity_element, "file", vox_path);
+		xml.AddStringAttribute(entity_element, "object", vox_object);
 		xml.AddFloatAttribute(entity_element, "scale", 10.0 * shape->voxels.scale, "1");
 	} else {
 		entity_element->SetName("compound");
@@ -315,8 +288,6 @@ void WriteXML::WriteShape(XMLElement* entity_element, Shape* shape, uint32_t han
 }
 
 void WriteXML::WriteCompound(XMLElement* compound_xml, uint32_t handle, const Tensor3D* shape_voxels, const Palette& palette, MV_FILE* compound_vox, string vox_file, int i, int j, int k) {
-	XMLElement* shape_xml = xml.CreateElement("vox");
-
 	int offsetx = 256 * i;
 	int offsety = 256 * j;
 	int offsetz = 256 * k;
@@ -363,10 +334,10 @@ void WriteXML::WriteCompound(XMLElement* compound_xml, uint32_t handle, const Te
 		else
 			delete mvshape.voxels;
 
-		xml.AddFloat3Attribute(shape_xml, "pos", pos_x, pos_y, pos_z);
-		xml.AddStrAttribute(shape_xml, "file", vox_file);
-		xml.AddStrAttribute(shape_xml, "object", vox_object);
-		xml.AddElement(compound_xml, shape_xml);
+		XMLElement* shape_xml = xml.AddChildElement(compound_xml, "vox");
+		xml.AddVec3Attribute(shape_xml, "pos", Vec3(pos_x, pos_y, pos_z), "0 0 0");
+		xml.AddStringAttribute(shape_xml, "file", vox_file);
+		xml.AddStringAttribute(shape_xml, "object", vox_object);
 	}
 }
 
@@ -384,8 +355,8 @@ static string ConcatTags(const Vec<Tag>& tags) {
 
 void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 	XMLElement* entity_element = xml.CreateElement("unknown");
-	xml.AddStrAttribute(entity_element, "tags", ConcatTags(entity->tags));
-	xml.AddStrAttribute(entity_element, "desc", entity->desc);
+	xml.AddStringAttribute(entity_element, "tags", ConcatTags(entity->tags));
+	xml.AddStringAttribute(entity_element, "desc", entity->desc);
 
 	switch (entity->type) {
 		case Entity::Body: {
@@ -395,20 +366,20 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			if (!params.legacy_format && entity->parent == NULL && !body->dynamic && entity->tags.getSize() == 0) {
 				if (entity->handle == scene.world_body) {
 					entity_element->SetName("group");
-					xml.AddStrAttribute(entity_element, "name", "World Body");
+					xml.AddStringAttribute(entity_element, "name", "World Body");
 				}
 			} else if (parent == xml.GetScene())
 				parent = xml.GetDynamicGroup();
 
 			Entity* entity_parent = entity->parent;
 			if (entity_parent == NULL)
-				WriteTransform(entity_element, body->transform);
+				xml.AddTransformAttribute(entity_element, body->transform);
 			else
 				switch (entity_parent->type) {
 					case Entity::Vehicle: {
 						Vehicle* parent = static_cast<Vehicle*>(entity_parent->self);
 						Transform local_transform = TransformToLocalTransform(parent->transform, body->transform);
-						WriteTransform(entity_element, local_transform);
+						xml.AddTransformAttribute(entity_element, local_transform);
 					}
 					break;
 					case Entity::Wheel:
@@ -440,19 +411,19 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 
 			Entity* entity_parent = entity->parent;
 			if (entity_parent == NULL)
-				WriteTransform(entity_element, light->transform);
+				xml.AddTransformAttribute(entity_element, light->transform);
 			else
 				switch (entity_parent->type) {
 					case Entity::Shape: {
 						Shape* parent = static_cast<Shape*>(entity_parent->self);
 						Transform local_tranform = TransformToLocalTransform(parent->transform, light->transform);
-						WriteTransform(entity_element, local_tranform);
+						xml.AddTransformAttribute(entity_element, local_tranform);
 					}
 					break;
 					case Entity::Location: {
 						Location* parent = static_cast<Location*>(entity_parent->self);
 						Transform local_tranform = TransformToLocalTransform(parent->transform, light->transform);
-						WriteTransform(entity_element, local_tranform);
+						xml.AddTransformAttribute(entity_element, local_tranform);
 					}
 					break;
 					case Entity::Screen:
@@ -465,11 +436,11 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 				}
 
 			if (light->type == Light::Capsule)
-				xml.AddAttribute(entity_element, "type", "capsule");
+				xml.AddStringAttribute(entity_element, "type", "capsule");
 			else if (light->type == Light::Cone)
-				xml.AddAttribute(entity_element, "type", "cone");
+				xml.AddStringAttribute(entity_element, "type", "cone");
 			else if (light->type == Light::Area)
-				xml.AddAttribute(entity_element, "type", "area");
+				xml.AddStringAttribute(entity_element, "type", "area");
 
 			xml.AddFloat4Attribute(entity_element, "color", pow(light->color.r, 1 / 2.2f), pow(light->color.g, 1 / 2.2f), pow(light->color.b, 1 / 2.2f), light->color.a, "1 1 1 1");
 			xml.AddFloatAttribute(entity_element, "scale", light->scale, "1");
@@ -503,7 +474,7 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 
 			Entity* entity_parent = entity->parent;
 			if (entity_parent == NULL)
-				WriteTransform(entity_element, location->transform);
+				xml.AddTransformAttribute(entity_element, location->transform);
 			else
 				switch (entity_parent->type) {
 					case Entity::Shape: {
@@ -520,25 +491,25 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 						}
 						Shape* parent = static_cast<Shape*>(entity_parent->self);
 						local_transform = TransformToLocalTransform(parent->transform, local_transform);
-						WriteTransform(entity_element, local_transform);
+						xml.AddTransformAttribute(entity_element, local_transform);
 					}
 					break;
 					case Entity::Body: {
 						Body* parent = static_cast<Body*>(entity_parent->self);
 						Transform local_transform = TransformToLocalTransform(parent->transform, location->transform);
-						WriteTransform(entity_element, local_transform);
+						xml.AddTransformAttribute(entity_element, local_transform);
 					}
 					break;
 					case Entity::Vehicle: {
 						Vehicle* parent = static_cast<Vehicle*>(entity_parent->self);
 						Transform local_transform = TransformToLocalTransform(parent->transform, location->transform);
-						WriteTransform(entity_element, local_transform);
+						xml.AddTransformAttribute(entity_element, local_transform);
 					}
 					break;
 					case Entity::Location: {
 						Location* parent = static_cast<Location*>(entity_parent->self);
 						Transform local_transform = TransformToLocalTransform(parent->transform, location->transform);
-						WriteTransform(entity_element, local_transform);
+						xml.AddTransformAttribute(entity_element, local_transform);
 					}
 					break;
 					case Entity::Trigger:
@@ -562,8 +533,7 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 					entity_element = NULL; // Vehicle location
 				else if (entity->tags[0].name == "player") {
 					entity_element->SetName("group");
-					xml.AddStrAttribute(entity_element, "tags", "");
-					xml.AddStrAttribute(entity_element, "name", "ik");
+					xml.AddStringAttribute(entity_element, "name", "ik");
 				}
 			}
 
@@ -574,8 +544,8 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 		case Entity::Water: {
 			Water* water = static_cast<Water*>(entity->self);
 			entity_element->SetName("water");
-			WriteTransform(entity_element, water->transform);
-			xml.AddStrAttribute(entity_element, "type", "polygon");
+			xml.AddTransformAttribute(entity_element, water->transform);
+			xml.AddStringAttribute(entity_element, "type", "polygon");
 			xml.AddFloatAttribute(entity_element, "depth", water->depth, "10");
 			xml.AddFloatAttribute(entity_element, "wave", water->wave, "0.5");
 			xml.AddFloatAttribute(entity_element, "ripple", water->ripple, "0.5");
@@ -583,7 +553,7 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			xml.AddFloatAttribute(entity_element, "foam", water->foam, "0.5");
 			xml.AddColorAttribute(entity_element, "color", water->color, "0.01 0.01 0.01");
 			xml.AddFloatAttribute(entity_element, "visibility", water->visibility, "3");
-			WriteVertices(entity_element, water->vertices);
+			xml.AddVerticesAttribute(entity_element, water->vertices);
 
 			if (parent == xml.GetScene())
 				parent = xml.GetWaterGroup();
@@ -603,11 +573,11 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 					Vec3 rope_end = joint->rope->segments[knot_count - 1].to;
 
 					xml.AddElement(entity_element, location_from);
-					xml.AddVectorAttribute(location_from, "pos", rope_start);
+					xml.AddVec3Attribute(location_from, "pos", rope_start);
 
 					XMLElement* location_to = xml.CreateElement("location");
 					xml.AddElement(entity_element, location_to);
-					xml.AddVectorAttribute(location_to, "pos", rope_end);
+					xml.AddVec3Attribute(location_to, "pos", rope_end);
 
 					Vec3 rope_dir = rope_end - rope_start;
 					float rope_length = rope_dir.length();
@@ -628,7 +598,7 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 		case Entity::Vehicle: {
 			Vehicle* vehicle = static_cast<Vehicle*>(entity->self);
 			entity_element->SetName("vehicle");
-			WriteTransform(entity_element, vehicle->transform);
+			xml.AddTransformAttribute(entity_element, vehicle->transform);
 
 			xml.AddStrFloatAttribute(entity_element, "sound", vehicle->properties.sound.name, vehicle->properties.sound.pitch, "medium");
 			xml.AddFloatAttribute(entity_element, "spring", vehicle->properties.spring, "1");
@@ -650,33 +620,33 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 
 				XMLElement* exhaust = xml.CreateElement("location");
 				xml.AddElement(entity_element, exhaust);
-				xml.AddStrAttribute(exhaust, "tags", exhaust_tag);
-				WriteTransform(exhaust, vehicle->exhausts[i].transform);
+				xml.AddStringAttribute(exhaust, "tags", exhaust_tag);
+				xml.AddTransformAttribute(exhaust, vehicle->exhausts[i].transform);
 			}
 
 			if (!vehicle->player.isZero()) {
 				XMLElement* player = xml.CreateElement("location");
 				xml.AddElement(entity_element, player);
-				xml.AddAttribute(player, "tags", "player");
-				//xml.AddVectorAttribute(player, "pos", vehicle->player);
+				xml.AddStringAttribute(player, "tags", "player");
+				//xml.AddVec3Attribute(player, "pos", vehicle->player);
 				Transform transform;
 				transform.pos = vehicle->player;
 				transform.rot = QuatEuler(0, 180, 0);
-				WriteTransform(player, transform);
+				xml.AddTransformAttribute(player, transform);
 			}
 
 			if (!vehicle->camera.isZero() && vehicle->camera != vehicle->player) {
 				XMLElement* camera = xml.CreateElement("location");
 				xml.AddElement(entity_element, camera);
-				xml.AddAttribute(camera, "tags", "camera");
-				xml.AddVectorAttribute(camera, "pos", vehicle->camera);
+				xml.AddStringAttribute(camera, "tags", "camera");
+				xml.AddVec3Attribute(camera, "pos", vehicle->camera);
 			}
 
 			if (!vehicle->exit.isZero()) {
 				XMLElement* exit = xml.CreateElement("location");
 				xml.AddElement(entity_element, exit);
-				xml.AddAttribute(exit, "tags", "exit");
-				xml.AddVectorAttribute(exit, "pos", vehicle->exit);
+				xml.AddStringAttribute(exit, "tags", "exit");
+				xml.AddVec3Attribute(exit, "pos", vehicle->exit);
 			}
 
 			bool is_boat = false;
@@ -686,8 +656,8 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			if (is_boat) {
 				XMLElement* propeller = xml.CreateElement("location");
 				xml.AddElement(entity_element, propeller);
-				xml.AddAttribute(propeller, "tags", "propeller");
-				xml.AddVectorAttribute(propeller, "pos", vehicle->propeller);
+				xml.AddStringAttribute(propeller, "tags", "propeller");
+				xml.AddVec3Attribute(propeller, "pos", vehicle->propeller);
 			}
 
 			if (parent == xml.GetScene())
@@ -700,17 +670,17 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 
 			Entity* entity_parent = entity->parent;
 			if (entity_parent == NULL)
-				WriteTransform(entity_element, wheel->transform);
+				xml.AddTransformAttribute(entity_element, wheel->transform);
 			else
 				switch (entity_parent->type) {
 					case Entity::Shape: {
 						Shape* parent = static_cast<Shape*>(entity_parent->self);
 						Transform local_transform = TransformToLocalTransform(parent->transform, wheel->transform);
-						WriteTransform(entity_element, local_transform);
+						xml.AddTransformAttribute(entity_element, local_transform);
 					}
 					break;
 					case Entity::Body:
-						WriteTransform(entity_element, wheel->transform);
+						xml.AddTransformAttribute(entity_element, wheel->transform);
 					break;
 					default:
 						printf("Invalid wheel parent of type %s\n", EntityName[entity_parent->type]);
@@ -728,14 +698,14 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 
 			Entity* entity_parent = entity->parent;
 			if (entity_parent == NULL)
-				WriteTransform(entity_element, screen->transform);
+				xml.AddTransformAttribute(entity_element, screen->transform);
 			else
 				switch (entity_parent->type) {
 					case Entity::Shape: {
 						Shape* parent = static_cast<Shape*>(entity_parent->self);
 						Transform local_transform = TransformToLocalTransform(parent->original_tr, parent->transform);
 						local_transform = TransformToLocalTransform(local_transform, screen->transform);
-						WriteTransform(entity_element, local_transform);
+						xml.AddTransformAttribute(entity_element, local_transform);
 					}
 					break;
 					default:
@@ -747,7 +717,7 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			xml.AddFloatAttribute(entity_element, "bulge", screen->bulge, "0.08");
 
 			string resolution = to_string(screen->resolution[0]) + " " + to_string(screen->resolution[1]);
-			xml.AddStrAttribute(entity_element, "resolution", resolution, "640 480");
+			xml.AddStringAttribute(entity_element, "resolution", resolution, "640 480");
 
 			string script_file = screen->script;
 			if (!params.level_id.empty()) {
@@ -759,7 +729,7 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			if (script_file.find(prefix) == 0)
 				script_file = script_file.substr(prefix.size());
 
-			xml.AddStrAttribute(entity_element, "script", script_file);
+			xml.AddStringAttribute(entity_element, "script", script_file);
 			xml.AddBoolAttribute(entity_element, "enabled", screen->enabled, false);
 			xml.AddBoolAttribute(entity_element, "interactive", screen->interactive, false);
 			xml.AddFloatAttribute(entity_element, "emissive", screen->emissive, "1");
@@ -777,17 +747,17 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 				Vec3 offset = Vec3(0, trigger->box_size[1], 0);
 				trigger_transform.pos = trigger_transform.pos - trigger_transform.rot * offset;
 			}
-			WriteTransform(entity_element, trigger_transform);
+			xml.AddTransformAttribute(entity_element, trigger_transform);
 
 			if (trigger->type == Trigger::Sphere)
 				xml.AddFloatAttribute(entity_element, "size", trigger->sphere_size, "10");
 			else if (trigger->type == Trigger::Box) {
-				xml.AddAttribute(entity_element, "type", "box");
+				xml.AddStringAttribute(entity_element, "type", "box");
 				xml.AddFloat3Attribute(entity_element, "size", 2.0 * trigger->box_size[0], 2.0 * trigger->box_size[1], 2.0 * trigger->box_size[2]);
 			} else if (trigger->type == Trigger::Polygon) {
-				xml.AddAttribute(entity_element, "type", "polygon");
+				xml.AddStringAttribute(entity_element, "type", "polygon");
 				xml.AddFloatAttribute(entity_element, "size", trigger->polygon_size, "10");
-				WriteVertices(entity_element, trigger->polygon_vertices);
+				xml.AddVerticesAttribute(entity_element, trigger->polygon_vertices);
 			}
 			xml.AddStrFloatAttribute(entity_element, "sound", trigger->sound.path, trigger->sound.volume);
 			xml.AddFloatAttribute(entity_element, "soundramp", trigger->sound.ramp, "2");
@@ -802,8 +772,8 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 		case Entity::Animator:
 			Animator* animator = static_cast<Animator*>(entity->self);
 			entity_element->SetName("animator");
-			xml.AddStrAttribute(entity_element, "file", animator->path);
-			WriteTransform(entity_element, animator->transform);
+			xml.AddStringAttribute(entity_element, "file", animator->path);
+			xml.AddTransformAttribute(entity_element, animator->transform);
 			break;
 	}
 
@@ -826,15 +796,15 @@ void WriteXML::WriteEntity2ndPass(const Entity* entity) {
 			if (xml_body != NULL) {
 				XMLElement* vital = xml.CreateElement("location");
 				xml.AddElement(xml_body, vital);
-				xml.AddAttribute(vital, "tags", "vital");
-				xml.AddVectorAttribute(vital, "pos", vehicle->vitals[i].position);
+				xml.AddStringAttribute(vital, "tags", "vital");
+				xml.AddVec3Attribute(vital, "pos", vehicle->vitals[i].position);
 			}
 		}
 	} else if (entity->type == Entity::Joint) {
 		Joint* joint = static_cast<Joint*>(entity->self);
 		if (joint->type != Joint::_Rope) {
 			XMLElement* entity_element = xml.CreateElement("joint");
-			xml.AddStrAttribute(entity_element, "tags", ConcatTags(entity->tags));
+			xml.AddStringAttribute(entity_element, "tags", ConcatTags(entity->tags));
 
 			uint32_t shape_handle = joint->shapes[0];
 			if (shape_handle == 0) return;
@@ -870,21 +840,21 @@ void WriteXML::WriteEntity2ndPass(const Entity* entity) {
 						relative_rot = QuatEulerRad(a, b, 0);
 					else {
 						relative_rot = Quat();
-						xml.AddStrAttribute(entity_element, "name", "FIXROT");
+						xml.AddStringAttribute(entity_element, "name", "FIXROT");
 					}
 				}
 			}
 			Transform joint_tr = Transform(relative_pos, relative_rot);
 			if (parent_element->Attribute("prop") == NULL)
 				joint_tr = TransformToLocalTransform(shape->transform, joint_tr);
-			WriteTransform(entity_element, joint_tr);
+			xml.AddTransformAttribute(entity_element, joint_tr);
 
 			if (joint->type == Joint::Hinge)
-				xml.AddAttribute(entity_element, "type", "hinge");
+				xml.AddStringAttribute(entity_element, "type", "hinge");
 			else if (joint->type == Joint::Prismatic)
-				xml.AddAttribute(entity_element, "type", "prismatic");
+				xml.AddStringAttribute(entity_element, "type", "prismatic");
 			else if (joint->type == Joint::Cone)
-				xml.AddAttribute(entity_element, "type", "cone");
+				xml.AddStringAttribute(entity_element, "type", "cone");
 
 			xml.AddFloatAttribute(entity_element, "size", joint->size, "0.1");
 			if (joint->type != Joint::Prismatic) {
@@ -939,13 +909,13 @@ void WriteXML::WriteEntity2ndPass(const Entity* entity) {
 
 		xml.AddElement(xml.GetScriptsGroup(), script_element);
 
-		xml.AddStrAttribute(script_element, "file", script_file);
+		xml.AddStringAttribute(script_element, "file", script_file);
 		for (unsigned int i = 0; i < script->params.getSize(); i++) {
 			string param_index = "param" + to_string(i);
 			string param = script->params[i].key;
 			if (script->params[i].value.length() > 0)
 				param += "=" + script->params[i].value;
-			xml.AddStrAttribute(script_element, param_index.c_str(), param);
+			xml.AddStringAttribute(script_element, param_index.c_str(), param);
 		}
 
 		for (unsigned int j = 0; j < script->entities.getSize(); j++) {

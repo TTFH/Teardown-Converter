@@ -64,9 +64,19 @@ public:
 
 extern const char* EntityName[];
 
-struct Vertex {	// vertex
-	float x, y;	// pos
+struct Vec2 {
+	float x, y;
+	Vec2() : x(0), y(0) {}
+	Vec2(float x, float y) : x(x), y(y) {}
 };
+
+struct Vec4 {
+	float x, y, z, w;
+	Vec4() : x(0), y(0), z(0), w(0) {}
+	Vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+};
+
+typedef Vec2 Vertex;
 
 struct Registry {
 	string key;
@@ -177,6 +187,11 @@ struct Voxels {
 	bool is_disconnected;
 };
 
+struct Texture {
+	uint16_t tile;
+	float weight;
+};
+
 struct Shape {
 	Transform transform;
 	uint16_t shape_flags;		// collide: 0x10
@@ -184,10 +199,12 @@ struct Shape {
 	uint8_t collision_mask;
 	float density;				// density
 	float strength;				// strength
-	uint16_t texture_tile;		// texture
+	/*uint16_t texture_tile;		// texture
 	uint16_t blendtexture_tile;	// blendtexture
 	float texture_weight;		// texture
-	float blendtexture_weight;	// blendtexture
+	float blendtexture_weight;	// blendtexture*/
+	Texture texture; // Order: tile, tile, weight, weight
+	Texture blendtexture;
 	Vec3 texture_offset;
 	float emissive_scale;
 	bool is_broken;
