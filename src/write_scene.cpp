@@ -252,10 +252,8 @@ void WriteXML::WriteBody(XMLElement* element, const Body* body, const Entity* pa
 	element->SetName("body");
 	xml.AddTransformAttribute(element, GetLocalTransform(parent, body->transform));
 	xml.AddBoolAttribute(element, "dynamic", body->dynamic, false);
-	// TODO: move static into world body group
-	// TODO: move dynamic into prop group
-	// TODO: remove empty bodies
-	// TODO: remove wheel bodies
+	if (element->Parent() == xml.GetScene() && body->dynamic)
+		xml.GetGroupElement(PROP)->InsertEndChild(element);
 }
 
 void WriteXML::WriteShape(XMLElement* element, const Shape* shape, uint32_t handle) {
@@ -511,6 +509,9 @@ void WriteXML::WriteLocation(XMLElement* element, const Location* location, Enti
 			xml.AddStringAttribute(element, "name", "ik");
 		}
 	}*/
+
+	if (element->Parent() == xml.GetScene())
+		xml.GetGroupElement(LOCATION)->InsertEndChild(element);
 }
 
 void WriteXML::WriteWater(XMLElement* element, const Water* water) {
@@ -525,6 +526,9 @@ void WriteXML::WriteWater(XMLElement* element, const Water* water) {
 	xml.AddColorAttribute(element, "color", water->color, "0.01 0.01 0.01");
 	xml.AddFloatAttribute(element, "visibility", water->visibility, "3");
 	xml.AddVerticesAttribute(element, water->vertices);
+
+	if (element->Parent() == xml.GetScene())
+		xml.GetGroupElement(WATER)->InsertEndChild(element);
 }
 
 void WriteXML::WriteJoint(const Joint* joint, string tags) {
@@ -616,6 +620,9 @@ void WriteXML::WriteRope(XMLElement* element, const Rope* rope, float size) {
 	xml.AddVec3Attribute(location_from, "pos", rope_start, "0 0 0");
 	XMLElement* location_to = xml.AddChildElement(element, "location");
 	xml.AddVec3Attribute(location_to, "pos", rope_end, "0 0 0");
+
+	if (element->Parent() == xml.GetScene())
+		xml.GetGroupElement(ROPE)->InsertEndChild(element);
 }
 
 void WriteXML::WriteVehicle(XMLElement* element, const Vehicle* vehicle, bool is_boat) {
@@ -670,6 +677,9 @@ void WriteXML::WriteVehicle(XMLElement* element, const Vehicle* vehicle, bool is
 		xml.AddStringAttribute(propeller, "tags", "propeller");
 		xml.AddVec3Attribute(propeller, "pos", vehicle->propeller, "0 0 0");
 	}
+
+	if (element->Parent() == xml.GetScene())
+		xml.GetGroupElement(VEHICLE)->InsertEndChild(element);
 }
 
 void WriteXML::WriteWheel(XMLElement* element, const Wheel* wheel, const Entity* parent) {
@@ -726,6 +736,9 @@ void WriteXML::WriteTrigger(XMLElement* element, const Trigger* trigger) {
 	}
 	xml.AddSoundAttribute(element, "sound", {trigger->sound.path, trigger->sound.volume}, "");
 	xml.AddFloatAttribute(element, "soundramp", trigger->sound.ramp, "2");
+
+	if (element->Parent() == xml.GetScene())
+		xml.GetGroupElement(TRIGGER)->InsertEndChild(element);
 }
 
 void WriteXML::WriteScript(const Script* script) {
@@ -793,14 +806,25 @@ void WriteXML::WriteAnimator(XMLElement* element, const Animator* animator) {
 }
 
 void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
-	XMLElement* element = xml.AddChildElement(parent, EntityName[entity->type], entity->handle);
+	XMLElement* element = xml.AddChildElement(parent, "unknown", entity->handle);
 	xml.AddStringAttribute(element, "tags", ConcatTags(entity->tags));
 	xml.AddStringAttribute(element, "desc", entity->desc);
 
 	switch (entity->type) {
 		case Entity::Body: {
 			Body* body = static_cast<Body*>(entity->self);
-			WriteBody(element, body, entity->parent);
+			if (entity->handle != scene.world_body) {
+				if ((body->dynamic && entity->children.getSize() > 0) || entity->tags.getSize() > 0)
+					WriteBody(element, body, entity->parent);
+				else {
+					parent->DeleteChild(element);
+					element = parent;
+				}
+			} else {
+				parent->DeleteChild(element);
+				element = xml.GetGroupElement(WORLD_BODY);
+				xml.AddTransformAttribute(element, body->transform);
+			}
 		}
 			break;
 		case Entity::Shape: {
@@ -810,7 +834,12 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			break;
 		case Entity::Light: {
 			Light* light = static_cast<Light*>(entity->self);
-			WriteLight(element, light, entity->parent);
+			if (entity->handle != scene.flashlight)
+				WriteLight(element, light, entity->parent);
+			else {
+				parent->DeleteChild(element);
+				element = parent;
+			}
 		}
 			break;
 		case Entity::Location: {
@@ -840,6 +869,11 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 		case Entity::Wheel: {
 			Wheel* wheel = static_cast<Wheel*>(entity->self);
 			WriteWheel(element, wheel, entity->parent);
+		}
+			break;
+		case Entity::Script: {
+			parent->DeleteChild(element);
+			element = parent;
 		}
 			break;
 		case Entity::Screen: {
