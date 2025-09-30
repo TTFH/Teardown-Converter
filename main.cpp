@@ -177,6 +177,7 @@ int main(int argc, char* argv[]) {
 		strcpy(game_folder, config_root->FindAttribute("game_folder")->Value());
 	}
 
+	int transform_precision = 2;
 	bool disable_convert = false;
 	bool save_as_legacy = false;
 	bool remove_snow = false;
@@ -333,6 +334,13 @@ int main(int argc, char* argv[]) {
 			ImGui::Checkbox("Do not use voxboxes", &no_voxbox);
 			ImGui::Checkbox("Compress .vox files (very slow)", &use_tdcz);
 			ImGui::EndGroup();
+			ImGui::SameLine();
+			ImGui::BeginGroup();
+			ImGui::Text("Transform settings:");
+			ImGui::Text("Decimal digits");
+			ImGui::PushItemWidth(150);
+			ImGui::SliderInt("##precision", &transform_precision, 0, 10);
+			ImGui::EndGroup();
 			ImGui::Dummy(ImVec2(0, 5));
 
 			if (disable_convert && progress >= 1) {
@@ -412,6 +420,7 @@ int main(int argc, char* argv[]) {
 				params->remove_snow = remove_snow;
 				params->compress_vox = use_tdcz;
 				params->legacy_format = save_as_legacy;
+				params->transform_precision = transform_precision;
 
 				pthread_create(&parse_thread, nullptr, DecompileMap, params);
 			}

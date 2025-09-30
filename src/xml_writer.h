@@ -19,16 +19,25 @@ private:
 	static const unsigned int GROUP_COUNT = 9;
 	array<XMLElement*, GROUP_COUNT> groups;
 	map<uint32_t, XMLElement*> element_mapping;
+	const unsigned int DEFAULT_PRECISION = 2;
+	int precision = DEFAULT_PRECISION;
+	int transform_precision = DEFAULT_PRECISION;
+	string FloatToString(float value);
 public:
 	XML_Writer();
 	void CreateGroups();
 	void SaveFile(const char* filename);
+	void SetTransformPrecision(int precision);
 
 	XMLElement* GetScene();
 	XMLElement* GetGroupElement(GroupType type);
 	XMLElement* GetEntityElement(uint32_t handle);
-	XMLElement* AddChildElement(XMLElement* parent, const char* name, uint32_t handle = 0);
 
+	XMLElement* AddChildElement(XMLElement* parent, const char* name);
+	XMLElement* CreateDetachedElement(const char* name);
+	void AddEntityElement(XMLElement* parent, XMLElement* child, uint32_t handle);
+
+	void AddExhaustTagAttribute(XMLElement* element, float strength);
 	void AddTransformAttribute(XMLElement* element, const Transform& tr);
 	void AddVerticesAttribute(XMLElement* element, const Vec<Vertex>& vertices);
 	void AddTextureAttribute(XMLElement* element, const char* name, Texture value);

@@ -1,7 +1,4 @@
 #include <math.h>
-#include <stdlib.h>
-#include <string>
-#include <sstream>
 #include <filesystem>
 
 #ifdef _WIN32
@@ -86,20 +83,6 @@ string GetFilename(const char* path) {
 	size_t dot = filename.find_last_of(".");
 	filename = filename.substr(0, dot);
 	return filename;
-}
-
-string FloatToString(float value) {
-	if (fabs(value) < 0.0005)  
-		value = 0;
-	ostringstream ss;
-	ss << fixed << setprecision(3) << value;
-	string str = ss.str();
-	if (str.find('.') != string::npos) {
-		str.erase(str.find_last_not_of('0') + 1);
-		if (str.back() == '.')
-			str.pop_back();
-	}
-	return str;
 }
 
 GLFWwindow* InitOpenGL(const char* window_title, int width, int height) {

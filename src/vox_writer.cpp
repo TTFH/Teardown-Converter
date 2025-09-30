@@ -1,51 +1,38 @@
+#include <iomanip>
 #include <math.h>
-#include <string.h>
-#include <stdint.h>
-#include <vector>
-#include <string>
+#include <sstream>
 #include <stdexcept>
+#include <stdint.h>
+#include <string.h>
+#include <string>
+#include <vector>
 
-#include "scene.h"
 #include "misc_utils.h"
+#include "scene.h"
 #include "vox_writer.h"
 #include "zlib_utils.h"
 
 static const char* MaterialPrefix = "$TD_";
 
 static const char* td_notes[32] = {
-	"snow/hole",
-	"reserved",
-	"unphysical",
-	"unphysical",
-	"reserved",
-	"reserved",
-	"reserved",
-	"reserved",
-	"ice",
-	"hardmasonry",
-	"hardmetal",
-	"plastic",
-	"plastic",
-	"heavymetal",
-	"heavymetal",
-	"metal",
-	"metal",
-	"plaster",
-	"plaster",
-	"masonry",
-	"masonry",
-	"masonry",
-	"masonry",
-	"wood",
-	"wood",
-	"rock",
-	"rock",
-	"dirt",
-	"dirt",
-	"foliage",
-	"foliage",
-	"glass"
-};
+	"snow/hole", "reserved",	"unphysical", "unphysical", "reserved", "reserved",	  "reserved",	"reserved",
+	"ice",		 "hardmasonry", "hardmetal",  "plastic",	"plastic",	"heavymetal", "heavymetal", "metal",
+	"metal",	 "plaster",		"plaster",	  "masonry",	"masonry",	"masonry",	  "masonry",	"wood",
+	"wood",		 "rock",		"rock",		  "dirt",		"dirt",		"foliage",	  "foliage",	"glass"};
+
+static string FloatToString(float value) {
+	if (fabs(value) < 0.0005)
+		value = 0;
+	ostringstream ss;
+	ss << fixed << setprecision(2) << value;
+	string str = ss.str();
+	if (str.find('.') != string::npos) {
+		str.erase(str.find_last_not_of('0') + 1);
+		if (str.back() == '.')
+			str.pop_back();
+	}
+	return str;
+}
 
 bool MV_Shape::operator==(const MV_Shape& other) const {
 	if (voxels.sizex != other.voxels.sizex || voxels.sizey != other.voxels.sizey || voxels.sizez != other.voxels.sizez)
@@ -64,12 +51,12 @@ MV_FILE::MV_FILE(string filename, bool write_imap) {
 	vox_file = nullptr;
 
 	for (int i = 0; i < 256; i++) {
-		palette[i] = { 75, 75, 75, 255};
-		material[i] = { Material::None, DIFFUSE, {} };
+		palette[i] = {75, 75, 75, 255};
+		material[i] = {Material::None, DIFFUSE, {}};
 		is_index_used[i] = false;
 		palette_map[i] = i;
 	}
-	palette[0] = { 0, 0, 0, 255 };
+	palette[0] = {0, 0, 0, 255};
 	for (int i = 0; i < ROWS; i++)
 		notes[i] = td_notes[i];
 }
@@ -118,7 +105,7 @@ void MV_FILE::WriteXYZI(const MV_Shape& shape) {
 			for (int z = 0; z < shape.voxels.sizez; z++) {
 				uint8_t index = shape.voxels.Get(x, y, z);
 				if (index != 0) {
-					MV_Voxel voxel = { (uint8_t)x, (uint8_t)y, (uint8_t)z, index };
+					MV_Voxel voxel = {(uint8_t)x, (uint8_t)y, (uint8_t)z, index};
 					fwrite(&voxel, sizeof(MV_Voxel), 1, vox_file);
 				}
 			}
@@ -143,10 +130,10 @@ void MV_FILE::WriteTDCZ(const MV_Shape& shape) {
 void MV_FILE::Write_nSHP(int i) {
 	WriteChunkHeader(nSHP, 20, 0);
 	WriteInt(2 * i + 1); // node_id
-	WriteInt(0); // node_attr
-	WriteInt(1); // num_models
-	WriteInt(i - 1); // ref_model_id
-	WriteInt(0); // Empty DICT (nodeAttribs)
+	WriteInt(0);		 // node_attr
+	WriteInt(1);		 // num_models
+	WriteInt(i - 1);	 // ref_model_id
+	WriteInt(0);		 // Empty DICT (nodeAttribs)
 }
 
 void MV_FILE::Write_nTRN(int i, string pos) {
@@ -158,9 +145,9 @@ void MV_FILE::Write_nTRN(int i, string pos) {
 	WriteDICT(node_attr);
 
 	WriteInt(2 * i + 1); // child_node_id
-	WriteInt(-1); // reserved_id
-	WriteInt(0); // layer_id
-	WriteInt(1); // num_frames
+	WriteInt(-1);		 // reserved_id
+	WriteInt(0);		 // layer_id
+	WriteInt(1);		 // num_frames
 
 	DICT frame_attr;
 	frame_attr["_t"] = pos;
@@ -172,14 +159,15 @@ void MV_FILE::Write_nTRN(int i, string pos) {
 void MV_FILE::Write_nGRP() {
 	int num_models = models.size();
 	WriteChunkHeader(nGRP, 4 * (3 + num_models), 0);
-	WriteInt(1); // node_id
-	WriteInt(0); // node_attr
+	WriteInt(1);		  // node_id
+	WriteInt(0);		  // node_attr
 	WriteInt(num_models); // node_childrens
 	for (int i = num_models; i > 0; i--)
 		WriteInt(2 * i); // child_node
 
 	for (int i = 1; i <= num_models; i++) {
-		string pos = to_string(models[i - 1].pos_x) + " " + to_string(models[i - 1].pos_y) + " " + to_string(models[i - 1].pos_z);
+		string pos = to_string(models[i - 1].pos_x) + " " + to_string(models[i - 1].pos_y) + " " +
+					 to_string(models[i - 1].pos_z);
 		Write_nTRN(i, pos);
 	}
 }
@@ -191,7 +179,8 @@ void MV_FILE::WriteRGBA() {
 }
 
 void MV_FILE::WriteIMAP() {
-	if (!write_imap) return;
+	if (!write_imap)
+		return;
 	try {
 		FIX_PALETTE_MAPPING();
 	} catch (logic_error& e) {
@@ -204,7 +193,8 @@ void MV_FILE::WriteIMAP() {
 			is_mapped = true;
 		i++;
 	}
-	if (!is_mapped) return;
+	if (!is_mapped)
+		return;
 
 	WriteChunkHeader(IMAP, 256, 0);
 	fwrite(&palette_map[1], sizeof(uint8_t), 255, vox_file);
@@ -226,7 +216,8 @@ void MV_FILE::WriteMATL(uint8_t index, const MV_Material& mat) {
 		material_attr["_type"] = "_emit";
 		material_attr["_emit"] = FloatToString(mat.properties.emit.emission);
 		material_attr["_flux"] = to_string(mat.properties.emit.power);
-	} else return;
+	} else
+		return;
 	int matl_size = 8 + 8 * material_attr.size();
 	for (DICT::iterator it = material_attr.begin(); it != material_attr.end(); it++)
 		matl_size += it->first.length() + it->second.length();
@@ -266,13 +257,13 @@ void MV_FILE::SaveModel(bool compress) {
 	}
 
 	WriteChunkHeader(nTRN, 28, 0);
-	WriteInt(0); // node_id
-	WriteInt(0); // Empty DICT (nodeAttribs)
-	WriteInt(1); // child_node_id
+	WriteInt(0);  // node_id
+	WriteInt(0);  // Empty DICT (nodeAttribs)
+	WriteInt(1);  // child_node_id
 	WriteInt(-1); // reserved_id
 	WriteInt(-1); // layer_id
-	WriteInt(1); // num_frames
-	WriteInt(0); // Empty DICT (frames)
+	WriteInt(1);  // num_frames
+	WriteInt(0);  // Empty DICT (frames)
 	Write_nGRP();
 
 	WriteRGBA();
@@ -304,16 +295,19 @@ bool MV_FILE::GetShapeName(const MV_Shape& shape, string& name) const {
 }
 
 void MV_FILE::SetEntry(uint8_t index, const MV_Color& color, MV_Material mat) {
-	if (index == 0 || is_index_used[index]) return;
+	if (index == 0 || is_index_used[index])
+		return;
 	palette[index] = color;
 	material[index] = mat;
 	is_index_used[index] = true;
 }
 
 string MV_FILE::GetIndexNote(int index) {
-	if (index == 0) index = 256;
+	if (index == 0)
+		index = 256;
 	int row = (ROWS - 1) - (index - 1) / 8;
-	if (row == 0) return "none";
+	if (row == 0)
+		return "none";
 	return notes[row];
 }
 
@@ -334,7 +328,7 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 			occupied[i] = true;
 		}
 	}
-	fixed[0] = true; // empty
+	fixed[0] = true;   // empty
 	fixed[254] = true; // snow
 	fixed[255] = true; // hole
 	occupied[0] = true;
@@ -431,8 +425,8 @@ void MV_FILE::FIX_PALETTE_MAPPING() {
 				note = note.substr(strlen(MaterialPrefix));
 			string mat_name = MaterialName[material[i].td_type];
 			if (note != mat_name)
-				throw logic_error("Index " + to_string(i) + " mapped to " + to_string(j)
-				+ " with incorrect row " + note + " for material " + mat_name);
+				throw logic_error("Index " + to_string(i) + " mapped to " + to_string(j) + " with incorrect row " +
+								  note + " for material " + mat_name);
 		}
 	}
 }

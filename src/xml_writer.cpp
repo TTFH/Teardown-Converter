@@ -1,3 +1,6 @@
+#include <iomanip>
+#include <math.h>
+#include <sstream>
 #include <stdint.h>
 #include <string>
 
@@ -6,7 +9,22 @@
 #include "misc_utils.h"
 #include "xml_writer.h"
 
-static const char* GroupName[] = { "World Body", "Static bodies", "Props", "Locations", "Water", "Ropes", "Vehicles", "Triggers", "Scripts" };
+static const char* GroupName[] = {"World Body", "Static bodies", "Props",	 "Locations", "Water",
+								  "Ropes",		"Vehicles",		 "Triggers", "Scripts"};
+
+string XML_Writer::FloatToString(float value) {
+	if (fabs(value) < 0.0005)
+		value = 0;
+	ostringstream ss;
+	ss << fixed << setprecision(precision) << value;
+	string str = ss.str();
+	if (str.find('.') != string::npos) {
+		str.erase(str.find_last_not_of('0') + 1);
+		if (str.back() == '.')
+			str.pop_back();
+	}
+	return str;
+}
 
 XML_Writer::XML_Writer() {
 	scene = main_xml.NewElement("scene");
@@ -28,6 +46,10 @@ void XML_Writer::SaveFile(const char* filename) {
 	main_xml.SaveFile(filename);
 }
 
+void XML_Writer::SetTransformPrecision(int precision) {
+	transform_precision = precision;
+}
+
 XMLElement* XML_Writer::GetScene() {
 	return scene;
 }
@@ -42,17 +64,33 @@ XMLElement* XML_Writer::GetEntityElement(uint32_t handle) {
 	return nullptr;
 }
 
-XMLElement* XML_Writer::AddChildElement(XMLElement* parent, const char* name, uint32_t handle) {
+XMLElement* XML_Writer::AddChildElement(XMLElement* parent, const char* name) {
 	XMLElement* element = main_xml.NewElement(name);
 	parent->InsertEndChild(element);
-	if (handle != 0)
-		element_mapping[handle] = element;
 	return element;
 }
 
+XMLElement* XML_Writer::CreateDetachedElement(const char* name) {
+	return main_xml.NewElement(name);
+}
+
+void XML_Writer::AddEntityElement(XMLElement* parent, XMLElement* child, uint32_t handle) {
+	parent->InsertEndChild(child);
+	element_mapping[handle] = child;
+}
+
+void XML_Writer::AddExhaustTagAttribute(XMLElement* element, float strength) {
+	string buffer = "exhaust";
+	if (strength != 1.0)
+		buffer += "=" + FloatToString(strength);
+	element->SetAttribute("tags", buffer.c_str());
+}
+
 void XML_Writer::AddTransformAttribute(XMLElement* element, const Transform& tr) {
+	precision = transform_precision;
 	AddVec3Attribute(element, "pos", tr.pos, "0 0 0");
 	AddVec3Attribute(element, "rot", QuatToEuler(tr.rot), "0 0 0");
+	precision = DEFAULT_PRECISION;
 }
 
 void XML_Writer::AddVerticesAttribute(XMLElement* element, const Vec<Vertex>& vertices) {
@@ -123,19 +161,3 @@ void XML_Writer::AddStringAttribute(XMLElement* element, const char* name, strin
 	if (value != default_value)
 		element->SetAttribute(name, value.c_str());
 }
-
-/*
-bool XML_Writer::IsChildOf(XMLElement* parent, XMLElement* child) {
-	if (parent == nullptr || child == nullptr)
-		return false;
-	while (child != nullptr) {
-		if (child == parent)
-			return true;
-		if (child->Parent() != nullptr)
-			child = child->Parent()->ToElement();
-		else
-			child = nullptr;
-	}
-	return false;
-}
-*/

@@ -15,7 +15,6 @@ string GetUsername();
 string GetMyDocuments();
 string GetAppDataLocal();
 string GetFilename(const char* path);
-string FloatToString(float value);
 
 GLFWwindow* InitOpenGL(const char* window_title, int width, int height);
 GLuint LoadTexture(const char* path);

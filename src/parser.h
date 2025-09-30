@@ -28,6 +28,8 @@ struct ConverterParams {
 	bool remove_snow = false;
 	bool compress_vox = false;
 	bool legacy_format = false;
+
+	int transform_precision = 2;
 };
 
 void ParseFile(ConverterParams params);
