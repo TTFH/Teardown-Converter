@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdexcept>
 
 #include "math_utils.h"
 
@@ -151,11 +152,15 @@ void Tensor3D::FromRunLengthEncoding(const RLE& rle) {
 }
 
 void Tensor3D::Set(int x, int y, int z, uint8_t value) {
-	data[x + sizex * (y + sizey * z)] = value;
+	if (x < 0 || x >= sizex || y < 0 || y >= sizey || z < 0 || z >= sizez)
+		throw out_of_range("Index out of range");
+	data[(x * sizey + y) * sizez + z] = value;
 }
 
 uint8_t Tensor3D::Get(int x, int y, int z) const {
-	return data[x + sizex * (y + sizey * z)];
+	if (x < 0 || x >= sizex || y < 0 || y >= sizey || z < 0 || z >= sizez)
+		throw out_of_range("Index out of range");
+	return data[(x * sizey + y) * sizez + z];
 }
 
 bool Tensor3D::IsFilledSingleColor() const {
@@ -172,7 +177,7 @@ int Tensor3D::GetVolume() const {
 
 int Tensor3D::GetNonZeroCount() const {
 	int count = 0;
-	for (size_t i = 1; i < data.size(); i++)
+	for (size_t i = 0; i < data.size(); i++)
 		if (data[i] != 0)
 			count++;
 	return count;

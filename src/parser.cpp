@@ -185,7 +185,7 @@ Entity* TDBIN::ReadEntity() {
 
 	entity->handle = ReadInt();
 	entity_mapping[entity->handle] = entity;
-	//printf("Reading %s with handle %d\n", EntityName[entity->type], entity->handle);
+	printf("Reading %s with handle %d\n", EntityName[entity->type], entity->handle);
 
 	uint8_t tag_count = ReadByte();
 	entity->tags.resize(tag_count);
@@ -194,7 +194,7 @@ Entity* TDBIN::ReadEntity() {
 
 	entity->desc = ReadString();
 	if (entity->type != Entity::Light && entity->type != Entity::Joint) // Ah, yes... consistency
-		entity->flags = ReadWord();
+		entity->flags = ReadWord();										// TODO: move inside entity types
 	entity->self = ReadEntityType(entity->type);
 
 	int childrens = ReadInt();
