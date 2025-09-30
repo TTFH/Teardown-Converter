@@ -41,22 +41,18 @@ struct Transform {
 
 class Tensor3D {
 private:
-	uint8_t*** data = nullptr;
+	vector<uint8_t> data;
 public:
-	int sizex, sizey, sizez;
-
-	Tensor3D(int sizex, int sizey, int sizez);
-	Tensor3D(const Tensor3D&) = delete;
-	Tensor3D& operator=(const Tensor3D&) = delete;
-	~Tensor3D();
-
+	uint32_t sizex, sizey, sizez;
+	Tensor3D();
+	Tensor3D(uint32_t sizex, uint32_t sizey, uint32_t sizez);
 	void FromRunLengthEncoding(const RLE& rle);
-	void Set(int x, int y, int z, uint8_t value);
-	uint8_t Get(int x, int y, int z) const;
+	void Set(uint32_t x, uint32_t y, uint32_t z, uint8_t value);
+	uint8_t Get(uint32_t x, uint32_t y, uint32_t z) const;
 	bool IsFilledSingleColor() const;
-	int GetVolume() const;
-	int GetNonZeroCount() const;
-	uint8_t* ToArray() const;
+	uint32_t GetVolume() const;
+	uint32_t GetNonZeroCount() const;
+	const uint8_t* ToArray() const;
 };
 
 double deg(double rad);

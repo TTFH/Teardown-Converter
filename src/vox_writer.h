@@ -66,7 +66,7 @@ struct MV_Voxel {
 struct MV_Shape {
 	string name;
 	int pos_x, pos_y, pos_z;
-	Tensor3D* voxels;
+	Tensor3D voxels;
 	bool operator==(const MV_Shape& other) const;
 };
 
@@ -105,7 +105,6 @@ private:
 	void WriteNOTE();
 public:
 	MV_FILE(string filename, bool write_imap = true);
-	~MV_FILE();
 	void SaveModel(bool compress = false);
 	void AddShape(const MV_Shape& shape);
 	bool GetShapeName(const MV_Shape& shape, string& name) const;

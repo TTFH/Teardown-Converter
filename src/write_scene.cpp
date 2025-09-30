@@ -14,14 +14,14 @@
 #include "write_scene.h"
 #include "../lib/tinyxml2.h"
 
-MV_Color ToMV(const Color& color) {
+static MV_Color ToMV(const Color& color) {
 	uint8_t r = 255.0 * color.r;
 	uint8_t g = 255.0 * color.g;
 	uint8_t b = 255.0 * color.b;
 	return { r, g, b, 255 };
 }
 
-MV_Material ToMV(const Material& material) {
+static MV_Material ToMV(const Material& material) {
 	MV_Material mat;
 	mat.td_type = material.type;
 	const Color& color = material.rgba;
@@ -49,6 +49,18 @@ MV_Material ToMV(const Material& material) {
 	} else
 		mat.type = DIFFUSE;
 	return mat;
+}
+
+static string ConcatTags(const SmallVec<Tag>& tags) {
+	string tag_str = "";
+	for (unsigned int i = 0; i < tags.getSize(); i++) {
+		tag_str += tags[i].name;
+		if (tags[i].value.length() > 0)
+			tag_str += "=" + tags[i].value;
+		if (i != tags.getSize() - 1)
+			tag_str += " ";
+	}
+	return tag_str;
 }
 
 WriteXML::WriteXML(ConverterParams params) : params(params) {
@@ -182,121 +194,213 @@ void WriteXML::WriteEntities() {
 	}
 }
 
-void WriteXML::WriteShape(XMLElement* entity_element, Shape* shape, uint32_t handle) {
-	Transform shape_transform = shape->transform;
-	shape->original_tr = shape_transform;
-
-	int sizex = shape->voxels.size[0];
-	int sizey = shape->voxels.size[1];
-	int sizez = shape->voxels.size[2];
-	unsigned int volume = sizex * sizey * sizez;
-	if (volume == 0) {
-		entity_element = nullptr; // Ignore empty shapes
-		return;
+static Transform GetEntityTransform(const Entity* entity) {
+	if (entity == nullptr)
+		return Transform();
+	switch (entity->type) {
+	case Entity::Body: {
+		Body* body = static_cast<Body*>(entity->self);
+		return body->transform;
 	}
-
-	const Palette& palette = scene.palettes[shape->voxels.palette];
-	bool collide = (shape->shape_flags & 0x10) != 0;
-
-	Tensor3D* voxels = new Tensor3D(sizex, sizey, sizez);
-	voxels->FromRunLengthEncoding(shape->voxels.palette_indexes);
-
-	bool is_prop = false; // TODO: implement remove parent body
-	bool is_scaled = !CompareFloat(shape->voxels.scale, 0.1f);
-	if (params.use_voxbox && !is_scaled && voxels->IsFilledSingleColor()) {
-		uint8_t index = voxels->Get(0, 0, 0);
-		const Material& palette_entry = palette.materials[index];
-
-		entity_element->SetName("voxbox");
-		if (!is_prop) xml.AddTransformAttribute(entity_element, shape_transform);
-		xml.AddTextureAttribute(entity_element, "texture", shape->texture);
-		xml.AddTextureAttribute(entity_element, "blendtexture", shape->blendtexture);
-		xml.AddFloatAttribute(entity_element, "density", shape->density, "1");
-		xml.AddFloatAttribute(entity_element, "strength", shape->strength, "1");
-		xml.AddBoolAttribute(entity_element, "collide", collide, true);
-		xml.AddBoolAttribute(entity_element, "prop", is_prop, false);
-		xml.AddVec3Attribute(entity_element, "size", Vec3(sizex, sizey, sizez), "50 30 20");
-		xml.AddStringAttribute(entity_element, "material", MaterialName[palette_entry.type], "none");
-		xml.AddColorAttribute(entity_element, "color", palette_entry.rgba, "1 1 1");
-		xml.AddVec4Attribute(entity_element, "pbr", Vec4(palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive), "0 0 0 0");
-		delete voxels;
-		return;
+	case Entity::Shape: {
+		Shape* shape = static_cast<Shape*>(entity->self);
+		return shape->transform;
 	}
-
-	Vec3 axis_offset(0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0);
-	if (is_scaled) axis_offset = axis_offset * (10.0f * shape->voxels.scale);
-	shape_transform.pos = shape_transform.pos + shape_transform.rot * axis_offset;
-	shape_transform.rot = shape_transform.rot * QuatEuler(90, 0, 0);
-	shape->transform = shape_transform;
-
-	if (!is_prop) xml.AddTransformAttribute(entity_element, shape_transform);
-	xml.AddTextureAttribute(entity_element, "texture", shape->texture);
-	xml.AddTextureAttribute(entity_element, "blendtexture", shape->blendtexture);
-	xml.AddFloatAttribute(entity_element, "density", shape->density, "1");
-	xml.AddFloatAttribute(entity_element, "strength", shape->strength, "1");
-	xml.AddBoolAttribute(entity_element, "collide", collide, true);
-	xml.AddBoolAttribute(entity_element, "prop", is_prop, false);
-
-	string vox_folder = params.legacy_format ? "custom/" : "vox/";
-	string vox_filename = params.map_folder + vox_folder + "palette" + to_string(shape->voxels.palette) + ".vox";
-	string path_prefix = params.legacy_format ? "LEVEL/" : "MOD/vox/";
-	string vox_path = path_prefix + "palette" + to_string(shape->voxels.palette) + ".vox";
-	string vox_object = "shape" + to_string(handle);
-
-	MV_FILE* vox_file;
-	if (vox_files.find(shape->voxels.palette) == vox_files.end()) {
-		vox_file = new MV_FILE(vox_filename.c_str());
-		vox_files[shape->voxels.palette] = vox_file;
-	} else
-		vox_file = vox_files[shape->voxels.palette];
-
-	if (volume > 0 && sizex <= 256 && sizey <= 256 && sizez <= 256) {
-		MV_Shape mvshape = { vox_object.c_str(), 0, 0, sizez / 2, voxels };
-		if (params.remove_snow) {
-			mvshape.voxels->Set(0, 0, 0, 255);
-			mvshape.voxels->Set(sizex - 1, sizey - 1, sizez - 1, 255);
-			vox_file->SetEntry(255, HOLE_COLOR, HOLE_MATERIAL);
-		}
-
-		for (int z = 0; z < sizez; z++)
-			for (int y = 0; y < sizey; y++)
-				for (int x = 0; x < sizex; x++) {
-					uint8_t index = voxels->Get(x, y, z);
-					if (index != 0) {
-						Material palette_entry = palette.materials[index];
-						if (params.remove_snow && index == 254)
-							mvshape.voxels->Set(x, y, z, 0);
-						vox_file->SetEntry(index, ToMV(palette_entry.rgba), ToMV(palette_entry));
-					}
-				}
-
-		bool duplicated = vox_file->GetShapeName(mvshape, vox_object);
-		if (!duplicated)
-			vox_file->AddShape(mvshape);
-		else
-			delete voxels;
-
-		entity_element->SetName("vox");
-		xml.AddStringAttribute(entity_element, "file", vox_path);
-		xml.AddStringAttribute(entity_element, "object", vox_object);
-		xml.AddFloatAttribute(entity_element, "scale", 10.0 * shape->voxels.scale, "1");
-	} else {
-		entity_element->SetName("compound");
-		for (int i = 0; i < (sizex + 256 - 1) / 256; i++)
-			for (int j = 0; j < (sizey + 256 - 1) / 256; j++)
-				for (int k = 0; k < (sizez + 256 - 1) / 256; k++)
-					WriteCompound(entity_element, handle, voxels, palette, vox_file, vox_path, i, j, k);
-		delete voxels;
+	case Entity::Light: {
+		Light* light = static_cast<Light*>(entity->self);
+		return light->transform;
+	}
+	case Entity::Location: {
+		Location* location = static_cast<Location*>(entity->self);
+		return location->transform;
+	}
+	case Entity::Water: {
+		Water* water = static_cast<Water*>(entity->self);
+		return water->transform;
+	}
+	case Entity::Vehicle: {
+		Vehicle* vehicle = static_cast<Vehicle*>(entity->self);
+		return vehicle->transform;
+	}
+	case Entity::Wheel: {
+		Wheel* wheel = static_cast<Wheel*>(entity->self);
+		return wheel->transform;
+	}
+	case Entity::Screen: {
+		Screen* screen = static_cast<Screen*>(entity->self);
+		return screen->transform;
+	}
+	case Entity::Trigger: {
+		Trigger* trigger = static_cast<Trigger*>(entity->self);
+		return trigger->transform;
+	}
+	case Entity::Animator: {
+		Animator* animator = static_cast<Animator*>(entity->self);
+		return animator->transform;
+	}
+	default:
+		return Transform();
 	}
 }
 
-void WriteXML::WriteCompound(XMLElement* compound_xml, uint32_t handle, const Tensor3D* shape_voxels, const Palette& palette, MV_FILE* compound_vox, string vox_file, int i, int j, int k) {
+static Transform GetLocalTransform(const Entity* parent, Transform tr) {
+	Transform parent_tr = GetEntityTransform(parent);
+	return TransformToLocalTransform(parent_tr, tr);
+}
+
+void WriteXML::WriteBody(XMLElement* element, const Body* body, const Entity* parent) {
+	element->SetName("body");
+	xml.AddTransformAttribute(element, GetLocalTransform(parent, body->transform));
+	xml.AddBoolAttribute(element, "dynamic", body->dynamic, false);
+	// TODO: move static into world body group
+	// TODO: move dynamic into prop group
+	// TODO: remove empty bodies
+	// TODO: remove wheel bodies
+}
+
+void WriteXML::WriteShape(XMLElement* element, const Shape* shape, uint32_t handle) {
+	int sizex = shape->voxels.sizex;
+	int sizey = shape->voxels.sizey;
+	int sizez = shape->voxels.sizez;
+	int volume = sizex * sizey * sizez;
+	if (volume == 0) return;
+
+	bool is_scaled = !CompareFloat(shape->voxels.scale, 0.1f);
+	const Palette& palette = scene.palettes[shape->voxels.palette_id];
+	if (params.use_voxbox && !is_scaled && shape->decoded_voxels.IsFilledSingleColor())
+		WriteVoxbox(element, shape);
+	else if (sizex <= 256 && sizey <= 256 && sizez <= 256)
+		WriteVox(element, shape, handle);
+	else
+		WriteCompound(element, shape, handle);
+}
+
+void WriteXML::WriteVox(XMLElement* element, const Shape* shape, uint32_t handle) {
+	int sizex = shape->voxels.sizex;
+	int sizey = shape->voxels.sizey;
+	int sizez = shape->voxels.sizez;
+
+	Vec3 axis_offset(0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0);
+	axis_offset = axis_offset * (10.0f * shape->voxels.scale);
+	Transform shape_transform = shape->transform;
+	shape_transform.pos = shape_transform.pos + shape_transform.rot * axis_offset;
+	shape_transform.rot = shape_transform.rot * QuatEuler(90, 0, 0);
+
+	string vox_folder = params.legacy_format ? "custom/" : "vox/";
+	string vox_filename ="palette" + to_string(shape->voxels.palette_id) + ".vox";
+	string vox_full_path = params.map_folder + vox_folder + vox_filename;
+	string path_prefix = params.legacy_format ? "LEVEL/" : "MOD/vox/";
+	string vox_path = path_prefix + vox_filename;
+	string vox_object = "shape" + to_string(handle);
+
+	MV_FILE* vox_file;
+	if (vox_files.find(shape->voxels.palette_id) == vox_files.end()) {
+		vox_file = new MV_FILE(vox_full_path);
+		vox_files[shape->voxels.palette_id] = vox_file;
+	} else
+		vox_file = vox_files[shape->voxels.palette_id];
+
+	MV_Shape mvshape = { vox_object, 0, 0, sizez / 2, shape->decoded_voxels };
+	// Add voxels in opposite corners to prevent shape from changing size when removing snow
+	if (params.remove_snow) {
+		if (mvshape.voxels.Get(0, 0, 0) != 0)
+			mvshape.voxels.Set(0, 0, 0, 255);
+		if (mvshape.voxels.Get(sizex - 1, sizey - 1, sizez - 1) != 0)
+			mvshape.voxels.Set(sizex - 1, sizey - 1, sizez - 1, 255);
+		vox_file->SetEntry(255, HOLE_COLOR, HOLE_MATERIAL);
+	}
+
+	const Palette& palette = scene.palettes[shape->voxels.palette_id];
+	for (int z = 0; z < sizez; z++)
+		for (int y = 0; y < sizey; y++)
+			for (int x = 0; x < sizex; x++) {
+				uint8_t index = shape->decoded_voxels.Get(x, y, z);
+				if (index != 0) {
+					// Remove snow voxels
+					if (params.remove_snow && index == 254)
+						mvshape.voxels.Set(x, y, z, 0);
+					// Add used palette entries
+					const Material& palette_entry = palette.materials[index];
+					vox_file->SetEntry(index, ToMV(palette_entry.rgba), ToMV(palette_entry));
+				}
+			}
+
+	bool duplicated = vox_file->GetShapeName(mvshape, vox_object);
+	if (!duplicated)
+		vox_file->AddShape(mvshape);
+
+	bool collide = (shape->shape_flags & 0x10) != 0;
+
+	element->SetName("vox");
+	xml.AddTransformAttribute(element, shape_transform);
+	xml.AddTextureAttribute(element, "texture", shape->texture);
+	xml.AddTextureAttribute(element, "blendtexture", shape->blendtexture);
+	xml.AddFloatAttribute(element, "density", shape->density, "1");
+	xml.AddFloatAttribute(element, "strength", shape->strength, "1");
+	xml.AddBoolAttribute(element, "collide", collide, true);
+
+	xml.AddStringAttribute(element, "file", vox_path);
+	xml.AddStringAttribute(element, "object", vox_object);
+	xml.AddFloatAttribute(element, "scale", 10.0 * shape->voxels.scale, "1");
+}
+
+void WriteXML::WriteVoxbox(XMLElement* element, const Shape* shape) {
+	int sizex = shape->voxels.sizex;
+	int sizey = shape->voxels.sizey;
+	int sizez = shape->voxels.sizez;
+
+	bool collide = (shape->shape_flags & 0x10) != 0;
+	uint8_t index = shape->decoded_voxels.Get(0, 0, 0);
+	const Palette& palette = scene.palettes[shape->voxels.palette_id];
+	const Material& palette_entry = palette.materials[index];
+
+	element->SetName("voxbox");
+	xml.AddTransformAttribute(element, shape->transform);
+	xml.AddTextureAttribute(element, "texture", shape->texture);
+	xml.AddTextureAttribute(element, "blendtexture", shape->blendtexture);
+	xml.AddFloatAttribute(element, "density", shape->density, "1");
+	xml.AddFloatAttribute(element, "strength", shape->strength, "1");
+	xml.AddBoolAttribute(element, "collide", collide, true);
+	xml.AddVec3Attribute(element, "size", Vec3(sizex, sizey, sizez), "50 30 20");
+	xml.AddStringAttribute(element, "material", MaterialName[palette_entry.type], "none");
+	xml.AddColorAttribute(element, "color", palette_entry.rgba, "1 1 1");
+	xml.AddVec4Attribute(element, "pbr", Vec4(palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive), "0 0 0 0");
+}
+
+void WriteXML::WriteCompound(XMLElement* element, const Shape* shape, uint32_t handle) {
+	int sizex = shape->voxels.sizex;
+	int sizey = shape->voxels.sizey;
+	int sizez = shape->voxels.sizez;
+
+	Vec3 axis_offset(0.05f * (sizex - sizex % 2), 0.05f * (sizey - sizey % 2), 0);
+	axis_offset = axis_offset * (10.0f * shape->voxels.scale);
+	Transform shape_transform = shape->transform;
+	shape_transform.pos = shape_transform.pos + shape_transform.rot * axis_offset;
+	shape_transform.rot = shape_transform.rot * QuatEuler(90, 0, 0);
+
+	bool collide = (shape->shape_flags & 0x10) != 0;
+
+	element->SetName("compound");
+	xml.AddTransformAttribute(element, shape_transform);
+	xml.AddTextureAttribute(element, "texture", shape->texture);
+	xml.AddTextureAttribute(element, "blendtexture", shape->blendtexture);
+	xml.AddFloatAttribute(element, "density", shape->density, "1");
+	xml.AddFloatAttribute(element, "strength", shape->strength, "1");
+	xml.AddBoolAttribute(element, "collide", collide, true);
+
+	for (int i = 0; i < (sizex + 256 - 1) / 256; i++)
+		for (int j = 0; j < (sizey + 256 - 1) / 256; j++)
+			for (int k = 0; k < (sizez + 256 - 1) / 256; k++)
+				WriteCompoundShape(element, shape, handle, i, j, k);
+}
+
+void WriteXML::WriteCompoundShape(XMLElement* parent, const Shape* shape, uint32_t handle, int i, int j, int k) {
 	int offsetx = 256 * i;
 	int offsety = 256 * j;
 	int offsetz = 256 * k;
-	int sizex = shape_voxels->sizex;
-	int sizey = shape_voxels->sizey;
-	int sizez = shape_voxels->sizez;
+	int sizex = shape->voxels.sizex;
+	int sizey = shape->voxels.sizey;
+	int sizez = shape->voxels.sizez;
 	int part_sizex = min(256, sizex - offsetx);
 	int part_sizey = min(256, sizey - offsety);
 	int part_sizez = min(256, sizez - offsetz);
@@ -311,168 +415,103 @@ void WriteXML::WriteCompound(XMLElement* compound_xml, uint32_t handle, const Te
 	int mv_pos_y = -10 * pos_z;
 	int mv_pos_z = 10 * pos_y + part_sizez / 2 + part_sizez % 2;
 
+	string vox_folder = params.legacy_format ? "custom/" : "vox/";
+	string vox_filename ="palette" + to_string(shape->voxels.palette_id) + ".vox";
+	string vox_full_path = params.map_folder + vox_folder + vox_filename;
+	string path_prefix = params.legacy_format ? "LEVEL/" : "MOD/vox/";
+	string vox_path = path_prefix + vox_filename;
 	string vox_object = "shape" + to_string(handle) + "_part" + to_string(i) + to_string(j) + to_string(k);
-	MV_Shape mvshape = { vox_object, mv_pos_x, mv_pos_y, mv_pos_z, new Tensor3D(part_sizex, part_sizey, part_sizez) };
-	mvshape.voxels->Set(0, 0, 0, 255);
-	mvshape.voxels->Set(part_sizex - 1, part_sizey - 1, part_sizez - 1, 255);
-	compound_vox->SetEntry(255, HOLE_COLOR, HOLE_MATERIAL);
+
+	MV_FILE* vox_file;
+	if (vox_files.find(shape->voxels.palette_id) == vox_files.end()) {
+		vox_file = new MV_FILE(vox_full_path);
+		vox_files[shape->voxels.palette_id] = vox_file;
+	} else
+		vox_file = vox_files[shape->voxels.palette_id];
+
+	MV_Shape mvshape = { vox_object, mv_pos_x, mv_pos_y, mv_pos_z, Tensor3D(part_sizex, part_sizey, part_sizez) };
+	mvshape.voxels.Set(0, 0, 0, 255);
+	mvshape.voxels.Set(part_sizex - 1, part_sizey - 1, part_sizez - 1, 255);
+	vox_file->SetEntry(255, HOLE_COLOR, HOLE_MATERIAL);
 
 	bool empty = true;
+	const Palette& palette = scene.palettes[shape->voxels.palette_id];
 	for (int z = offsetz; z < part_sizez + offsetz; z++)
 		for (int y = offsety; y < part_sizey + offsety; y++)
 			for (int x = offsetx; x < part_sizex + offsetx; x++) {
-				uint8_t index = shape_voxels->Get(x, y, z);
+				uint8_t index = shape->decoded_voxels.Get(x, y, z);
 				if (index != 0) {
-					const Material& palette_entry = palette.materials[index];
+					// Add voxels that are not snow
 					if (!params.remove_snow || index != 254)
-						mvshape.voxels->Set(x - offsetx, y - offsety, z - offsetz, index);
-					compound_vox->SetEntry(index, ToMV(palette_entry.rgba), ToMV(palette_entry));
+						mvshape.voxels.Set(x - offsetx, y - offsety, z - offsetz, index);
+					// Add used palette entries
+					const Material& palette_entry = palette.materials[index];
+					vox_file->SetEntry(index, ToMV(palette_entry.rgba), ToMV(palette_entry));
 					empty = false;
 				}
 			}
 	if (!empty) {
-		bool duplicated = compound_vox->GetShapeName(mvshape, vox_object);
+		bool duplicated = vox_file->GetShapeName(mvshape, vox_object);
 		if (!duplicated)
-			compound_vox->AddShape(mvshape);
-		else
-			delete mvshape.voxels;
+			vox_file->AddShape(mvshape);
 
-		XMLElement* shape_xml = xml.AddChildElement(compound_xml, "vox");
+		XMLElement* shape_xml = xml.AddChildElement(parent, "vox");
 		xml.AddVec3Attribute(shape_xml, "pos", Vec3(pos_x, pos_y, pos_z), "0 0 0");
-		xml.AddStringAttribute(shape_xml, "file", vox_file);
+		xml.AddStringAttribute(shape_xml, "file", vox_path);
 		xml.AddStringAttribute(shape_xml, "object", vox_object);
 	}
 }
 
-static string ConcatTags(const Vec<Tag>& tags) {
-	string tag_str = "";
-	for (unsigned int i = 0; i < tags.getSize(); i++) {
-		tag_str += tags[i].name;
-		if (tags[i].value.length() > 0)
-			tag_str += "=" + tags[i].value;
-		if (i != tags.getSize() - 1)
-			tag_str += " ";
+void WriteXML::WriteLight(XMLElement* element, const Light* light, const Entity* parent) {
+	Color light_color = light->color;
+	light_color.r = pow(light->color.r, 1 / 2.2f);
+	light_color.g = pow(light->color.g, 1 / 2.2f);
+	light_color.b = pow(light->color.b, 1 / 2.2f);
+
+	element->SetName("light");
+	xml.AddStringAttribute(element, "type", LightName[light->type], "sphere");
+	xml.AddColorAttribute(element, "color", light_color, "1 1 1 1");
+	xml.AddFloatAttribute(element, "scale", light->scale, "1");
+
+	if (light->type == Light::Cone) {
+		xml.AddFloatAttribute(element, "angle", 2.0 * deg(acos(light->angle)), "90");
+		xml.AddFloatAttribute(element, "penumbra", 2.0 * deg(acos(light->angle) - acos(light->penumbra)), "10");
 	}
-	return tag_str;
+
+	if (light->type == Light::Area)
+		xml.AddVec2Attribute(element, "size", Vec2(2.0 * light->area_size[0], 2.0 * light->area_size[1]), "0.1 0");
+	else if (light->type == Light::Capsule)
+		xml.AddVec2Attribute(element, "size", Vec2(2.0 * light->capsule_size, light->size), "0.1 0");
+	else
+		xml.AddFloatAttribute(element, "size", light->size, "0.1");
+
+	xml.AddFloatAttribute(element, "reach", light->reach, "0");
+	xml.AddFloatAttribute(element, "unshadowed", light->unshadowed, "0");
+	xml.AddFloatAttribute(element, "fogscale", light->fogscale, "1");
+	xml.AddFloatAttribute(element, "fogiter", light->fogiter, "1");
+	xml.AddSoundAttribute(element, "sound", light->sound, "");
+	xml.AddFloatAttribute(element, "glare", light->glare, "0");
 }
 
 void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
-	XMLElement* entity_element = xml.CreateElement("unknown");
-	xml.AddStringAttribute(entity_element, "tags", ConcatTags(entity->tags));
-	xml.AddStringAttribute(entity_element, "desc", entity->desc);
+	XMLElement* element = xml.AddChildElement(parent, "unknown", entity->handle);
+	xml.AddStringAttribute(element, "tags", ConcatTags(entity->tags));
+	xml.AddStringAttribute(element, "desc", entity->desc);
 
 	switch (entity->type) {
 		case Entity::Body: {
 			Body* body = static_cast<Body*>(entity->self);
-			entity_element->SetName("body");
-
-			if (!params.legacy_format && entity->parent == nullptr && !body->dynamic && entity->tags.getSize() == 0) {
-				if (entity->handle == scene.world_body) {
-					entity_element->SetName("group");
-					xml.AddStringAttribute(entity_element, "name", "World Body");
-				}
-			} else if (parent == xml.GetScene() && body->dynamic)
-				parent = xml.GetGroupElement(PROP);
-
-			Entity* entity_parent = entity->parent;
-			if (entity_parent == nullptr)
-				xml.AddTransformAttribute(entity_element, body->transform);
-			else
-				switch (entity_parent->type) {
-					case Entity::Vehicle: {
-						Vehicle* parent = static_cast<Vehicle*>(entity_parent->self);
-						Transform local_transform = TransformToLocalTransform(parent->transform, body->transform);
-						xml.AddTransformAttribute(entity_element, local_transform);
-					}
-					break;
-					case Entity::Wheel:
-					break;
-					default:
-						printf("Invalid body parent of type %s\n", EntityName[entity_parent->type]);
-					break;
-				}
-
-			xml.AddBoolAttribute(entity_element, "dynamic", body->dynamic, false);
-
-			// If has parent, is static and no tags
-			if (entity->parent != nullptr && !body->dynamic && entity->tags.getSize() == 0)
-				entity_element = nullptr; // Ignore wheel body
-
-			// If no children and no tags
-			if (entity->children.getSize() == 0 && entity->tags.getSize() == 0)
-				entity_element = nullptr; // Ignore empty bodies with no tags
+			WriteBody(element, body, entity->parent);
 		}
 			break;
 		case Entity::Shape: {
 			Shape* shape = static_cast<Shape*>(entity->self);
-			WriteShape(entity_element, shape, entity->handle);
+			WriteShape(element, shape, entity->handle);
 		}
 			break;
 		case Entity::Light: {
 			Light* light = static_cast<Light*>(entity->self);
-			entity_element->SetName("light");
-
-			Entity* entity_parent = entity->parent;
-			if (entity_parent == nullptr)
-				xml.AddTransformAttribute(entity_element, light->transform);
-			else
-				switch (entity_parent->type) {
-					case Entity::Shape: {
-						Shape* parent = static_cast<Shape*>(entity_parent->self);
-						Transform local_tranform = TransformToLocalTransform(parent->transform, light->transform);
-						xml.AddTransformAttribute(entity_element, local_tranform);
-					}
-					break;
-					case Entity::Location: {
-						Location* parent = static_cast<Location*>(entity_parent->self);
-						Transform local_tranform = TransformToLocalTransform(parent->transform, light->transform);
-						xml.AddTransformAttribute(entity_element, local_tranform);
-					}
-					break;
-					case Entity::Screen:
-					break;
-					case Entity::Light:
-					break;
-					default:
-						printf("Invalid light parent of type %s\n", EntityName[entity_parent->type]);
-					break;
-				}
-
-			if (light->type == Light::Capsule)
-				xml.AddStringAttribute(entity_element, "type", "capsule");
-			else if (light->type == Light::Cone)
-				xml.AddStringAttribute(entity_element, "type", "cone");
-			else if (light->type == Light::Area)
-				xml.AddStringAttribute(entity_element, "type", "area");
-
-			Color light_color = light->color;
-			light_color.r = pow(light->color.r, 1 / 2.2f);
-			light_color.g = pow(light->color.g, 1 / 2.2f);
-			light_color.b = pow(light->color.b, 1 / 2.2f);
-			xml.AddColorAttribute(entity_element, "color", light_color, "1 1 1 1");
-			xml.AddFloatAttribute(entity_element, "scale", light->scale, "1");
-
-			if (light->type == Light::Cone) {
-				xml.AddFloatAttribute(entity_element, "angle", 2.0 * deg(acos(light->angle)), "90");
-				xml.AddFloatAttribute(entity_element, "penumbra", 2.0 * deg(acos(light->angle) - acos(light->penumbra)), "10");
-			}
-
-			if (light->type == Light::Area)
-				xml.AddVec2Attribute(entity_element, "size", Vec2(2.0 * light->area_size[0], 2.0 * light->area_size[1]), "0.1 0");
-			else if (light->type == Light::Capsule)
-				xml.AddVec2Attribute(entity_element, "size", Vec2(2.0 * light->capsule_size, light->size), "0.1 0");
-			else
-				xml.AddFloatAttribute(entity_element, "size", light->size, "0.1");
-
-			xml.AddFloatAttribute(entity_element, "reach", light->reach, "0");
-			xml.AddFloatAttribute(entity_element, "unshadowed", light->unshadowed, "0");
-			xml.AddFloatAttribute(entity_element, "fogscale", light->fogscale, "1");
-			xml.AddFloatAttribute(entity_element, "fogiter", light->fogiter, "1");
-			xml.AddSoundAttribute(entity_element, "sound", light->sound, "");
-			xml.AddFloatAttribute(entity_element, "glare", light->glare, "0");
-
-			if (entity->parent == nullptr || entity->handle == scene.flashlight)
-				entity_element = nullptr; // Ignore player flashlight
+			WriteLight(element, light, entity->parent);
 		}
 			break;
 		case Entity::Location: {
@@ -776,11 +815,6 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			break;
 	}
 
-	if (entity_element != nullptr)
-		xml.AddElement(parent, entity_element, entity->handle);
-	else
-		entity_element = parent;
-
 	for (unsigned int i = 0; i < entity->children.getSize(); i++)
 		WriteEntity(entity_element, entity->children[i]);
 }
@@ -905,7 +939,7 @@ void WriteXML::WriteEntity2ndPass(const Entity* entity) {
 			string param = script->params[i].key;
 			if (script->params[i].value.length() > 0)
 				param += "=" + script->params[i].value;
-			xml.AddStringAttribute(script_element, param_index.c_str(), param);
+			xml.AddStringAttribute(script_element, param_index, param);
 		}
 
 		/*for (unsigned int j = 0; j < script->entities.getSize(); j++) {

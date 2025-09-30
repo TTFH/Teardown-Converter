@@ -16,6 +16,14 @@ const char* EntityName[] = {
 	"Animator"
 };
 
+const char* LightName[] = {
+	"unknown",
+	"sphere",
+	"capsule",
+	"cone",
+	"area"
+};
+
 static void DeleteEntity(uint8_t type, void* entity) {
 	switch (type) {
 		case Entity::Body:

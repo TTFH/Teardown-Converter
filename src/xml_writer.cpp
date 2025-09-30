@@ -6,7 +6,7 @@
 #include "misc_utils.h"
 #include "xml_writer.h"
 
-static const char* GroupName[] = {"Props", "Locations", "Water", "Ropes", "Vehicles", "Triggers", "Scripts"};
+static const char* GroupName[] = { "World Body", "Props", "Locations", "Water", "Ropes", "Vehicles", "Triggers", "Scripts" };
 
 XML_Writer::XML_Writer() {
 	scene = main_xml.NewElement("scene");

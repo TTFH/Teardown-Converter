@@ -48,12 +48,12 @@ static const char* td_notes[32] = {
 };
 
 bool MV_Shape::operator==(const MV_Shape& other) const {
-	if (voxels->sizex != other.voxels->sizex || voxels->sizey != other.voxels->sizey || voxels->sizez != other.voxels->sizez)
+	if (voxels.sizex != other.voxels.sizex || voxels.sizey != other.voxels.sizey || voxels.sizez != other.voxels.sizez)
 		return false;
-	for (int x = 0; x < voxels->sizex; x++)
-		for (int y = 0; y < voxels->sizey; y++)
-			for (int z = 0; z < voxels->sizez; z++)
-				if (voxels->Get(x, y, z) != other.voxels->Get(x, y, z))
+	for (int x = 0; x < voxels.sizex; x++)
+		for (int y = 0; y < voxels.sizey; y++)
+			for (int z = 0; z < voxels.sizez; z++)
+				if (voxels.Get(x, y, z) != other.voxels.Get(x, y, z))
 					return false;
 	return true;
 }
@@ -103,20 +103,20 @@ void MV_FILE::WriteFileHeader() {
 
 void MV_FILE::WriteSIZE(const MV_Shape& shape) {
 	WriteChunkHeader(SIZE, 12, 0);
-	WriteInt(shape.voxels->sizex);
-	WriteInt(shape.voxels->sizey);
-	WriteInt(shape.voxels->sizez);
+	WriteInt(shape.voxels.sizex);
+	WriteInt(shape.voxels.sizey);
+	WriteInt(shape.voxels.sizez);
 }
 
 void MV_FILE::WriteXYZI(const MV_Shape& shape) {
-	int voxel_count = shape.voxels->GetNonZeroCount();
+	int voxel_count = shape.voxels.GetNonZeroCount();
 	WriteChunkHeader(XYZI, 4 * (1 + voxel_count), 0);
 	WriteInt(voxel_count);
 
-	for (int x = 0; x < shape.voxels->sizex; x++) {
-		for (int y = 0; y < shape.voxels->sizey; y++) {
-			for (int z = 0; z < shape.voxels->sizez; z++) {
-				uint8_t index = shape.voxels->Get(x, y, z);
+	for (int x = 0; x < shape.voxels.sizex; x++) {
+		for (int y = 0; y < shape.voxels.sizey; y++) {
+			for (int z = 0; z < shape.voxels.sizez; z++) {
+				uint8_t index = shape.voxels.Get(x, y, z);
 				if (index != 0) {
 					MV_Voxel voxel = { (uint8_t)x, (uint8_t)y, (uint8_t)z, index };
 					fwrite(&voxel, sizeof(MV_Voxel), 1, vox_file);
@@ -127,13 +127,13 @@ void MV_FILE::WriteXYZI(const MV_Shape& shape) {
 }
 
 void MV_FILE::WriteTDCZ(const MV_Shape& shape) {
-	uint8_t* voxel_array = shape.voxels->ToArray();
+	const uint8_t* voxel_array = shape.voxels.ToArray();
 	vector<uint8_t> compressed_data;
-	if (ZlibBlockCompress(voxel_array, shape.voxels->GetVolume(), 9, compressed_data)) {
+	if (ZlibBlockCompress(voxel_array, shape.voxels.GetVolume(), 9, compressed_data)) {
 		WriteChunkHeader(TDCZ, 3 * sizeof(int) + compressed_data.size(), 0);
-		WriteInt(shape.voxels->sizex);
-		WriteInt(shape.voxels->sizey);
-		WriteInt(shape.voxels->sizez);
+		WriteInt(shape.voxels.sizex);
+		WriteInt(shape.voxels.sizey);
+		WriteInt(shape.voxels.sizez);
 		fwrite(compressed_data.data(), sizeof(uint8_t), compressed_data.size(), vox_file);
 	} else
 		printf("[Warning] Failed to compress shape %s\n", shape.name.c_str());
@@ -308,12 +308,6 @@ void MV_FILE::SetEntry(uint8_t index, const MV_Color& color, MV_Material mat) {
 	palette[index] = color;
 	material[index] = mat;
 	is_index_used[index] = true;
-}
-
-MV_FILE::~MV_FILE() {
-	for (vector<MV_Shape>::iterator it = models.begin(); it != models.end(); it++)
-		delete it->voxels;
-	models.clear();
 }
 
 string MV_FILE::GetIndexNote(int index) {

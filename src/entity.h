@@ -59,10 +59,11 @@ public:
 #define VERSION_1_5_4 154
 #define LAST_VERSION VERSION_1_7_0
 
-#define SmallVec Vec
-//typedef uint32_t Handle;
+template <typename T>
+using SmallVec = Vec<T>;
 
 extern const char* EntityName[];
+extern const char* LightName[];
 
 struct Vec2 {
 	float x, y;
@@ -129,7 +130,7 @@ struct Entity {
 
 	uint8_t type;
 	uint32_t handle;
-	SmallVec<Tag> tags;
+	SmallVec<Tag> tags;	// tags
 	string desc;		// desc
 	uint16_t flags;
 	void* self;
@@ -176,20 +177,23 @@ enum ShapeOrigin : uint8_t {
 	Spawn = 5,
 };
 */
-struct Voxels {
-	uint32_t size[3];
-	// if the shape volume is not empty, voxels are stored using run length encoding
-	// with pairs (n-1, i) in xyz order
-	RLE palette_indexes;
-	uint32_t palette;
-	float scale;				// scale = 10.0 * this
-	uint8_t light_mask[8];		// - - - - | f r b -
-	bool is_disconnected;
-};
 
 struct Texture {
 	uint16_t tile;
 	float weight;
+};
+
+struct Voxels {
+	uint32_t sizex;
+	uint32_t sizey;
+	uint32_t sizez;
+	// if the shape volume is not empty, voxels are stored using run length encoding
+	// with pairs (n-1, i) in xyz order
+	RLE rle;
+	uint32_t palette_id;
+	float scale;			// scale = 10.0 * this
+	uint8_t light_mask[8];	// - - - - | f r b -
+	bool is_disconnected;
 };
 
 struct Shape {
@@ -213,7 +217,8 @@ struct Shape {
 	uint8_t origin;
 	uint32_t animator;
 
-	Transform original_tr;
+	//Transform original_tr;
+	Tensor3D decoded_voxels;
 };
 
 struct Light {

@@ -134,93 +134,50 @@ bool Transform::isDefault() {
 	return pos.isZero() && CompareFloat(rot.x, 0) && CompareFloat(rot.y, 0) && CompareFloat(rot.z, 0) && CompareFloat(rot.w, 1);
 }
 
-Tensor3D::Tensor3D(int sizex, int sizey, int sizez) {
-	this->sizex = sizex;
-	this->sizey = sizey;
-	this->sizez = sizez;
+Tensor3D::Tensor3D() : sizex(0), sizey(0), sizez(0) {}
 
-	data = new uint8_t**[sizex];
-	for (int i = 0; i < sizex; i++) {
-		data[i] = new uint8_t*[sizey];
-		for (int j = 0; j < sizey; j++)
-			data[i][j] = new uint8_t[sizez];
-	}
-	for (int i = 0; i < sizex; i++)
-		for (int j = 0; j < sizey; j++)
-			for (int k = 0; k < sizez; k++)
-				data[i][j][k] = 0x00;
-}
-
-Tensor3D::~Tensor3D() {
-	for (int i = 0; i < sizex; i++) {
-		for (int j = 0; j < sizey; j++)
-			delete[] data[i][j];
-		delete[] data[i];
-	}
-	delete[] data;
-	data = nullptr;
+Tensor3D::Tensor3D(uint32_t sizex, uint32_t sizey, uint32_t sizez) : sizex(sizex), sizey(sizey), sizez(sizez) {
+	data.resize(sizex * sizey * sizez, 0);
 }
 
 void Tensor3D::FromRunLengthEncoding(const RLE& rle) {
-	uint8_t* array = new uint8_t[GetVolume()];
-
-	int k = 0;
+	uint32_t k = 0;
 	for (RLE::const_iterator it = rle.begin(); it != rle.end(); it++) {
 		uint8_t run_length = it->first;
 		uint8_t entry = it->second;
-		for (unsigned int j = 0; j <= run_length; j++)
-			array[k++] = entry;
+		for (uint32_t j = 0; j <= run_length; j++)
+			data[k++] = entry;
 	}
-
-	k = 0;
-	for (int z = 0; z < sizez; z++)
-		for (int y = 0; y < sizey; y++)
-			for (int x = 0; x < sizex; x++)
-				data[x][y][z] = array[k++];
-
-	delete[] array;
 }
 
-void Tensor3D::Set(int x, int y, int z, uint8_t value) {
-	data[x][y][z] = value;
+void Tensor3D::Set(uint32_t x, uint32_t y, uint32_t z, uint8_t value) {
+	data[x + sizex * (y + sizey * z)] = value;
 }
 
-uint8_t Tensor3D::Get(int x, int y, int z) const {
-	return data[x][y][z];
+uint8_t Tensor3D::Get(uint32_t x, uint32_t y, uint32_t z) const {
+	return data[x + sizex * (y + sizey * z)];
 }
 
 bool Tensor3D::IsFilledSingleColor() const {
-	uint8_t color = data[0][0][0];
-	for (int x = 0; x < sizex; x++)
-		for (int y = 0; y < sizey; y++)
-			for (int z = 0; z < sizez; z++)
-				if (data[x][y][z] != color)
-					return false;
+	uint8_t color = data[0];
+	for (size_t i = 1; i < data.size(); i++)
+		if (data[i] != color)
+			return false;
 	return true;
 }
 
-int Tensor3D::GetVolume() const {
-	return sizex * sizey * sizez;
+uint32_t Tensor3D::GetVolume() const {
+	return data.size();
 }
 
-int Tensor3D::GetNonZeroCount() const {
-	int count = 0;
-	for (int x = 0; x < sizex; x++)
-		for (int y = 0; y < sizey; y++)
-			for (int z = 0; z < sizez; z++)
-				if (data[x][y][z] != 0)
-					count++;
+uint32_t Tensor3D::GetNonZeroCount() const {
+	uint32_t count = 0;
+	for (size_t i = 1; i < data.size(); i++)
+		if (data[i] != 0)
+			count++;
 	return count;
 }
 
-uint8_t* Tensor3D::ToArray() const {
-	int volume = GetVolume();
-	if (volume == 0) return nullptr;
-	uint8_t* array = new uint8_t[volume];
-	int i = 0;
-	for (int z = 0; z < sizez; z++)
-		for (int y = 0; y < sizey; y++)
-			for (int x = 0; x < sizex; x++)
-				array[i++] = data[x][y][z];
-	return array;
+const uint8_t* Tensor3D::ToArray() const {
+	return data.data();
 }

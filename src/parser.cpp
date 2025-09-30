@@ -111,20 +111,21 @@ VehicleProperties TDBIN::ReadVehicleProperties() {
 
 Voxels TDBIN::ReadVoxels() {
 	Voxels voxels;
-	for (int i = 0; i < 3; i++)
-		voxels.size[i] = ReadInt();
+	voxels.sizex = ReadInt();
+	voxels.sizey = ReadInt();
+	voxels.sizez = ReadInt();
 
-	int volume = voxels.size[0] * voxels.size[1] * voxels.size[2];
+	int volume = voxels.sizex * voxels.sizey * voxels.sizez;
 	if (volume > 0) {
 		int encoded_length = ReadInt();
-		voxels.palette_indexes.resize(encoded_length / 2);
+		voxels.rle.resize(encoded_length / 2);
 		for (int i = 0; i < encoded_length / 2; i++) {
 			uint8_t run_length = ReadByte();
 			uint8_t voxel_index = ReadByte();
-			voxels.palette_indexes[i] = {run_length, voxel_index};
+			voxels.rle[i] = {run_length, voxel_index};
 		}
 	}
-	voxels.palette = ReadInt();
+	voxels.palette_id = ReadInt();
 	voxels.scale = ReadFloat();
 
 	for (int i = 0; i < 8; i++)
@@ -244,6 +245,9 @@ Shape* TDBIN::ReadShape() {
 	shape->is_broken = ReadBool();
 	shape->has_voxels = ReadByte();
 	shape->voxels = ReadVoxels();
+
+	shape->decoded_voxels = Tensor3D(shape->voxels.sizex, shape->voxels.sizey, shape->voxels.sizez);
+	shape->decoded_voxels.FromRunLengthEncoding(shape->voxels.rle);
 
 	shape->origin = ReadByte();
 	if (tdbin_version >= VERSION_1_6_0)
