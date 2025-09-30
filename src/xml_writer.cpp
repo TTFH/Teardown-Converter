@@ -11,7 +11,9 @@ static const char* GroupName[] = { "World Body", "Props", "Locations", "Water", 
 XML_Writer::XML_Writer() {
 	scene = main_xml.NewElement("scene");
 	main_xml.InsertEndChild(scene);
+}
 
+void XML_Writer::CreateGroups() {
 	for (unsigned int i = 0; i < GROUP_COUNT; i++) {
 		groups[i] = main_xml.NewElement("group");
 		groups[i]->SetAttribute("name", GroupName[i]);

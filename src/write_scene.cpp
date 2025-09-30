@@ -181,6 +181,8 @@ void WriteXML::SaveVoxFiles() {
 }
 
 void WriteXML::WriteEntities() {
+	xml.CreateGroups();
+
 	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
 		WriteEntity(xml.GetScene(), scene.entities[i]);
 
@@ -256,13 +258,10 @@ void WriteXML::WriteBody(XMLElement* element, const Body* body, const Entity* pa
 		xml.GetGroupElement(PROP)->InsertEndChild(element);
 }
 
-void WriteXML::WriteShape(XMLElement* element, const Shape* shape, uint32_t handle) {
+void WriteXML::WriteShape(XMLElement* element, Shape* shape, uint32_t handle) {
 	int sizex = shape->voxels.sizex;
 	int sizey = shape->voxels.sizey;
 	int sizez = shape->voxels.sizez;
-	int volume = sizex * sizey * sizez;
-	if (volume == 0) return;
-
 	bool is_scaled = !CompareFloat(shape->voxels.scale, 0.1f);
 	if (params.use_voxbox && !is_scaled && shape->decoded_voxels.IsFilledSingleColor())
 		WriteVoxbox(element, shape);
@@ -272,7 +271,7 @@ void WriteXML::WriteShape(XMLElement* element, const Shape* shape, uint32_t hand
 		WriteCompound(element, shape, handle);
 }
 
-void WriteXML::WriteVox(XMLElement* element, const Shape* shape, uint32_t handle) {
+void WriteXML::WriteVox(XMLElement* element, Shape* shape, uint32_t handle) {
 	int sizex = shape->voxels.sizex;
 	int sizey = shape->voxels.sizey;
 	int sizez = shape->voxels.sizez;
@@ -282,6 +281,7 @@ void WriteXML::WriteVox(XMLElement* element, const Shape* shape, uint32_t handle
 	Transform shape_transform = shape->transform;
 	shape_transform.pos = shape_transform.pos + shape_transform.rot * axis_offset;
 	shape_transform.rot = shape_transform.rot * QuatEuler(90, 0, 0);
+	shape->transform = shape_transform;
 
 	string vox_folder = params.legacy_format ? "custom/" : "vox/";
 	string vox_filename ="palette" + to_string(shape->voxels.palette_id) + ".vox";
@@ -364,7 +364,7 @@ void WriteXML::WriteVoxbox(XMLElement* element, const Shape* shape) {
 	xml.AddVec4Attribute(element, "pbr", Vec4(palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive), "0 0 0 0");
 }
 
-void WriteXML::WriteCompound(XMLElement* element, const Shape* shape, uint32_t handle) {
+void WriteXML::WriteCompound(XMLElement* element, Shape* shape, uint32_t handle) {
 	int sizex = shape->voxels.sizex;
 	int sizey = shape->voxels.sizey;
 	int sizez = shape->voxels.sizez;
@@ -374,6 +374,7 @@ void WriteXML::WriteCompound(XMLElement* element, const Shape* shape, uint32_t h
 	Transform shape_transform = shape->transform;
 	shape_transform.pos = shape_transform.pos + shape_transform.rot * axis_offset;
 	shape_transform.rot = shape_transform.rot * QuatEuler(90, 0, 0);
+	shape->transform = shape_transform;
 
 	bool collide = (shape->shape_flags & 0x10) != 0;
 
@@ -491,24 +492,9 @@ void WriteXML::WriteLight(XMLElement* element, const Light* light, const Entity*
 	xml.AddFloatAttribute(element, "glare", light->glare, "0");
 }
 
-void WriteXML::WriteLocation(XMLElement* element, const Location* location, Entity* parent) {
+void WriteXML::WriteLocation(XMLElement* element, const Location* location, const Entity* parent) {
 	element->SetName("location");
 	xml.AddTransformAttribute(element, GetLocalTransform(parent, location->transform));
-
-	/*Entity* entity_parent = parent;
-	while (entity_parent != nullptr && entity_parent->type != Entity::Vehicle)
-		entity_parent = entity_parent->parent;
-	bool inside_vehicle = entity_parent != nullptr;
-	if (inside_vehicle && entity->tags.getSize() == 1) {
-		if (entity->tags[0].name == "camera" || entity->tags[0].name == "vital" ||
-			entity->tags[0].name == "exhaust" || entity->tags[0].name == "exit" ||
-			entity->tags[0].name == "propeller")
-			element = nullptr; // Vehicle location
-		else if (entity->tags[0].name == "player") {
-			element->SetName("group");
-			xml.AddStringAttribute(element, "name", "ik");
-		}
-	}*/
 
 	if (element->Parent() == xml.GetScene())
 		xml.GetGroupElement(LOCATION)->InsertEndChild(element);
@@ -536,9 +522,6 @@ void WriteXML::WriteJoint(const Joint* joint, string tags) {
 	if (shape_handle == 0) return;
 	assert(entity_mapping.find(shape_handle) != entity_mapping.end());
 	Entity* parent_entity = entity_mapping[shape_handle];
-	assert(parent_entity != nullptr);
-	assert(parent_entity->type == Entity::Shape);
-	Shape* shape = static_cast<Shape*>(parent_entity->self);
 	XMLElement* parent_element = xml.GetEntityElement(shape_handle);
 	assert(parent_element != nullptr);
 
@@ -567,8 +550,7 @@ void WriteXML::WriteJoint(const Joint* joint, string tags) {
 		}
 	}
 	Transform joint_tr = Transform(relative_pos, relative_rot);
-	if (parent_element->Attribute("prop") == nullptr)
-		joint_tr = TransformToLocalTransform(shape->transform, joint_tr);
+	joint_tr = GetLocalTransform(parent_entity, joint_tr);
 
 	XMLElement* element = xml.AddChildElement(parent_element, "joint"/*, entity->handle*/);
 	xml.AddStringAttribute(element, "tags", tags);
@@ -782,20 +764,44 @@ void WriteXML::WriteScript(const Script* script) {
 		xml.AddStringAttribute(script_element, param_index.c_str(), param);
 	}
 
-	/*for (unsigned int j = 0; j < script->entities.getSize(); j++) {
-		uint32_t entity_handle = script->entities[j];
-		XMLElement* entity_child = xml.GetEntityElement(entity_handle);
-		// TODO: improve logic
-		if (entity_child != nullptr && strcmp(entity_child->Name(), "light") != 0 && strcmp(entity_child->Name(), "rope") != 0) {
-			XMLElement* entity_parent = nullptr;
-			if (entity_child->Parent() != nullptr)
-				entity_parent = entity_child->Parent()->ToElement();
-			if (xml.IsChildOf(script_element, entity_child))
-				continue; // Already moved
-			xml.MoveElement(script_element, entity_child);
-			if (entity_parent != nullptr && entity_parent != xml.GetScene() && strcmp(entity_parent->Name(), "group") != 0)
-				xml.MoveElement(entity_parent, script_element);
+	/*for (unsigned int i = 0; i < script->entities.getSize(); i++) {
+		uint32_t handle = script->entities[i];
+		XMLElement* entity_element = xml.GetEntityElement(handle);
+		if (entity_element == nullptr)
+			continue;
+
+		// Check if some xml parent is also inside the script
+		bool script_includes_parent = false;
+		XMLElement* parent_element = nullptr;
+		if (entity_element->Parent() != nullptr)
+			parent_element = entity_element->Parent()->ToElement();
+		while (parent_element != nullptr && !script_includes_parent) {
+			for (unsigned int j = 0; j < script->entities.getSize(); j++) {
+				uint32_t other_handle = script->entities[j];
+				if (other_handle == handle)
+					continue;
+				XMLElement* other_element = xml.GetEntityElement(other_handle);
+				if (parent_element == other_element) {
+					script_includes_parent = true;
+					break;
+				}
+			}
+			if (parent_element->Parent() != nullptr)
+				parent_element = parent_element->Parent()->ToElement();
+			else
+				parent_element = nullptr;
 		}
+		if (script_includes_parent)
+			continue;
+
+		// Move script inside the parent of this entity, if it's not a group
+		assert(entity_element->Parent() != nullptr);
+		parent_element = entity_element->Parent()->ToElement();
+		if (parent_element != xml.GetScene() && parent_element->Name() != string("group"))
+			parent_element->InsertEndChild(script_element);
+		
+		// Move entity inside the script
+		script_element->InsertEndChild(entity_element);
 	}*/
 }
 
@@ -806,35 +812,39 @@ void WriteXML::WriteAnimator(XMLElement* element, const Animator* animator) {
 }
 
 void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
-	XMLElement* element = xml.AddChildElement(parent, "unknown", entity->handle);
+	XMLElement* element = xml.AddChildElement(parent, EntityName[entity->type], entity->handle);
 	xml.AddStringAttribute(element, "tags", ConcatTags(entity->tags));
 	xml.AddStringAttribute(element, "desc", entity->desc);
 
 	switch (entity->type) {
 		case Entity::Body: {
 			Body* body = static_cast<Body*>(entity->self);
-			if (entity->handle != scene.world_body) {
-				if ((body->dynamic && entity->children.getSize() > 0) || entity->tags.getSize() > 0)
-					WriteBody(element, body, entity->parent);
-				else {
-					parent->DeleteChild(element);
-					element = parent;
-				}
-			} else {
+			if (entity->handle == scene.world_body) {
 				parent->DeleteChild(element);
 				element = xml.GetGroupElement(WORLD_BODY);
 				xml.AddTransformAttribute(element, body->transform);
+			} else {
+				if (entity->children.getSize() == 0) {
+					parent->DeleteChild(element);
+					element = parent;
+				} else
+					WriteBody(element, body, entity->parent);
 			}
 		}
 			break;
 		case Entity::Shape: {
 			Shape* shape = static_cast<Shape*>(entity->self);
-			WriteShape(element, shape, entity->handle);
+			int volume = shape->voxels.sizex * shape->voxels.sizey * shape->voxels.sizez;
+			if (volume == 0) {
+				parent->DeleteChild(element);
+				element = parent;
+			} else
+				WriteShape(element, shape, entity->handle);
 		}
 			break;
 		case Entity::Light: {
 			Light* light = static_cast<Light*>(entity->self);
-			if (entity->handle != scene.flashlight)
+			if (entity->parent != nullptr && entity->handle != scene.flashlight)
 				WriteLight(element, light, entity->parent);
 			else {
 				parent->DeleteChild(element);
@@ -844,7 +854,30 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			break;
 		case Entity::Location: {
 			Location* location = static_cast<Location*>(entity->self);
-			WriteLocation(element, location, entity->parent);
+			/*Entity* entity_parent = entity->parent;
+			while (entity_parent != nullptr && entity_parent->type != Entity::Vehicle)
+				entity_parent = entity_parent->parent;*/
+
+			bool generic_location = true;
+			//bool inside_vehicle = entity_parent != nullptr;
+			//if (inside_vehicle) {
+				string tags = ConcatTags(entity->tags);
+				if (tags == "camera" || tags == "vital" ||
+					tags == "exhaust" || tags == "exit" ||
+					tags == "propeller" || (entity->parent != nullptr && entity->parent->type == Entity::Joint)) {
+					parent->DeleteChild(element);
+					element = parent;
+					generic_location = false;
+				} else if (tags == "player") {
+					element->SetName("group");
+					element->DeleteAttribute("tags");
+					xml.AddStringAttribute(element, "name", "ik");
+					xml.AddTransformAttribute(element, GetLocalTransform(entity->parent, location->transform));
+					generic_location = false;
+				}
+			//}
+			if (generic_location)
+				WriteLocation(element, location, entity->parent);
 		}
 			break;
 		case Entity::Water: {
@@ -856,13 +889,17 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			Joint* joint = static_cast<Joint*>(entity->self);
 			if (joint->type == Joint::_Rope)
 				WriteRope(element, joint->rope, joint->size);
+			else {
+				parent->DeleteChild(element);
+				element = parent;
+			}
 		}
 			break;
 		case Entity::Vehicle: {
-			Vehicle* vehicle = static_cast<Vehicle*>(entity->self);
 			bool is_boat = false;
 			for (unsigned int i = 0; i < entity->tags.getSize(); i++)
 				is_boat |= entity->tags[i].name == "boat";
+			Vehicle* vehicle = static_cast<Vehicle*>(entity->self);
 			WriteVehicle(element, vehicle, is_boat);
 		}
 			break;

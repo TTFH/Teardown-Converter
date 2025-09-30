@@ -21,6 +21,7 @@ private:
 	map<uint32_t, XMLElement*> element_mapping;
 public:
 	XML_Writer();
+	void CreateGroups();
 	void SaveFile(const char* filename);
 
 	XMLElement* GetScene();

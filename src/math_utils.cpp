@@ -154,13 +154,13 @@ void Tensor3D::FromRunLengthEncoding(const RLE& rle) {
 void Tensor3D::Set(int x, int y, int z, uint8_t value) {
 	if (x < 0 || x >= sizex || y < 0 || y >= sizey || z < 0 || z >= sizez)
 		throw out_of_range("Index out of range");
-	data[(x * sizey + y) * sizez + z] = value;
+	data[x + sizex * (y + sizey * z)] = value;
 }
 
 uint8_t Tensor3D::Get(int x, int y, int z) const {
 	if (x < 0 || x >= sizex || y < 0 || y >= sizey || z < 0 || z >= sizez)
 		throw out_of_range("Index out of range");
-	return data[(x * sizey + y) * sizez + z];
+	return data[x + sizex * (y + sizey * z)];
 }
 
 bool Tensor3D::IsFilledSingleColor() const {
