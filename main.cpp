@@ -103,15 +103,13 @@ void CreateTestPalette() {
 	vox_file.SetEntry(SNOW_INDEX, SNOW_COLOR, SNOW_MATERIAL);
 	vox_file.SetEntry(HOLE_INDEX, HOLE_COLOR, HOLE_MATERIAL);
 
-	Tensor3D* voxels = new Tensor3D(8 * 8, 8, 8 * 32);
+	MV_Shape mvshape = { "", 0, 0, 128, Tensor3D(8 * 8, 8, 8 * 32) };
 	for (int i = 0; i < 255; i++) {
 		for (int x = 0; x < 8; x++)
 			for (int y = 0; y < 8; y++)
 				for (int z = 0; z < 8; z++)
-					voxels->Set(x + 8 * (i % 8), y, z + 8 * (i / 8), i + 1);
+					mvshape.voxels.Set(x + 8 * (i % 8), y, z + 8 * (i / 8), i + 1);
 	}
-
-	MV_Shape mvshape = { "", 0, 0, 128, voxels };
 	vox_file.AddShape(mvshape);
 	vox_file.SaveModel();
 }

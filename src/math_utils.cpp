@@ -136,25 +136,25 @@ bool Transform::isDefault() {
 
 Tensor3D::Tensor3D() : sizex(0), sizey(0), sizez(0) {}
 
-Tensor3D::Tensor3D(uint32_t sizex, uint32_t sizey, uint32_t sizez) : sizex(sizex), sizey(sizey), sizez(sizez) {
+Tensor3D::Tensor3D(int sizex, int sizey, int sizez) : sizex(sizex), sizey(sizey), sizez(sizez) {
 	data.resize(sizex * sizey * sizez, 0);
 }
 
 void Tensor3D::FromRunLengthEncoding(const RLE& rle) {
-	uint32_t k = 0;
+	int k = 0;
 	for (RLE::const_iterator it = rle.begin(); it != rle.end(); it++) {
 		uint8_t run_length = it->first;
 		uint8_t entry = it->second;
-		for (uint32_t j = 0; j <= run_length; j++)
+		for (int j = 0; j <= run_length; j++)
 			data[k++] = entry;
 	}
 }
 
-void Tensor3D::Set(uint32_t x, uint32_t y, uint32_t z, uint8_t value) {
+void Tensor3D::Set(int x, int y, int z, uint8_t value) {
 	data[x + sizex * (y + sizey * z)] = value;
 }
 
-uint8_t Tensor3D::Get(uint32_t x, uint32_t y, uint32_t z) const {
+uint8_t Tensor3D::Get(int x, int y, int z) const {
 	return data[x + sizex * (y + sizey * z)];
 }
 
@@ -166,12 +166,12 @@ bool Tensor3D::IsFilledSingleColor() const {
 	return true;
 }
 
-uint32_t Tensor3D::GetVolume() const {
+int Tensor3D::GetVolume() const {
 	return data.size();
 }
 
-uint32_t Tensor3D::GetNonZeroCount() const {
-	uint32_t count = 0;
+int Tensor3D::GetNonZeroCount() const {
+	int count = 0;
 	for (size_t i = 1; i < data.size(); i++)
 		if (data[i] != 0)
 			count++;

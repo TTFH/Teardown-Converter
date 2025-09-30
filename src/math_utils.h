@@ -43,15 +43,15 @@ class Tensor3D {
 private:
 	vector<uint8_t> data;
 public:
-	uint32_t sizex, sizey, sizez;
+	int sizex, sizey, sizez;
 	Tensor3D();
-	Tensor3D(uint32_t sizex, uint32_t sizey, uint32_t sizez);
+	Tensor3D(int sizex, int sizey, int sizez);
 	void FromRunLengthEncoding(const RLE& rle);
-	void Set(uint32_t x, uint32_t y, uint32_t z, uint8_t value);
-	uint8_t Get(uint32_t x, uint32_t y, uint32_t z) const;
+	void Set(int x, int y, int z, uint8_t value);
+	uint8_t Get(int x, int y, int z) const;
 	bool IsFilledSingleColor() const;
-	uint32_t GetVolume() const;
-	uint32_t GetNonZeroCount() const;
+	int GetVolume() const;
+	int GetNonZeroCount() const;
 	const uint8_t* ToArray() const;
 };
 

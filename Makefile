@@ -1,7 +1,7 @@
 TARGET = release/teardown-converter
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -O3 #-g
+CXXFLAGS = -Wall -Wextra -Werror -Wpedantic -O3 -g
 CXXFLAGS += -Iimgui -I.
 CXXFLAGS += -Wno-missing-field-initializers
 CXXFLAGS += `pkg-config --cflags glfw3`
@@ -44,26 +44,29 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
 
-$(OBJDIR)/%.o: %.cpp
+$(OBJDIR)/%.o: %.cpp | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: src/%.cpp src/%.h
+$(OBJDIR)/%.o: src/%.cpp src/%.h | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: lib/%.cpp lib/%.h
+$(OBJDIR)/%.o: lib/%.cpp lib/%.h | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: glad/%.c glad/%.h
+$(OBJDIR)/%.o: glad/%.c glad/%.h | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: imgui/%.cpp
+$(OBJDIR)/%.o: imgui/%.cpp | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: imgui/backend/%.cpp imgui/backend/%.h
+$(OBJDIR)/%.o: imgui/backend/%.cpp imgui/backend/%.h | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: file_dialog/%.cpp file_dialog/%.h
+$(OBJDIR)/%.o: file_dialog/%.cpp file_dialog/%.h | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
 rebuild: clean all
 
