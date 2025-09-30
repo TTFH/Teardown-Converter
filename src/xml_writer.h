@@ -10,13 +10,13 @@
 using namespace std;
 using namespace tinyxml2;
 
-enum GroupType { WORLD_BODY, PROP, LOCATION, WATER, ROPE, VEHICLE, TRIGGER, SCRIPT };
+enum GroupType { WORLD_BODY, STATIC, PROP, LOCATION, WATER, ROPE, VEHICLE, TRIGGER, SCRIPT };
 
 class XML_Writer {
 private:
 	XMLDocument main_xml;
 	XMLElement* scene;
-	static const unsigned int GROUP_COUNT = 8;
+	static const unsigned int GROUP_COUNT = 9;
 	array<XMLElement*, GROUP_COUNT> groups;
 	map<uint32_t, XMLElement*> element_mapping;
 public:

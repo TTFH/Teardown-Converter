@@ -262,6 +262,7 @@ void WriteXML::WriteShape(XMLElement* element, Shape* shape, uint32_t handle) {
 	int sizex = shape->voxels.sizex;
 	int sizey = shape->voxels.sizey;
 	int sizez = shape->voxels.sizez;
+	shape->original_tr = shape->transform;
 	bool is_scaled = !CompareFloat(shape->voxels.scale, 0.1f);
 	if (params.use_voxbox && !is_scaled && shape->decoded_voxels.IsFilledSingleColor())
 		WriteVoxbox(element, shape);
@@ -467,7 +468,8 @@ void WriteXML::WriteLight(XMLElement* element, const Light* light, const Entity*
 	light_color.b = pow(light->color.b, 1 / 2.2f);
 
 	element->SetName("light");
-	xml.AddTransformAttribute(element, GetLocalTransform(parent, light->transform));
+	if (parent == nullptr || (parent->type != Entity::Screen && parent->type != Entity::Light))
+		xml.AddTransformAttribute(element, GetLocalTransform(parent, light->transform));
 	xml.AddStringAttribute(element, "type", LightName[light->type], "sphere");
 	xml.AddColorAttribute(element, "color", light_color, "1 1 1 1");
 	xml.AddFloatAttribute(element, "scale", light->scale, "1");
@@ -494,7 +496,8 @@ void WriteXML::WriteLight(XMLElement* element, const Light* light, const Entity*
 
 void WriteXML::WriteLocation(XMLElement* element, const Location* location, const Entity* parent) {
 	element->SetName("location");
-	xml.AddTransformAttribute(element, GetLocalTransform(parent, location->transform));
+	if (parent == nullptr || parent->type != Entity::Trigger)
+		xml.AddTransformAttribute(element, GetLocalTransform(parent, location->transform));
 
 	if (element->Parent() == xml.GetScene())
 		xml.GetGroupElement(LOCATION)->InsertEndChild(element);
@@ -666,13 +669,16 @@ void WriteXML::WriteVehicle(XMLElement* element, const Vehicle* vehicle, bool is
 
 void WriteXML::WriteWheel(XMLElement* element, const Wheel* wheel, const Entity* parent) {
 	element->SetName("wheel");
-	xml.AddTransformAttribute(element, GetLocalTransform(parent, wheel->transform));
+	if (parent != nullptr && parent->type == Entity::Body)
+		xml.AddTransformAttribute(element, wheel->transform);
+	else
+		xml.AddTransformAttribute(element, GetLocalTransform(parent, wheel->transform));
 	xml.AddFloatAttribute(element, "drive", wheel->drive, "0");
 	xml.AddFloatAttribute(element, "steer", wheel->steer, "0");
 	xml.AddVec2Attribute(element, "travel", wheel->travel, "-0.1 0.1");
 }
 
-void WriteXML::WriteScreen(XMLElement* element, const Screen* screen) {
+void WriteXML::WriteScreen(XMLElement* element, const Screen* screen, const Entity* parent) {
 	string script_file = screen->script;
 	if (!params.level_id.empty()) {
 		string prefix = "data/level/" + params.level_id;
@@ -684,6 +690,14 @@ void WriteXML::WriteScreen(XMLElement* element, const Screen* screen) {
 		script_file = script_file.substr(prefix.size());
 
 	element->SetName("screen");
+
+	if (parent != nullptr && parent->type == Entity::Shape) {
+		Shape* shape = static_cast<Shape*>(parent->self);
+		Transform local_transform = TransformToLocalTransform(shape->original_tr, shape->transform);
+		local_transform = TransformToLocalTransform(local_transform, screen->transform);
+		xml.AddTransformAttribute(element, local_transform);
+	}
+
 	xml.AddVec2Attribute(element, "size", screen->size, "0.9 0.5");
 	xml.AddFloatAttribute(element, "bulge", screen->bulge, "0.08");
 	xml.AddVec2Attribute(element, "resolution", Vec2(screen->resolution[0], screen->resolution[1]), "640 480");
@@ -764,7 +778,7 @@ void WriteXML::WriteScript(const Script* script) {
 		xml.AddStringAttribute(script_element, param_index.c_str(), param);
 	}
 
-	/*for (unsigned int i = 0; i < script->entities.getSize(); i++) {
+	for (unsigned int i = 0; i < script->entities.getSize(); i++) {
 		uint32_t handle = script->entities[i];
 		XMLElement* entity_element = xml.GetEntityElement(handle);
 		if (entity_element == nullptr)
@@ -802,7 +816,7 @@ void WriteXML::WriteScript(const Script* script) {
 		
 		// Move entity inside the script
 		script_element->InsertEndChild(entity_element);
-	}*/
+	}
 }
 
 void WriteXML::WriteAnimator(XMLElement* element, const Animator* animator) {
@@ -819,12 +833,14 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 	switch (entity->type) {
 		case Entity::Body: {
 			Body* body = static_cast<Body*>(entity->self);
+			// Add world body as a group
 			if (entity->handle == scene.world_body) {
 				parent->DeleteChild(element);
 				element = xml.GetGroupElement(WORLD_BODY);
 				xml.AddTransformAttribute(element, body->transform);
 			} else {
-				if (entity->children.getSize() == 0) {
+				// Skip empty bodies and wheel bodies
+				if (entity->children.getSize() == 0 || (entity->parent != nullptr && entity->parent->type == Entity::Wheel)) {
 					parent->DeleteChild(element);
 					element = parent;
 				} else
@@ -854,17 +870,21 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			break;
 		case Entity::Location: {
 			Location* location = static_cast<Location*>(entity->self);
-			/*Entity* entity_parent = entity->parent;
+			Entity* entity_parent = entity->parent;
 			while (entity_parent != nullptr && entity_parent->type != Entity::Vehicle)
-				entity_parent = entity_parent->parent;*/
+				entity_parent = entity_parent->parent;
 
 			bool generic_location = true;
-			//bool inside_vehicle = entity_parent != nullptr;
-			//if (inside_vehicle) {
+			bool inside_vehicle = entity_parent != nullptr;
+			if (entity->parent != nullptr && entity->parent->type == Entity::Joint) {
+				parent->DeleteChild(element);
+				element = parent;
+				generic_location = false;
+			} else if (inside_vehicle) {
 				string tags = ConcatTags(entity->tags);
 				if (tags == "camera" || tags == "vital" ||
 					tags == "exhaust" || tags == "exit" ||
-					tags == "propeller" || (entity->parent != nullptr && entity->parent->type == Entity::Joint)) {
+					tags == "propeller") {
 					parent->DeleteChild(element);
 					element = parent;
 					generic_location = false;
@@ -875,7 +895,7 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 					xml.AddTransformAttribute(element, GetLocalTransform(entity->parent, location->transform));
 					generic_location = false;
 				}
-			//}
+			}
 			if (generic_location)
 				WriteLocation(element, location, entity->parent);
 		}
@@ -915,7 +935,7 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			break;
 		case Entity::Screen: {
 			Screen* screen = static_cast<Screen*>(entity->self);
-			WriteScreen(element, screen);
+			WriteScreen(element, screen, entity->parent);
 		}
 			break;
 		case Entity::Trigger: {

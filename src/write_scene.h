@@ -28,7 +28,7 @@ private:
 	void WriteJoint(const Joint* joint, string tags);
 	void WriteVehicle(XMLElement* element, const Vehicle* vehicle, bool is_boat);
 	void WriteWheel(XMLElement* element, const Wheel* wheel, const Entity* parent);
-	void WriteScreen(XMLElement* element, const Screen* screen);
+	void WriteScreen(XMLElement* element, const Screen* screen, const Entity* parent);
 	void WriteTrigger(XMLElement* element, const Trigger* trigger);
 	void WriteScript(const Script* script);
 	void WriteAnimator(XMLElement* element, const Animator* animator);

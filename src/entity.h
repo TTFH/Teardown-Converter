@@ -217,7 +217,7 @@ struct Shape {
 	uint8_t origin;
 	uint32_t animator;
 
-	//Transform original_tr;
+	Transform original_tr;
 	Tensor3D decoded_voxels;
 };
 
