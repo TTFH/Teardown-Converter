@@ -793,10 +793,9 @@ void WriteXML::WriteAnimator(XMLElement* element, const Animator* animator) {
 }
 
 void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
-	XMLElement* element = xml.AddChildElement(parent, "unknown", entity->handle);
+	XMLElement* element = xml.AddChildElement(parent, EntityName[entity->type], entity->handle);
 	xml.AddStringAttribute(element, "tags", ConcatTags(entity->tags));
 	xml.AddStringAttribute(element, "desc", entity->desc);
-	printf("Writing entity %u (%s)\n", entity->handle, EntityName[entity->type]);
 
 	switch (entity->type) {
 		case Entity::Body: {

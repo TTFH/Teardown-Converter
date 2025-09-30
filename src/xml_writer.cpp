@@ -13,9 +13,9 @@ XML_Writer::XML_Writer() {
 	main_xml.InsertEndChild(scene);
 
 	for (unsigned int i = 0; i < GROUP_COUNT; i++) {
-		XMLElement* group = main_xml.NewElement("group");
-		group->SetAttribute("name", GroupName[i]);
-		main_xml.InsertEndChild(group);
+		groups[i] = main_xml.NewElement("group");
+		groups[i]->SetAttribute("name", GroupName[i]);
+		scene->InsertEndChild(groups[i]);
 	}
 }
 
@@ -105,8 +105,10 @@ void XML_Writer::AddSoundAttribute(XMLElement* element, const char* name, Sound 
 	string buffer = value.path;
 	if (value.volume != 1.0)
 		buffer += " " + FloatToString(value.volume);
-	if (buffer != default_value)
+	if (buffer != "" && buffer != default_value)
 		element->SetAttribute(name, buffer.c_str());
+	else if (default_value != "")
+		element->SetAttribute(name, default_value.c_str());
 }
 
 void XML_Writer::AddFloatAttribute(XMLElement* element, const char* name, float value, string default_value) {
