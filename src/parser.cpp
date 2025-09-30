@@ -185,7 +185,7 @@ Entity* TDBIN::ReadEntity() {
 
 	entity->handle = ReadInt();
 	entity_mapping[entity->handle] = entity;
-	printf("Reading %s with handle %d\n", EntityName[entity->type], entity->handle);
+	//printf("Reading %s with handle %d\n", EntityName[entity->type], entity->handle);
 
 	uint8_t tag_count = ReadByte();
 	entity->tags.resize(tag_count);
@@ -301,7 +301,7 @@ Water* TDBIN::ReadWater() {
 	int vertex_count = ReadInt();
 	water->vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++)
-		water->vertices[i] = ReadVertex();
+		water->vertices[i] = ReadVec2();
 	return water;
 }
 
@@ -446,7 +446,7 @@ Trigger* TDBIN::ReadTrigger() {
 	int vertex_count = ReadInt();
 	trigger->polygon_vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++)
-		trigger->polygon_vertices[i] = ReadVertex();
+		trigger->polygon_vertices[i] = ReadVec2();
 	trigger->sound.path = ReadString();
 	trigger->sound.ramp = ReadFloat();
 	trigger->sound.type = ReadByte();
@@ -513,8 +513,8 @@ Animator* TDBIN::ReadAnimator() {
 	entries = ReadInt();
 	for (int i = 0; i < entries; i++) {
 		ReadTransform();
-		ReadVertex();
-		ReadVertex();
+		ReadVec2();
+		ReadVec2();
 		ReadFloat();
 		ReadFloat();
 		ReadByte();
@@ -718,6 +718,7 @@ void TDBIN::ReadEnvironment() {
 
 	Snow* snow = &environment->snow;
 	snow->dir = ReadVec4();
+	snow->amount = ReadVec2();
 	snow->onground = ReadBool();
 
 	environment->wind = ReadVec3();
@@ -800,7 +801,7 @@ void TDBIN::parse() {
 	int vertex_count = ReadInt();
 	boundary->vertices.resize(vertex_count);
 	for (int i = 0; i < vertex_count; i++)
-		boundary->vertices[i] = ReadVertex();
+		boundary->vertices[i] = ReadVec2();
 	boundary->padleft = ReadFloat();
 	boundary->padtop = ReadFloat();
 	boundary->padright = ReadFloat();

@@ -95,13 +95,6 @@ Color Reader::ReadColor() {
 	return color;
 }
 
-Vertex Reader::ReadVertex() {
-	Vertex vertex;
-	vertex.x = ReadFloat();
-	vertex.y = ReadFloat();
-	return vertex;
-}
-
 Vec2 Reader::ReadVec2() {
 	Vec2 vec;
 	vec.x = ReadFloat();

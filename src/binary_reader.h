@@ -23,7 +23,6 @@ public:
 	Tag ReadTag();
 	Registry ReadRegistry();
 	Color ReadColor();
-	Vertex ReadVertex();
 	Vec2 ReadVec2();
 	Vec3 ReadVec3();
 	Vec4 ReadVec4();
