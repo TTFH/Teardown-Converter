@@ -301,10 +301,11 @@ void WriteXML::WriteVox(XMLElement* element, Shape* shape, uint32_t handle) {
 
 	MV_Shape mvshape = { vox_object, 0, 0, sizez / 2, shape->decoded_voxels };
 	// Add voxels in opposite corners to prevent shape from changing size when removing snow
+	// Only if those are air or snow
 	if (params.remove_snow) {
-		if (mvshape.voxels.Get(0, 0, 0) != 0)
+		if (mvshape.voxels.Get(0, 0, 0) == 0 || mvshape.voxels.Get(0, 0, 0) == 254)
 			mvshape.voxels.Set(0, 0, 0, 255);
-		if (mvshape.voxels.Get(sizex - 1, sizey - 1, sizez - 1) != 0)
+		if (mvshape.voxels.Get(sizex - 1, sizey - 1, sizez - 1) == 0 || mvshape.voxels.Get(sizex - 1, sizey - 1, sizez - 1) == 254)
 			mvshape.voxels.Set(sizex - 1, sizey - 1, sizez - 1, 255);
 		vox_file->SetEntry(255, HOLE_COLOR, HOLE_MATERIAL);
 	}

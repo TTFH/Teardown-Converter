@@ -132,7 +132,6 @@ struct Entity {
 	uint32_t handle;
 	SmallVec<Tag> tags;	// tags
 	string desc;		// desc
-	uint16_t flags;
 	void* self;
 	Vec<Entity*> children;
 	uint32_t beef_beef;
@@ -149,6 +148,7 @@ enum BodyMode : uint8_t {
 };
 */
 struct Body {
+	uint16_t flags;
 	Transform transform;
 	Vec3 velocity;
 	Vec3 angular_velocity;
@@ -197,6 +197,7 @@ struct Voxels {
 };
 
 struct Shape {
+	uint16_t flags;
 	Transform transform;
 	uint16_t shape_flags;		// collide: 0x10
 	uint8_t collision_layer;
@@ -249,10 +250,12 @@ struct Light {
 };
 
 struct Location {
+	uint16_t flags;
 	Transform transform;
 };
 
 struct Water {
+	uint16_t flags;
 	Transform transform;
 	float depth;		// depth
 	float wave;			// wave
@@ -344,6 +347,7 @@ struct VehicleLocation {
 };
 
 struct Vehicle {
+	uint16_t flags;
 	uint32_t body;
 	Transform transform;
 	Transform transform2;
@@ -369,6 +373,7 @@ struct Vehicle {
 };
 
 struct Wheel {
+	uint16_t flags;
 	uint32_t vehicle;
 	uint32_t vehicle_body;
 	uint32_t body;
@@ -389,6 +394,7 @@ struct Wheel {
 };
 
 struct Screen {
+	uint16_t flags;
 	Transform transform;
 	Vec2 size;				// size
 	float bulge;			// bulge
@@ -421,6 +427,7 @@ struct Trigger {
 	static const uint32_t Box = 2;
 	static const uint32_t Polygon = 3;
 
+	uint16_t flags;
 	Transform transform;
 	uint32_t type;				// type
 	float sphere_size;			// size
@@ -462,6 +469,7 @@ struct ValueTransition {
 };
 
 struct Script {
+	uint16_t flags;
 	string file;			// file
 	Vec<Registry> params;	// param%d
 	float tick_time;
@@ -499,6 +507,7 @@ struct Animation {
 };
 */
 struct Animator {
+	uint16_t flags;
 	Transform transform;
 	string path;		// file
 	// ...

@@ -193,8 +193,6 @@ Entity* TDBIN::ReadEntity() {
 		entity->tags[i] = ReadTag();
 
 	entity->desc = ReadString();
-	if (entity->type != Entity::Light && entity->type != Entity::Joint) // Ah, yes... consistency
-		entity->flags = ReadWord();										// TODO: move inside entity types
 	entity->self = ReadEntityType(entity->type);
 
 	int childrens = ReadInt();
@@ -214,6 +212,7 @@ Entity* TDBIN::ReadEntity() {
 
 Body* TDBIN::ReadBody() {
 	Body* body = new Body();
+	body->flags = ReadWord();
 	body->transform = ReadTransform();
 	body->velocity = ReadVec3();
 	body->angular_velocity = ReadVec3();
@@ -228,6 +227,7 @@ Body* TDBIN::ReadBody() {
 
 Shape* TDBIN::ReadShape() {
 	Shape* shape = new Shape();
+	shape->flags = ReadWord();
 	shape->transform = ReadTransform();
 	shape->shape_flags = ReadWord();
 	shape->collision_layer = ReadByte();
@@ -284,12 +284,14 @@ Light* TDBIN::ReadLight() {
 
 Location* TDBIN::ReadLocation() {
 	Location* location = new Location();
+	location->flags = ReadWord();
 	location->transform = ReadTransform();
 	return location;
 }
 
 Water* TDBIN::ReadWater() {
 	Water* water = new Water();
+	water->flags = ReadWord();
 	water->transform = ReadTransform();
 	water->depth = ReadFloat();
 	water->wave = ReadFloat();
@@ -336,6 +338,7 @@ Joint* TDBIN::ReadJoint() {
 
 Vehicle* TDBIN::ReadVehicle() {
 	Vehicle* vehicle = new Vehicle();
+	vehicle->flags = ReadWord();
 	vehicle->body = ReadInt();
 	vehicle->transform = ReadTransform();
 	vehicle->transform2 = ReadTransform();
@@ -397,6 +400,7 @@ Vehicle* TDBIN::ReadVehicle() {
 
 Wheel* TDBIN::ReadWheel() {
 	Wheel* wheel = new Wheel();
+	wheel->flags = ReadWord();
 	wheel->vehicle = ReadInt();
 	wheel->vehicle_body = ReadInt();
 	wheel->body = ReadInt();
@@ -420,6 +424,7 @@ Wheel* TDBIN::ReadWheel() {
 
 Screen* TDBIN::ReadScreen() {
 	Screen* screen = new Screen();
+	screen->flags = ReadWord();
 	screen->transform = ReadTransform();
 	screen->size = ReadVec2();
 	screen->bulge = ReadFloat();
@@ -438,6 +443,7 @@ Screen* TDBIN::ReadScreen() {
 
 Trigger* TDBIN::ReadTrigger() {
 	Trigger* trigger = new Trigger();
+	trigger->flags = ReadWord();
 	trigger->transform = ReadTransform();
 	trigger->type = ReadInt();
 	trigger->sphere_size = ReadFloat();
@@ -456,6 +462,7 @@ Trigger* TDBIN::ReadTrigger() {
 
 Script* TDBIN::ReadScript() {
 	Script* script = new Script();
+	script->flags = ReadWord();
 	script->file = ReadString();
 
 	int entries = ReadInt();
@@ -497,6 +504,7 @@ Animator* TDBIN::ReadAnimator() {
 	int entries = 0;
 	uint8_t* buffer = nullptr;
 	Animator* animator = new Animator();
+	animator->flags = ReadWord();
 	animator->transform = ReadTransform();
 	animator->path = ReadString();
 
