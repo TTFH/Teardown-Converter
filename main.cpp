@@ -311,7 +311,9 @@ int main(int argc, char* argv[]) {
 			ImGui::Text("Selected Level:");
 			ImGui::SameLine();
 			ImGui::Text(selected_level->title.c_str());
+			ImGui::BeginChild("LevelDesc", ImVec2(0, 50), ImGuiChildFlags_Border);
 			ImGui::TextWrapped(selected_level->description.c_str());
+			ImGui::EndChild();
 			ImGui::Dummy(ImVec2(0, 10));
 
 			// Avoid conflicts with file names
@@ -326,6 +328,8 @@ int main(int argc, char* argv[]) {
 			}
 			if (preview_texture != 0)
 				ImGui::Image((void*)(uintptr_t)preview_texture, ImVec2(175, 100));
+			else
+				ImGui::Dummy(ImVec2(175, 100));
 
 			ImGui::SameLine();
 			ImGui::BeginGroup();

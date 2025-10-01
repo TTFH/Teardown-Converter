@@ -92,8 +92,6 @@ void WriteXML::WriteEnvironment() {
 	Environment::Water* water = &scene.environment.water;
 	Snow* snow = &scene.environment.snow;
 
-	XMLElement* environment = xml.AddChildElement(xml.GetScene(), "environment");
-
 	string skybox_texture = skybox->texture;
 	string prefix = "data/env/";
 	if (skybox_texture.find(prefix) == 0)
@@ -108,6 +106,7 @@ void WriteXML::WriteEnvironment() {
 	if (fog->type == Fog::Classic)
 		fog->params.y += fog->params.x; // end = start + distance
 
+	XMLElement* environment = xml.AddChildElement(xml.GetScene(), "environment");
 	xml.AddStringAttribute(environment, "skybox", skybox_texture, "cloudy.dds");
 	xml.AddColorAttribute(environment, "skyboxtint", skybox->tint, "1 1 1");
 	xml.AddFloatAttribute(environment, "skyboxbrightness", skybox->brightness, "1");
@@ -470,6 +469,7 @@ void WriteXML::WriteLight(XMLElement* element, const Light* light, const Entity*
 	light_color.b = pow(light->color.b, 1 / 2.2f);
 
 	element->SetName("light");
+	// Assuming lights are at the center of the screen or another light
 	if (parent == nullptr || (parent->type != Entity::Screen && parent->type != Entity::Light))
 		xml.AddTransformAttribute(element, GetLocalTransform(parent, light->transform));
 	xml.AddStringAttribute(element, "type", LightName[light->type], "sphere");
@@ -798,7 +798,9 @@ void WriteXML::WriteScript(const Script* script) {
 			parent_element->InsertEndChild(script_element);
 
 		// Move entity inside the script
-		xml.AddEntityElement(script_element, entity_element, entity_handle);
+		// Do not move ropes, the script may have been moved inside a body
+		if (entity_element->Name() != string("rope"))
+			xml.AddEntityElement(script_element, entity_element, entity_handle);
 	}
 }
 
@@ -866,9 +868,8 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 				element = nullptr;
 				generic_location = false;
 			} else if (inside_vehicle) {
-				string tags = ConcatTags(entity->tags);
-				if (tags == "player") {
-
+				string tag = entity->tags.getSize() > 0 ? entity->tags[0].name : "";
+				if (tag == "player") {
 					entity_parent = entity->parent;
 					Transform local_transform = location->transform;
 					Entity* entity_gparent = entity_parent->parent;
@@ -889,9 +890,9 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 					xml.AddStringAttribute(element, "name", "ik");
 					xml.AddTransformAttribute(element, local_transform);
 					generic_location = false;
-				} else if (tags == "camera" || tags == "vital" ||
-					tags == "exhaust" || tags == "exit" ||
-					tags == "propeller") {
+				} else if (tag == "camera" || tag == "vital" ||
+					tag == "exhaust" || tag == "exit" ||
+					tag == "propeller") {
 					element = nullptr;
 					generic_location = false;
 				}

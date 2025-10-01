@@ -114,6 +114,10 @@ GLuint LoadTexture(const char* path) {
 	GLuint texture_id;
 	int width, height, channels;
 	uint8_t* data = stbi_load(path, &width, &height, &channels, STBI_rgb_alpha);
+	if (data == nullptr) {
+		printf("[WARNING] Image %s not found.\n", path);
+		return 0;
+	}
 
 	glGenTextures(1, &texture_id);
 	glBindTexture(GL_TEXTURE_2D, texture_id);
