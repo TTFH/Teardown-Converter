@@ -43,6 +43,7 @@ string GetUsername() {
 #endif
 }
 
+#ifdef _WIN32
 static string WideToUtf8(const wstring& wstr) {
 	if (wstr.empty()) return string();
 	int length = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), nullptr, 0, nullptr, nullptr);
@@ -50,6 +51,7 @@ static string WideToUtf8(const wstring& wstr) {
 	WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), result.data(), length, nullptr, nullptr);
 	return result;
 }
+#endif
 
 string GetMyDocuments() {
 #ifdef _WIN32
