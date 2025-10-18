@@ -140,8 +140,11 @@ int main(int argc, char* argv[]) {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init();
 
+	float scale = ImGui_ImplGlfw_GetContentScaleForWindow(window);
+
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.FontGlobalScale = scale;
 
 	ImGuiWindowFlags dialog_flags = ImGuiWindowFlags_None;
 	dialog_flags |= ImGuiWindowFlags_NoResize;
