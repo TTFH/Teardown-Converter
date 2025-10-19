@@ -230,7 +230,7 @@ int main(int argc, char* argv[]) {
 		{
 			ImGui::Begin("Convert TDBIN file", nullptr, dialog_flags);
 
-			ImGui::Text("Quicksave folder:");
+			ImGui::TextUnformatted("Quicksave folder:");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(350);
 			ImGui::InputText("##qsfolder", quicksave_folder, IM_ARRAYSIZE(quicksave_folder));
@@ -245,7 +245,7 @@ int main(int argc, char* argv[]) {
 				ImGuiFileDialog::Instance()->Close();
 			}
 
-			ImGui::Text("Mods folder:     ");
+			ImGui::TextUnformatted("Mods folder:     ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(350);
 			ImGui::InputText("##modsfolder", mods_folder, IM_ARRAYSIZE(mods_folder));
@@ -260,7 +260,7 @@ int main(int argc, char* argv[]) {
 				ImGuiFileDialog::Instance()->Close();
 			}
 
-			ImGui::Text("Game folder:     ");
+			ImGui::TextUnformatted("Game folder:     ");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(350);
 			ImGui::InputText("##gamefolder", game_folder, IM_ARRAYSIZE(game_folder));
@@ -276,7 +276,7 @@ int main(int argc, char* argv[]) {
 			}
 			ImGui::Dummy(ImVec2(0, 5));
 
-			ImGui::Text("Filter maps:     ");
+			ImGui::TextUnformatted("Filter maps:     ");
 			ImGui::SameLine();
 
 			ImGui::PushItemWidth(350);
@@ -302,9 +302,9 @@ int main(int argc, char* argv[]) {
 
 			ImGui::Spacing();
 			ImGui::SameLine(64);
-			ImGui::Text("File Name");
+			ImGui::TextUnformatted("File Name");
 			ImGui::SameLine(364);
-			ImGui::Text("Level Name");
+			ImGui::TextUnformatted("Level Name");
 			if (ImGui::BeginListBox("##listbox", ImVec2(-FLT_MIN, 10 * ImGui::GetTextLineHeightWithSpacing() + 5))) {
 				for (vector<LevelInfo>::iterator it = levels.begin(); it != levels.end(); it++) {
 					bool is_selected = selected_level == it;
@@ -313,9 +313,9 @@ int main(int argc, char* argv[]) {
 					}
 					ImGui::SameLine(300);
 					if (it->title.empty())
-						ImGui::Text(it->level_id.c_str());
+						ImGui::TextUnformatted(it->level_id.c_str());
 					else
-						ImGui::Text(it->title.c_str());
+						ImGui::TextUnformatted(it->title.c_str());
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
 				}
@@ -325,9 +325,9 @@ int main(int argc, char* argv[]) {
 
 			ImGui::Text("Selected Level:");
 			ImGui::SameLine();
-			ImGui::Text(selected_level->title.c_str());
+			ImGui::TextUnformatted(selected_level->title.c_str());
 			ImGui::BeginChild("LevelDesc", ImVec2(0, 50), ImGuiChildFlags_Border);
-			ImGui::TextWrapped(selected_level->description.c_str());
+			ImGui::TextWrapped("%s", selected_level->description.c_str());
 			ImGui::EndChild();
 			ImGui::Dummy(ImVec2(0, 10));
 
@@ -355,8 +355,8 @@ int main(int argc, char* argv[]) {
 			ImGui::EndGroup();
 			ImGui::SameLine();
 			ImGui::BeginGroup();
-			ImGui::Text("Transform settings:");
-			ImGui::Text("Decimal digits");
+			ImGui::TextUnformatted("Transform settings:");
+			ImGui::TextUnformatted("Decimal digits");
 			ImGui::PushItemWidth(150);
 			ImGui::SliderInt("##precision", &transform_precision, 0, 10);
 			ImGui::EndGroup();
