@@ -144,13 +144,13 @@ int main(int argc, char* argv[]) {
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.FontGlobalScale = scale;
 
 	ImGuiWindowFlags dialog_flags = ImGuiWindowFlags_None;
 	dialog_flags |= ImGuiWindowFlags_NoResize;
 
 	ImGui::StyleColorsDark();
 	ImGuiStyle& style = ImGui::GetStyle();
+	style.FontScaleMain = scale;
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
 	style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
 
