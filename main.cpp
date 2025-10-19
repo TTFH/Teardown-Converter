@@ -144,6 +144,7 @@ int main(int argc, char* argv[]) {
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.IniFilename = nullptr;
 
 	ImGuiWindowFlags dialog_flags = ImGuiWindowFlags_None;
 	dialog_flags |= ImGuiWindowFlags_NoResize;
