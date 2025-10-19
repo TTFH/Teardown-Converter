@@ -34,6 +34,8 @@ endif
 
 ifeq ($(UNAME_S), Darwin)
 	ECHO_MESSAGE = "MacOS"
+	CXXFLAGS += -I/opt/homebrew/include
+	LIBS += -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
 endif
 
 .PHONY: all clean rebuild

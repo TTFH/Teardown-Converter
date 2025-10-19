@@ -165,6 +165,18 @@ int main(int argc, char* argv[]) {
 	char game_folder[256] = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown";
 	//const char* quicksave_folder_legacy = "C:\\Users\\user\\Documents\\Teardown";
 	//const char* mods_folder_legacy = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown\\create";
+#elif __linux__
+	// $HOME/.local/share/Steam/steamapps/common/Teardown
+	const char *resolvedHome = getenv("HOME");
+	char quicksave_folder[256] = "quicksave_folder";
+	char mods_folder[256] = "mods_folder";
+	char game_folder[256] = "game_folder";
+	if (resolvedHome != nullptr) {
+		// the proton path includes a proton id which is maybe different on each system
+		snprintf(quicksave_folder, sizeof(quicksave_folder), "%s/.local/share/Steam/steamapps/compatdata/1167630/pfx/drive_c/users/steamuser/AppData/Local/Teardown", resolvedHome);
+		// snprintf(mods_folder, sizeof(mods_folder), "%s/.local/share/Steam/steamapps/common/Teardown/mods", resolvedHome);
+		snprintf(game_folder, sizeof(game_folder), "%s/.local/share/Steam/steamapps/common/Teardown", resolvedHome);
+	}
 #else
 	char quicksave_folder[256] = "quicksave_folder";
 	char mods_folder[256] = "mods_folder";
