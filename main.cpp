@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
 	string selected_preview = "";
 	GLuint preview_texture = 0;
 
-	pthread_t parse_thread;
+	pthread_t parse_thread {};
 	ConverterParams* params = new ConverterParams();
 
 	string selected_category = "Sandbox";
