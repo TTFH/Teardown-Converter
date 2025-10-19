@@ -46,3 +46,30 @@ jobs:
             CXX: g++-12
           run: |
             make -j 2
+
+    windows-mingw:
+        timeout-minutes: 60
+        runs-on: windows-latest
+
+        steps:
+        - uses: actions/checkout@v4
+
+        - name: Setup MSYS2 (MINGW64) and dependencies
+          uses: msys2/setup-msys2@v2
+          with:
+            msystem: MINGW64
+            update: true
+            install: >-
+              mingw-w64-x86_64-toolchain
+              mingw-w64-x86_64-glfw
+              mingw-w64-x86_64-zlib
+              mingw-w64-x86_64-pkgconf
+              make
+
+        - name: Build (MinGW)
+          shell: msys2 {0}
+          env:
+            CC: gcc
+            CXX: g++
+          run: |
+            make -j 2
