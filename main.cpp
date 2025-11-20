@@ -144,13 +144,14 @@ int main(int argc, char* argv[]) {
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.FontGlobalScale = scale;
+	io.IniFilename = nullptr;
 
 	ImGuiWindowFlags dialog_flags = ImGuiWindowFlags_None;
 	dialog_flags |= ImGuiWindowFlags_NoResize;
 
 	ImGui::StyleColorsDark();
 	ImGuiStyle& style = ImGui::GetStyle();
+	style.FontScaleMain = scale;
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
 	style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
 
@@ -165,6 +166,18 @@ int main(int argc, char* argv[]) {
 	char game_folder[256] = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown";
 	//const char* quicksave_folder_legacy = "C:\\Users\\user\\Documents\\Teardown";
 	//const char* mods_folder_legacy = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown\\create";
+#elif __linux__
+	// $HOME/.local/share/Steam/steamapps/common/Teardown
+	const char *resolvedHome = getenv("HOME");
+	char quicksave_folder[256] = "quicksave_folder";
+	char mods_folder[256] = "mods_folder";
+	char game_folder[256] = "game_folder";
+	if (resolvedHome != nullptr) {
+		// the proton path includes a proton id which is maybe different on each system
+		snprintf(quicksave_folder, sizeof(quicksave_folder), "%s/.local/share/Steam/steamapps/compatdata/1167630/pfx/drive_c/users/steamuser/AppData/Local/Teardown", resolvedHome);
+		// snprintf(mods_folder, sizeof(mods_folder), "%s/.local/share/Steam/steamapps/common/Teardown/mods", resolvedHome);
+		snprintf(game_folder, sizeof(game_folder), "%s/.local/share/Steam/steamapps/common/Teardown", resolvedHome);
+	}
 #else
 	char quicksave_folder[256] = "quicksave_folder";
 	char mods_folder[256] = "mods_folder";
@@ -191,7 +204,7 @@ int main(int argc, char* argv[]) {
 	string selected_preview = "";
 	GLuint preview_texture = 0;
 
-	pthread_t parse_thread;
+	pthread_t parse_thread {};
 	ConverterParams* params = new ConverterParams();
 
 	string selected_category = "Sandbox";
@@ -218,9 +231,9 @@ int main(int argc, char* argv[]) {
 		{
 			ImGui::Begin("Convert TDBIN file", nullptr, dialog_flags);
 
-			ImGui::Text("Quicksave folder:");
+			ImGui::TextUnformatted("Quicksave folder:");
 			ImGui::SameLine();
-			ImGui::PushItemWidth(350);
+			ImGui::PushItemWidth(350 * scale);
 			ImGui::InputText("##qsfolder", quicksave_folder, IM_ARRAYSIZE(quicksave_folder));
 			ImGui::PopItemWidth();
 			ImGui::SameLine();
@@ -233,9 +246,9 @@ int main(int argc, char* argv[]) {
 				ImGuiFileDialog::Instance()->Close();
 			}
 
-			ImGui::Text("Mods folder:     ");
+			ImGui::TextUnformatted("Mods folder:     ");
 			ImGui::SameLine();
-			ImGui::PushItemWidth(350);
+			ImGui::PushItemWidth(350 * scale);
 			ImGui::InputText("##modsfolder", mods_folder, IM_ARRAYSIZE(mods_folder));
 			ImGui::PopItemWidth();
 			ImGui::SameLine();
@@ -248,9 +261,9 @@ int main(int argc, char* argv[]) {
 				ImGuiFileDialog::Instance()->Close();
 			}
 
-			ImGui::Text("Game folder:     ");
+			ImGui::TextUnformatted("Game folder:     ");
 			ImGui::SameLine();
-			ImGui::PushItemWidth(350);
+			ImGui::PushItemWidth(350 * scale);
 			ImGui::InputText("##gamefolder", game_folder, IM_ARRAYSIZE(game_folder));
 			ImGui::PopItemWidth();
 			ImGui::SameLine();
@@ -264,10 +277,10 @@ int main(int argc, char* argv[]) {
 			}
 			ImGui::Dummy(ImVec2(0, 5));
 
-			ImGui::Text("Filter maps:     ");
+			ImGui::TextUnformatted("Filter maps:     ");
 			ImGui::SameLine();
 
-			ImGui::PushItemWidth(350);
+			ImGui::PushItemWidth(350 * scale);
 			if (ImGui::BeginCombo("##combo", selected_category.c_str())) {
 				for (vector<string>::iterator it = categories.begin(); it != categories.end(); it++) {
 					bool is_selected = selected_category == *it;
@@ -284,40 +297,40 @@ int main(int argc, char* argv[]) {
 			ImGui::PopItemWidth();
 
 			ImGui::SameLine();
-			ImGui::PushItemWidth(80);
+			ImGui::PushItemWidth(80 * scale);
 			ImGui::Combo("##gameversion", &game_version, " 1.7.0\0 1.6.3\0 1.6.0\0 1.5.4\0");
 			ImGui::PopItemWidth();
 
 			ImGui::Spacing();
-			ImGui::SameLine(64);
-			ImGui::Text("File Name");
-			ImGui::SameLine(364);
-			ImGui::Text("Level Name");
-			if (ImGui::BeginListBox("##listbox", ImVec2(-FLT_MIN, 10 * ImGui::GetTextLineHeightWithSpacing() + 5))) {
+			ImGui::SameLine(64 * scale);
+			ImGui::TextUnformatted("File Name");
+			ImGui::SameLine(364 * scale);
+			ImGui::TextUnformatted("Level Name");
+			if (ImGui::BeginListBox("##listbox", ImVec2(-FLT_MIN, 10 * ImGui::GetTextLineHeightWithSpacing() + 5 * scale))) {
 				for (vector<LevelInfo>::iterator it = levels.begin(); it != levels.end(); it++) {
 					bool is_selected = selected_level == it;
 					if (ImGui::Selectable(it->filename.c_str(), is_selected) && !disable_convert) {
 						selected_level = it;
 					}
-					ImGui::SameLine(300);
+					ImGui::SameLine(300 * scale);
 					if (it->title.empty())
-						ImGui::Text(it->level_id.c_str());
+						ImGui::TextUnformatted(it->level_id.c_str());
 					else
-						ImGui::Text(it->title.c_str());
+						ImGui::TextUnformatted(it->title.c_str());
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
 				}
 				ImGui::EndListBox();
 			}
-			ImGui::Dummy(ImVec2(0, 10));
+			ImGui::Dummy(ImVec2(0, 10 * scale));
 
 			ImGui::Text("Selected Level:");
 			ImGui::SameLine();
-			ImGui::Text(selected_level->title.c_str());
-			ImGui::BeginChild("LevelDesc", ImVec2(0, 50), ImGuiChildFlags_Border);
-			ImGui::TextWrapped(selected_level->description.c_str());
+			ImGui::TextUnformatted(selected_level->title.c_str());
+			ImGui::BeginChild("LevelDesc", ImVec2(0, 50 * scale), ImGuiChildFlags_Border);
+			ImGui::TextWrapped("%s", selected_level->description.c_str());
 			ImGui::EndChild();
-			ImGui::Dummy(ImVec2(0, 10));
+			ImGui::Dummy(ImVec2(0, 10 * scale));
 
 			// Avoid conflicts with file names
 			string preview_name = selected_level->level_id;
@@ -330,9 +343,9 @@ int main(int argc, char* argv[]) {
 				preview_texture = LoadTexture(texture_path.c_str());
 			}
 			if (preview_texture != 0)
-				ImGui::Image((void*)(uintptr_t)preview_texture, ImVec2(175, 100));
+				ImGui::Image((void*)(uintptr_t)preview_texture, ImVec2(175 * scale, 100 * scale));
 			else
-				ImGui::Dummy(ImVec2(175, 100));
+				ImGui::Dummy(ImVec2(175 * scale, 100 * scale));
 
 			ImGui::SameLine();
 			ImGui::BeginGroup();
@@ -343,12 +356,12 @@ int main(int argc, char* argv[]) {
 			ImGui::EndGroup();
 			ImGui::SameLine();
 			ImGui::BeginGroup();
-			ImGui::Text("Transform settings:");
-			ImGui::Text("Decimal digits");
-			ImGui::PushItemWidth(150);
+			ImGui::TextUnformatted("Transform settings:");
+			ImGui::TextUnformatted("Decimal digits");
+			ImGui::PushItemWidth(150 * scale);
 			ImGui::SliderInt("##precision", &transform_precision, 0, 10);
 			ImGui::EndGroup();
-			ImGui::Dummy(ImVec2(0, 5));
+			ImGui::Dummy(ImVec2(0, 5 * scale));
 
 			if (disable_convert && progress >= 1) {
 				progress = 1;
@@ -358,9 +371,9 @@ int main(int argc, char* argv[]) {
 			const ImU32 col = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 			const ImU32 bg = ImGui::GetColorU32(ImGuiCol_Button);
 			if (disable_convert)
-				ImGui::BufferingBar("##buffer_bar", progress, ImVec2(600, 8), bg, col);
+				ImGui::BufferingBar("##buffer_bar", progress, ImVec2(600 * scale, 8 * scale), bg, col);
 
-			ImGui::Dummy(ImVec2(0, 10));
+			ImGui::Dummy(ImVec2(0, 10 * scale));
 			bool disabled = disable_convert;
 			if (disabled)
 				ImGui::BeginDisabled();
@@ -369,8 +382,8 @@ int main(int argc, char* argv[]) {
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.3f, 0.8f, 0.8f));
 
 			ImGui::Spacing();
-			ImGui::SameLine(ImGui::GetWindowSize().x / 2 - 72);
-			if (ImGui::Button("CONVERT", ImVec2(72, 32))) {
+			ImGui::SameLine(ImGui::GetWindowSize().x / 2 - 72 * scale);
+			if (ImGui::Button("CONVERT", ImVec2(72 * scale, 32 * scale))) {
 				progress = 0;
 				disable_convert = true;
 
@@ -437,8 +450,8 @@ int main(int argc, char* argv[]) {
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.9f, 0.9f));
 
-			ImGui::SameLine(ImGui::GetWindowSize().x / 2 + 36);
-			if (ImGui::Button("Close", ImVec2(72, 32)))
+			ImGui::SameLine(ImGui::GetWindowSize().x / 2 + 36 * scale);
+			if (ImGui::Button("Close", ImVec2(72 * scale, 32 * scale)))
 				glfwSetWindowShouldClose(window, true);
 			ImGui::PopStyleColor(3);
 

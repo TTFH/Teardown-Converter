@@ -1,0 +1,75 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    mac:
+        timeout-minutes: 60
+        runs-on: macos-15
+        steps:
+        - uses: actions/checkout@v4
+
+        - name: Setup
+          run: brew install glfw3 mesa
+
+        - name: Build
+          run: |
+            make -j 2
+
+    linux:
+        timeout-minutes: 60
+        runs-on: ubuntu-22.04
+
+        steps:
+        - uses: actions/checkout@v4
+
+        - name: Setup
+          run: |
+            sudo apt-get update
+            sudo apt-get install libglfw3-dev
+
+        - name: Linux
+          env:
+            CC: gcc-12
+            CXX: g++-12
+          run: |
+            make -j 2
+
+    windows-mingw:
+        timeout-minutes: 60
+        runs-on: windows-latest
+
+        steps:
+        - uses: actions/checkout@v4
+
+        - name: Setup MSYS2 (MINGW64) and dependencies
+          uses: msys2/setup-msys2@v2
+          with:
+            msystem: MINGW64
+            update: true
+            install: >-
+              mingw-w64-x86_64-toolchain
+              mingw-w64-x86_64-glfw
+              mingw-w64-x86_64-zlib
+              mingw-w64-x86_64-pkgconf
+              make
+
+        - name: Build (MinGW)
+          shell: msys2 {0}
+          env:
+            CC: gcc
+            CXX: g++
+          run: |
+            make -j 2
