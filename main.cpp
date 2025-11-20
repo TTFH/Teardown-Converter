@@ -24,7 +24,7 @@
 
 using namespace tinyxml2;
 
-atomic<float> progress = 0;
+atomic<float> progress;
 
 void* DecompileMap(void* param) {
 	ConverterParams* data = (ConverterParams*)param;
@@ -118,6 +118,8 @@ int main(int argc, char* argv[]) {
 #ifdef _WIN32
 	_setmaxstdio(2048);
 #endif
+	progress.store(0.0f);
+
 	if (argc > 1) {
 		if (argc == 2) {
 			ConverterParams params;

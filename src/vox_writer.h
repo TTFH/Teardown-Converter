@@ -113,10 +113,10 @@ public:
 
 const int SNOW_INDEX = 254;
 const MV_Color SNOW_COLOR = { 230, 230, 230, 255 };
-const MV_Material SNOW_MATERIAL = { Material::Unphysical, METAL, { 0.8f, 1.1f, 0.0f } };
+const MV_Material SNOW_MATERIAL = { Material::Unphysical, METAL, {{ 0.8f, 1.1f, 0.0f }} };
 
 const uint8_t HOLE_INDEX = 255;
 const MV_Color HOLE_COLOR = { 255, 0, 0, 255 };
-const MV_Material HOLE_MATERIAL = { Material::None, GLASS, { 1.0f } };
+const MV_Material HOLE_MATERIAL = { Material::None, GLASS, {{ 1.0f }} };
 
 #endif
