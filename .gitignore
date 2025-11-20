@@ -1,9 +1,12 @@
 .vscode/
 *.zip
 obj/*.o
+
 release/config.xml
+release/imgui.ini
 release/teardown-converter
 release/teardown-converter.exe
+
 release/*.bin
 release/*.tdbin
 release/**/*.txt

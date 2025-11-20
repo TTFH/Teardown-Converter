@@ -144,7 +144,6 @@ int main(int argc, char* argv[]) {
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.IniFilename = nullptr;
 
 	ImGuiWindowFlags dialog_flags = ImGuiWindowFlags_None;
 	dialog_flags |= ImGuiWindowFlags_NoResize;
@@ -155,33 +154,26 @@ int main(int argc, char* argv[]) {
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
 	style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
 
+	char game_folder[256] = "<game_folder>";
+	char mods_folder[256] = "<mods_folder>";
+	char quicksave_folder[256] = "<quicksave_folder>";
+
 #ifdef _WIN32
 	string appdata_path = GetAppDataLocal();
 	string documents_path = GetMyDocuments();
-	char quicksave_folder[256];
-	char mods_folder[256];
-	strcpy(quicksave_folder, (appdata_path + "\\Teardown").c_str());
-	strcpy(mods_folder, (documents_path + "\\Teardown\\mods").c_str());
+	snprintf(game_folder, sizeof(game_folder), "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown");
+	snprintf(mods_folder, sizeof(mods_folder), "%s\\Teardown\\mods", documents_path.c_str());
+	snprintf(quicksave_folder, sizeof(quicksave_folder), "%s\\Teardown", appdata_path.c_str());
 
-	char game_folder[256] = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown";
 	//const char* quicksave_folder_legacy = "C:\\Users\\user\\Documents\\Teardown";
 	//const char* mods_folder_legacy = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Teardown\\create";
 #elif __linux__
-	// $HOME/.local/share/Steam/steamapps/common/Teardown
-	const char *resolvedHome = getenv("HOME");
-	char quicksave_folder[256] = "quicksave_folder";
-	char mods_folder[256] = "mods_folder";
-	char game_folder[256] = "game_folder";
+	const char* resolvedHome = getenv("HOME");
 	if (resolvedHome != nullptr) {
-		// the proton path includes a proton id which is maybe different on each system
-		snprintf(quicksave_folder, sizeof(quicksave_folder), "%s/.local/share/Steam/steamapps/compatdata/1167630/pfx/drive_c/users/steamuser/AppData/Local/Teardown", resolvedHome);
-		// snprintf(mods_folder, sizeof(mods_folder), "%s/.local/share/Steam/steamapps/common/Teardown/mods", resolvedHome);
 		snprintf(game_folder, sizeof(game_folder), "%s/.local/share/Steam/steamapps/common/Teardown", resolvedHome);
+		snprintf(mods_folder, sizeof(mods_folder), "%s/.local/share/Steam/steamapps/compatdata/1167630/pfx/drive_c/users/steamuser/My Documents/Teardown/mods", resolvedHome);
+		snprintf(quicksave_folder, sizeof(quicksave_folder), "%s/.local/share/Steam/steamapps/compatdata/1167630/pfx/drive_c/users/steamuser/AppData/Local/Teardown", resolvedHome);
 	}
-#else
-	char quicksave_folder[256] = "quicksave_folder";
-	char mods_folder[256] = "mods_folder";
-	char game_folder[256] = "game_folder";
 #endif
 
 	XMLDocument config_file;
@@ -204,7 +196,7 @@ int main(int argc, char* argv[]) {
 	string selected_preview = "";
 	GLuint preview_texture = 0;
 
-	pthread_t parse_thread {};
+	pthread_t parse_thread = 0;
 	ConverterParams* params = new ConverterParams();
 
 	string selected_category = "Sandbox";
@@ -221,14 +213,14 @@ int main(int argc, char* argv[]) {
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
-		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-			glfwSetWindowShouldClose(window, true);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
 		{
+			ImGui::SetNextWindowPos(ImVec2(50, 0), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSize(ImVec2(600, 600), ImGuiCond_FirstUseEver);
 			ImGui::Begin("Convert TDBIN file", nullptr, dialog_flags);
 
 			ImGui::TextUnformatted("Quicksave folder:");
@@ -237,6 +229,9 @@ int main(int argc, char* argv[]) {
 			ImGui::InputText("##qsfolder", quicksave_folder, IM_ARRAYSIZE(quicksave_folder));
 			ImGui::PopItemWidth();
 			ImGui::SameLine();
+
+			ImGui::SetNextWindowPos(ImVec2(100, 50), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSize(ImVec2(500, 500), ImGuiCond_FirstUseEver);
 
 			if (ImGui::Button("Select Folder##1"))
 				ImGuiFileDialog::Instance()->OpenDialog("DirDialogQF", "Select Quicksave folder", ".");
