@@ -7,7 +7,7 @@ CXXFLAGS += -Wno-missing-field-initializers
 CXXFLAGS += `pkg-config --cflags glfw3`
 LIBS = `pkg-config --libs glfw3 --static` -lz
 
-SOURCES = main.cpp glad/glad.c lib/tinyxml2.cpp
+SOURCES = main.cpp glad/glad.cpp lib/tinyxml2.cpp
 SOURCES += src/binary_reader.cpp src/entity.cpp src/levels.cpp src/lua_table.cpp
 SOURCES += src/math_utils.cpp src/misc_utils.cpp src/parser.cpp src/scene.cpp
 SOURCES += src/vox_writer.cpp src/write_scene.cpp src/xml_writer.cpp src/zlib_utils.cpp
@@ -55,7 +55,7 @@ $(OBJDIR)/%.o: src/%.cpp src/%.h | $(OBJDIR)
 $(OBJDIR)/%.o: lib/%.cpp lib/%.h | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: glad/%.c glad/%.h | $(OBJDIR)
+$(OBJDIR)/%.o: glad/%.cpp glad/%.h | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: imgui/%.cpp | $(OBJDIR)

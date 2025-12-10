@@ -279,6 +279,7 @@ Light* TDBIN::ReadLight() {
 	light->sound.path = ReadString();
 	light->sound.volume = ReadFloat();
 	light->glare = ReadFloat();
+	light->breaksound = ReadString();
 	return light;
 }
 

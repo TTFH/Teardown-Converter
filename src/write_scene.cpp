@@ -494,6 +494,7 @@ void WriteXML::WriteLight(XMLElement* element, const Light* light, const Entity*
 	xml.AddFloatAttribute(element, "fogiter", light->fogiter, "1");
 	xml.AddSoundAttribute(element, "sound", light->sound, "");
 	xml.AddFloatAttribute(element, "glare", light->glare, "0");
+	xml.AddStringAttribute(element, "breaksound", light->breaksound, "");
 }
 
 void WriteXML::WriteLocation(XMLElement* element, const Location* location, const Entity* parent) {

@@ -332,5 +332,6 @@ void SaveInfoTxt(string map_folder, string level_name, string level_desc) {
 	fprintf(info_file, "author = Tuxedo Labs\n");
 	fprintf(info_file, "description = %s\n", level_desc.c_str());
 	fprintf(info_file, "tags = Map, Asset\n");
+	fprintf(info_file, "version = 1\n");
 	fclose(info_file);
 }

@@ -247,6 +247,7 @@ struct Light {
 	float flickering;
 	Sound sound;		// sound
 	float glare;		// glare
+	string breaksound;	// breaksound
 };
 
 struct Location {
