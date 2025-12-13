@@ -83,6 +83,7 @@ Registry Reader::ReadRegistry() {
 	Registry entry;
 	entry.key = ReadString();
 	entry.value = ReadString();
+	entry.sync = ReadBool();
 	return entry;
 }
 

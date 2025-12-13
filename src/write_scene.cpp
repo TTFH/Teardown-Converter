@@ -746,7 +746,7 @@ void WriteXML::WriteScript(const Script* script) {
 	if (script_file == "achievements.lua" ||
 		script_file == "characters.lua" ||
 		script_file == "creativemode.lua" ||
-		script_file == "explosion.lua" ||
+		script_file == "explosionclient.lua" ||
 		script_file == "fx.lua" ||
 		script_file == "playerbody.lua" ||
 		script_file == "spawn.lua")

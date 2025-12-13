@@ -182,8 +182,8 @@ struct Scene {
 	string mod;
 
 	uint32_t aaa1;
-	Vec<Registry> enabled_mods;
-	Vec<Registry> spawned_mods;
+	Vec<Tag> enabled_mods;
+	Vec<Tag> spawned_mods;
 
 	uint32_t driven_vehicle;	// driven
 	Vec3 shadow_volume;			// shadowVolume
@@ -203,12 +203,7 @@ struct Scene {
 	Vec<Palette> palettes;
 	Vec<Registry> registry;
 	Vec<Entity*> entities;
-
-	uint32_t entity_count;
-	uint32_t broken_voxels;
-	Vec<Projectile> projectiles;
-	bool has_snow;
-	Vec<Path> assets;
+	// ...
 };
 
 #endif

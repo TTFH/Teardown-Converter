@@ -310,6 +310,11 @@ vector<LevelInfo> LoadLevels(string filter) {
 			{ "marina", "ending22", "Marina Part 2 Ending", "" },
 			{ "preview", "quicksave", "Quicksave", "Last Saved Level" },
 			{ "preview", "quicksavecampaign", "Quicksave Campaign", "Last Saved Campaign Level" },
+			{ "preview", "quicksavesession1", "Quicksave - Session 1", "Multiplayer save for player 1" },
+			{ "preview", "quicksavesession2", "Quicksave - Session 2", "Multiplayer save for player 2" },
+			{ "preview", "quicksavesession3", "Quicksave - Session 3", "Multiplayer save for player 3" },
+			{ "preview", "quicksavesession4", "Quicksave - Session 4", "Multiplayer save for player 4" },
+			{ "lee", "test_intro", "Performance Test Intro", "" },
 			{ "lee", "test", "Performance Test", "" },
 		};
 		int others_count = sizeof(others) / sizeof(others[0]);
@@ -332,6 +337,6 @@ void SaveInfoTxt(string map_folder, string level_name, string level_desc) {
 	fprintf(info_file, "author = Tuxedo Labs\n");
 	fprintf(info_file, "description = %s\n", level_desc.c_str());
 	fprintf(info_file, "tags = Map, Asset\n");
-	fprintf(info_file, "version = 1\n");
+	fprintf(info_file, "version = 2\n");
 	fclose(info_file);
 }

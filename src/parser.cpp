@@ -167,10 +167,8 @@ LuaTable* TDBIN::ReadLuaTable() {
 	do {
 		LuaTableEntry* table_entry = new LuaTableEntry();
 		table_entry->key_type = (LuaType)ReadInt();
-		if (table_entry->key_type == NIL) {
-			table->push_back(table_entry);
+		if (table_entry->key_type == NIL)
 			break;
-		}
 		table_entry->key = ReadLuaValue(table_entry->key_type);
 		table_entry->value_type = (LuaType)ReadInt();
 		table_entry->value = ReadLuaValue(table_entry->value_type);
@@ -204,7 +202,7 @@ Entity* TDBIN::ReadEntity() {
 
 	entity->beef_beef = ReadInt();
 	if (entity->beef_beef != 0xBEEFBEEF) {
-		printf("[ERROR] Invalid Cow: %08X\n", entity->beef_beef);
+		printf("[ERROR] Failed to parse file, invalid entity ending marker.");
 		exit(EXIT_FAILURE);
 	}
 	return entity;
@@ -250,8 +248,7 @@ Shape* TDBIN::ReadShape() {
 	shape->decoded_voxels.FromRunLengthEncoding(shape->voxels.rle);
 
 	shape->origin = ReadByte();
-	if (tdbin_version >= VERSION_1_6_0)
-		shape->animator = ReadInt();
+	shape->animator = ReadInt();
 	return shape;
 }
 
@@ -382,14 +379,12 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->vitals[i].nearby_voxels = ReadInt();
 	}
 
-	if (tdbin_version >= VERSION_1_6_0) {
-		int anim_count = ReadInt();
-		vehicle->locations.resize(anim_count);
-		for (int i = 0; i < anim_count; i++) {
-			vehicle->locations[i].name = ReadString();
-			vehicle->locations[i].transform = ReadTransform();
-			vehicle->locations[i].handle = ReadInt();
-		}
+	int anim_count = ReadInt();
+	vehicle->locations.resize(anim_count);
+	for (int i = 0; i < anim_count; i++) {
+		vehicle->locations[i].name = ReadString();
+		vehicle->locations[i].transform = ReadTransform();
+		vehicle->locations[i].handle = ReadInt();
 	}
 
 	vehicle->bounds_dist = ReadFloat();
@@ -469,7 +464,7 @@ Script* TDBIN::ReadScript() {
 	int entries = ReadInt();
 	script->params.resize(entries);
 	for (int i = 0; i < entries; i++)
-		script->params[i] = ReadRegistry();
+		script->params[i] = ReadTag();
 
 	script->tick_time = ReadFloat();
 	script->update_time = ReadFloat();
@@ -661,18 +656,15 @@ void TDBIN::ReadPlayer() {
 	player->transform = ReadTransform();
 	player->pitch = ReadFloat();
 	player->yaw = ReadFloat();
-	if (tdbin_version >= VERSION_1_7_0) {
-		player->orientation = ReadQuat();
-		player->camera_orientation = ReadQuat();
-	}
+	player->orientation = ReadQuat();
+	player->camera_orientation = ReadQuat();
 	player->velocity = ReadVec3();
 	player->health = ReadFloat();
 	player->transition_timer = ReadFloat();
 	player->time_underwater = ReadFloat();
 	player->bluetide_timer = ReadFloat();
 	player->bluetide_power = ReadFloat();
-	if (tdbin_version >= VERSION_1_6_0)
-		player->animator = ReadFloat();
+	player->animator = ReadFloat();
 }
 
 void TDBIN::ReadEnvironment() {
@@ -701,17 +693,11 @@ void TDBIN::ReadEnvironment() {
 	environment->brightness = ReadFloat();
 
 	Fog* fog = &environment->fog;
-	if (tdbin_version >= VERSION_1_6_0)
-		fog->type = ReadByte();
-	else
-		fog->type = 0;
+	fog->type = ReadByte();
 	fog->color = ReadColor();
 	fog->params = ReadVec4();
 
-	if (tdbin_version >= VERSION_1_6_0)
-		fog->height_offset = ReadFloat();
-	else
-		fog->height_offset = 0.0f;
+	fog->height_offset = ReadFloat();
 
 	Environment::Water* water = &environment->water;
 	water->wetness = ReadFloat();
@@ -733,10 +719,7 @@ void TDBIN::ReadEnvironment() {
 	environment->wind = ReadVec3();
 	environment->waterhurt = ReadFloat();
 
-	if (tdbin_version >= VERSION_1_6_3)
-		environment->lensdirt = ReadString();
-	else
-		environment->lensdirt = "";
+	environment->lensdirt = ReadString();
 }
 
 void TDBIN::parse() {
@@ -747,7 +730,7 @@ void TDBIN::parse() {
 	tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
 
 #ifdef _WIN32
-	if (tdbin_version < VERSION_1_5_4) {
+	if (tdbin_version < VERSION_2_0_0) {
 		MessageBox(nullptr, "The map you're trying to convert is too old, make sure to delete old .tdbin files",
 				   "Map version too old", MB_OK | MB_ICONERROR);
 		exit(EXIT_FAILURE);
@@ -774,33 +757,29 @@ void TDBIN::parse() {
 	scene.mod = ReadString();
 	scene.aaa1 = ReadInt();
 	if (scene.aaa1 != 0xAAA1) {
-		printf("[ERROR] Invalid Battery Size: %08X\n", scene.aaa1);
+		printf("[ERROR] Failed to parse file, invalid 0xAAA1 marker.");
 		exit(EXIT_FAILURE);
 	}
 
 	int entries = ReadInt();
 	scene.enabled_mods.resize(entries);
 	for (int i = 0; i < entries; i++)
-		scene.enabled_mods[i] = ReadRegistry();
+		scene.enabled_mods[i] = ReadTag();
 
 	entries = ReadInt();
 	scene.spawned_mods.resize(entries);
 	for (int i = 0; i < entries; i++)
-		scene.spawned_mods[i] = ReadRegistry();
+		scene.spawned_mods[i] = ReadTag();
 
 	scene.driven_vehicle = ReadInt();
 	scene.shadow_volume = ReadVec3();
-	if (tdbin_version >= VERSION_1_7_0)
-		scene.gravity = ReadVec3();
-	else
-		scene.gravity = Vec3(0, -10, 0);
+	scene.gravity = ReadVec3();
 	scene.spawnpoint = ReadTransform();
 	scene.world_body = ReadInt();
 	scene.flashlight = ReadInt();
 	scene.explosion_lua = ReadInt();
 	scene.achievements_lua = ReadInt();
-	if (tdbin_version >= VERSION_1_6_0)
-		scene.characters_lua = ReadInt();
+	scene.characters_lua = ReadInt();
 
 	ReadPostProcessing();
 	ReadPlayer();
@@ -839,7 +818,7 @@ void TDBIN::parse() {
 		scene.entities[i]->parent = nullptr;
 	}
 
-	entries = ReadInt();
+	/*entries = ReadInt();
 	scene.projectiles.resize(entries);
 	for (int i = 0; i < entries; i++) {
 		scene.projectiles[i].origin = ReadVec3();
@@ -848,16 +827,8 @@ void TDBIN::parse() {
 		scene.projectiles[i].max_dist = ReadFloat();
 		scene.projectiles[i].type = ReadInt();
 		scene.projectiles[i].strength = ReadFloat();
-	}
+	}*/
 
-	scene.has_snow = ReadBool();
-
-	entries = ReadInt();
-	scene.assets.resize(entries);
-	for (int i = 0; i < entries; i++) {
-		scene.assets[i].folder = ReadString();
-		scene.assets[i].do_override = ReadBool();
-	}
 	printf("File parsed successfully!\n");
 }
 
@@ -867,8 +838,7 @@ void ParseFile(ConverterParams params) {
 	try {
 		parser.parse();
 	} catch (const bad_alloc& e) {
-		printf("You're a few terabytes low on RAM or this application crashed.\n");
-		printf("It's most likely the second.\n");
+		printf("[ERROR] Failed to parse file, array size overflow.");
 		exit(EXIT_FAILURE);
 	}
 	create_folder(params.map_folder);

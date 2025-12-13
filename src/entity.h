@@ -53,11 +53,8 @@ public:
 	}
 };
 
-#define VERSION_1_7_0 170
-#define VERSION_1_6_3 163
-#define VERSION_1_6_0 160
-#define VERSION_1_5_4 154
-#define LAST_VERSION VERSION_1_7_0
+#define VERSION_2_0_0 200
+#define LAST_VERSION VERSION_2_0_0
 
 template <typename T>
 using SmallVec = Vec<T>;
@@ -82,6 +79,7 @@ typedef Vec2 Vertex;
 struct Registry {
 	string key;
 	string value;
+	bool sync;
 };
 
 struct Tag {
@@ -127,9 +125,10 @@ struct Entity {
 	static const uint8_t Trigger = 10;
 	static const uint8_t Script = 11;
 	static const uint8_t Animator = 12;
+	static const uint8_t Rig = 13;
 
 	uint8_t type;
-	uint32_t handle;
+	int handle;
 	SmallVec<Tag> tags;	// tags
 	string desc;		// desc
 	void* self;
@@ -472,7 +471,7 @@ struct ValueTransition {
 struct Script {
 	uint16_t flags;
 	string file;			// file
-	Vec<Registry> params;	// param%d
+	Vec<Tag> params;	// param%d
 	float tick_time;
 	float update_time;
 	uint32_t variables_count;
@@ -512,6 +511,10 @@ struct Animator {
 	Transform transform;
 	string path;		// file
 	// ...
+};
+
+struct Rig {
+	
 };
 
 #endif
