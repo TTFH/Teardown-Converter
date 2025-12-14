@@ -47,7 +47,7 @@ bool ZlibBlockCompress(const uint8_t* source, size_t source_len, int level, vect
 bool ZlibUncompress(const uint8_t* source, const size_t source_len, vector<uint8_t>& dest) {
 	z_stream stream;
 	stream.zalloc = Z_NULL;
-	stream.zfree  = Z_NULL;
+	stream.zfree = Z_NULL;
 	stream.opaque = Z_NULL;
 	stream.next_in = (Bytef*)source;
 	stream.avail_in = source_len;

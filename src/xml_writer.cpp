@@ -93,7 +93,7 @@ void XML_Writer::AddTransformAttribute(XMLElement* element, const Transform& tr)
 	precision = DEFAULT_PRECISION;
 }
 
-void XML_Writer::AddVerticesAttribute(XMLElement* element, const Vec<Vertex>& vertices) {
+void XML_Writer::AddVerticesAttribute(XMLElement* element, const Vec<Vec2>& vertices) {
 	for (unsigned int i = 0; i < vertices.getSize(); i++) {
 		XMLElement* vertex = main_xml.NewElement("vertex");
 		element->InsertEndChild(vertex);

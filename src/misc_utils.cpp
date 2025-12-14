@@ -35,7 +35,7 @@ void create_folder(string name) {
 string GetUsername() {
 #ifdef _WIN32
 	char username[UNLEN + 1];
-    DWORD username_len = sizeof(username);
+	DWORD username_len = sizeof(username);
 	GetUserNameA(username, &username_len);
 	return string(username);
 #else

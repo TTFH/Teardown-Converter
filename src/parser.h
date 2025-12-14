@@ -44,6 +44,7 @@ private:
 	Palette ReadPalette();
 	Rope* ReadRope();
 	VehicleProperties ReadVehicleProperties();
+	ScriptCore ReadScriptCore();
 	Voxels ReadVoxels();
 	LuaValue ReadLuaValue(LuaType key_type);
 	LuaTable* ReadLuaTable();
@@ -61,9 +62,10 @@ private:
 	Trigger* ReadTrigger();
 	Script* ReadScript();
 	Animator* ReadAnimator();
+	Rig* ReadRig();
 
 	void ReadPostProcessing();
-	void ReadPlayer();
+	void ReadPlayers();
 	void ReadEnvironment();
 	void* ReadEntityType(uint8_t type);
 public:

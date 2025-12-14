@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 #include "entity.h"
 
@@ -19,6 +20,15 @@ struct PostProcessing {
 	float bloom;		// bloom
 };
 
+struct ToolInfo {
+	uint8_t enabled;
+	string id;
+	string name;
+	Transform transform;
+	float max_ammo;
+	uint32_t ammo;
+};
+
 struct Player {
 	Transform transform;
 	float pitch;
@@ -27,11 +37,17 @@ struct Player {
 	Quat camera_orientation;
 	Vec3 velocity;
 	float health;
-	float transition_timer;
-	float time_underwater;
-	float bluetide_timer;	// game.player.steroid
-	float bluetide_power;
-	uint32_t animator;
+	uint32_t unk1[2];
+	int driven_vehicle;
+	int flashlight1;
+	int flashlight2;
+	uint32_t unk3[4];
+	int animator1;
+	uint32_t unk4;
+	int animator2;
+	ToolInfo tool_info[17];
+	uint32_t unk5;
+	string current_tool;
 };
 
 struct Sun {
@@ -99,7 +115,7 @@ struct Environment {
 };
 
 struct Boundary {
-	Vec<Vertex> vertices;
+	Vec<Vec2> vertices;
 	float padleft;		// -padleft
 	float padtop;		// -padtop
 	float padright;		// padright
@@ -150,56 +166,48 @@ struct Palette {
 	uint8_t yellow_tint[4 * 256];
 	uint8_t rgba_tint[4 * 256];
 };
-/*
-enum ProjectileType : uint32_t {
-	Gun = 0,
-	Rocket = 2,
-	??? = 4,
-	Bullet = 5,
-	// Shotgun
-};
-*/
+
 struct Projectile {
 	Vec3 origin;
 	Vec3 direction;
 	float dist;
 	float max_dist;
-	uint32_t type;
 	float strength;
-};
-
-struct Path {
-	string folder;
-	bool do_override;
+	uint32_t type;
+	uint32_t unk1;
+	bool unk2;
 };
 
 struct Scene {
-	char magic[5];				// TDBIN
-	uint8_t version[3];			// version
+	char magic[5];
+	uint8_t version[3];
 	string level_id;
 	string level_path;
 	string layers;
 	string mod;
 
+	uint32_t unk1;
 	uint32_t aaa1;
-	Vec<Tag> enabled_mods;
-	Vec<Tag> spawned_mods;
+	Vec<Tag> active_mods;
+	Vec<Tag> spawn_mods;
 
-	uint32_t driven_vehicle;	// driven
-	Vec3 shadow_volume;			// shadowVolume
+	Vec3 shadow_volume;
 	Vec3 gravity;
-	Transform spawnpoint;		// spawnpoint
-	uint32_t world_body;
-	uint32_t flashlight;
-	uint32_t explosion_lua;
-	uint32_t achievements_lua;
-	uint32_t characters_lua;
+	Transform spawnpoint;
+
+	int world_body;
+	int explosionclient_lua;
+	int characters_lua;
+	int achievements_lua;
 
 	PostProcessing postpro;
-	Player player;
+	Vec<uint32_t> player_ids;
+	vector<Player> players;
 	Environment environment;
 	Boundary boundary;
+	Vec<Projectile> projectiles;
 	Vec<Fire> fires;
+	uint32_t unk2;
 	Vec<Palette> palettes;
 	Vec<Registry> registry;
 	Vec<Entity*> entities;

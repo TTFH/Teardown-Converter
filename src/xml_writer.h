@@ -39,7 +39,7 @@ public:
 
 	void AddExhaustTagAttribute(XMLElement* element, float strength);
 	void AddTransformAttribute(XMLElement* element, const Transform& tr);
-	void AddVerticesAttribute(XMLElement* element, const Vec<Vertex>& vertices);
+	void AddVerticesAttribute(XMLElement* element, const Vec<Vec2>& vertices);
 	void AddTextureAttribute(XMLElement* element, const char* name, Texture value);
 	void AddBoolAttribute(XMLElement* element, const char* name, bool value, bool default_value);
 	void AddVec2Attribute(XMLElement* element, const char* name, Vec2 value, string default_value);

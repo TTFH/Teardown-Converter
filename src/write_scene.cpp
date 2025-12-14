@@ -189,8 +189,9 @@ void WriteXML::WriteEntities() {
 	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
 		WriteEntity2ndPass(scene.entities[i]);
 
-	if (scene.driven_vehicle != 0) {
-		XMLElement* vehicle_xml = xml.GetEntityElement(scene.driven_vehicle);
+	for (unsigned int i = 0; i < scene.players.size(); i++) {
+		uint32_t vehicle_handle = scene.players[i].driven_vehicle;
+		XMLElement* vehicle_xml = xml.GetEntityElement(vehicle_handle);
 		if (vehicle_xml != nullptr)
 			xml.AddBoolAttribute(vehicle_xml, "driven", true, false);
 	}
@@ -748,22 +749,23 @@ void WriteXML::WriteScript(const Script* script) {
 		script_file == "creativemode.lua" ||
 		script_file == "explosionclient.lua" ||
 		script_file == "fx.lua" ||
+		script_file == "hudnotification.lua" ||
 		script_file == "playerbody.lua" ||
 		script_file == "spawn.lua")
 		return;
 
 	XMLElement* script_element = xml.AddChildElement(xml.GetGroupElement(SCRIPT), "script");
 	xml.AddStringAttribute(script_element, "file", script_file);
-	for (unsigned int i = 0; i < script->params.getSize(); i++) {
+	for (unsigned int i = 0; i < script->client_params.getSize(); i++) {
 		string param_index = "param" + to_string(i);
-		string param = script->params[i].key;
-		if (script->params[i].value.length() > 0)
-			param += "=" + script->params[i].value;
+		string param = script->client_params[i].name;
+		if (script->client_params[i].value.length() > 0)
+			param += "=" + script->client_params[i].value;
 		xml.AddStringAttribute(script_element, param_index.c_str(), param);
 	}
 
-	for (unsigned int i = 0; i < script->entities.getSize(); i++) {
-		uint32_t entity_handle = script->entities[i];
+	for (unsigned int i = 0; i < script->client_core.entities.getSize(); i++) {
+		uint32_t entity_handle = script->client_core.entities[i];
 		XMLElement* entity_element = xml.GetEntityElement(entity_handle);
 		if (entity_element == nullptr)
 			continue;
@@ -774,8 +776,8 @@ void WriteXML::WriteScript(const Script* script) {
 		if (entity_element->Parent() != nullptr)
 			parent_element = entity_element->Parent()->ToElement();
 		while (parent_element != nullptr && !script_includes_parent) {
-			for (unsigned int j = 0; j < script->entities.getSize(); j++) {
-				uint32_t other_handle = script->entities[j];
+			for (unsigned int j = 0; j < script->client_core.entities.getSize(); j++) {
+				uint32_t other_handle = script->client_core.entities[j];
 				if (other_handle == entity_handle)
 					continue;
 				XMLElement* other_element = xml.GetEntityElement(other_handle);
@@ -851,7 +853,7 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			break;
 		case Entity::Light: {
 			Light* light = static_cast<Light*>(entity->self);
-			if (entity->parent != nullptr && entity->handle != scene.flashlight)
+			if (entity->parent != nullptr)
 				WriteLight(element, light, entity->parent);
 			else
 				element = nullptr;

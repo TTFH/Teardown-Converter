@@ -80,7 +80,12 @@ Joint::~Joint() {
 }
 
 Script::~Script() {
-	for (LuaTable::iterator it = variables->begin(); it != variables->end(); it++)
+	if (has_server) {
+		for (LuaTable::iterator it = server_core.variables->begin(); it != server_core.variables->end(); it++)
+			delete *it;
+		delete server_core.variables;
+	}
+	for (LuaTable::iterator it = client_core.variables->begin(); it != client_core.variables->end(); it++)
 		delete *it;
-	delete variables;
+	delete client_core.variables;
 }

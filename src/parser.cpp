@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -167,8 +168,10 @@ LuaTable* TDBIN::ReadLuaTable() {
 	do {
 		LuaTableEntry* table_entry = new LuaTableEntry();
 		table_entry->key_type = (LuaType)ReadInt();
-		if (table_entry->key_type == NIL)
+		if (table_entry->key_type == NIL) {
+			table->push_back(table_entry);
 			break;
+		}
 		table_entry->key = ReadLuaValue(table_entry->key_type);
 		table_entry->value_type = (LuaType)ReadInt();
 		table_entry->value = ReadLuaValue(table_entry->value_type);
@@ -254,7 +257,7 @@ Shape* TDBIN::ReadShape() {
 
 Light* TDBIN::ReadLight() {
 	Light* light = new Light();
-	light->enabled = ReadBool();
+	light->is_on = ReadBool();
 	light->type = ReadByte();
 
 	light->transform = ReadTransform();
@@ -352,6 +355,7 @@ Vehicle* TDBIN::ReadVehicle() {
 	vehicle->player = ReadVec3();
 	vehicle->exit = ReadVec3();
 	vehicle->propeller = ReadVec3();
+	vehicle->passenger_exit = ReadVec3();
 	vehicle->difflock = ReadFloat();
 	vehicle->health = ReadFloat();
 	vehicle->main_voxel_count = ReadInt();
@@ -385,6 +389,15 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->locations[i].name = ReadString();
 		vehicle->locations[i].transform = ReadTransform();
 		vehicle->locations[i].handle = ReadInt();
+	}
+
+	int passenger_count = ReadInt();
+	vehicle->passengers.resize(passenger_count);
+	for (int i = 0; i < passenger_count; i++) {
+		vehicle->passengers[i].unk1[0] = ReadInt();
+		vehicle->passengers[i].unk1[1] = ReadInt();
+		vehicle->passengers[i].unk1[2] = ReadInt();
+		vehicle->passengers[i].unk2 = ReadBool();
 	}
 
 	vehicle->bounds_dist = ReadFloat();
@@ -456,43 +469,75 @@ Trigger* TDBIN::ReadTrigger() {
 	return trigger;
 };
 
-Script* TDBIN::ReadScript() {
-	Script* script = new Script();
-	script->flags = ReadWord();
-	script->file = ReadString();
+ScriptCore TDBIN::ReadScriptCore() {
+	ScriptCore core;
+	core.tick_time = ReadFloat();
+	core.update_time = ReadFloat();
+	core.unk1 = ReadBool();
+	core.unk2 = ReadBool();
+	core.variables_count = ReadInt();
+	core.variables = ReadLuaTable();
 
-	int entries = ReadInt();
-	script->params.resize(entries);
-	for (int i = 0; i < entries; i++)
-		script->params[i] = ReadTag();
-
-	script->tick_time = ReadFloat();
-	script->update_time = ReadFloat();
-	script->variables_count = ReadInt();
-	script->variables = ReadLuaTable();
-
-	int entities = ReadInt();
-	script->entities.resize(entities);
-	for (int i = 0; i < entities; i++)
-		script->entities[i] = ReadInt();
+	int entity_count = ReadInt();
+	core.entities.resize(entity_count);
+	for (int i = 0; i < entity_count; i++)
+		core.entities[i] = ReadInt();
 
 	int sound_count = ReadInt();
-	script->sounds.resize(sound_count);
+	core.sounds.resize(sound_count);
 	for (int i = 0; i < sound_count; i++) {
-		script->sounds[i].type = ReadInt();
-		script->sounds[i].name = ReadString();
+		core.sounds[i].type = ReadInt();
+		core.sounds[i].name = ReadString();
 	}
 
 	int transition_count = ReadInt();
-	script->transitions.resize(transition_count);
+	core.transitions.resize(transition_count);
 	for (int i = 0; i < transition_count; i++) {
-		script->transitions[i].variable = ReadString();
-		script->transitions[i].transition = ReadByte();
-		script->transitions[i].target_time = ReadFloat();
-		script->transitions[i].current_time = ReadFloat();
-		script->transitions[i].current_value = ReadFloat();
-		script->transitions[i].target_value = ReadFloat();
+		core.transitions[i].variable = ReadString();
+		core.transitions[i].transition = ReadByte();
+		core.transitions[i].target_time = ReadFloat();
+		core.transitions[i].current_time = ReadFloat();
+		core.transitions[i].current_value = ReadFloat();
+		core.transitions[i].target_value = ReadFloat();
 	}
+
+	int unk3_count = ReadInt();
+	core.unk3.resize(unk3_count);
+	for (int i = 0; i < unk3_count; i++) {
+		core.unk3[i].handle = ReadInt();
+		core.unk3[i].path = ReadString();
+	}
+
+	int unk4_count = ReadWord();
+	core.unk4.resize(unk4_count);
+	for (int i = 0; i < unk4_count; i++) {
+		core.unk4[i].first = ReadInt();
+		core.unk4[i].second = ReadInt();
+	}
+	return core;
+}
+
+Script* TDBIN::ReadScript() {
+	Script* script = new Script();
+	script->flags = ReadWord();
+	script->unk1 = ReadInt();
+	script->file = ReadString();
+	script->unk2 = ReadString();
+	script->unk3 = ReadBool();
+	script->unk4 = ReadBool();
+	script->has_server = ReadBool();
+	if (script->has_server) {
+		int param_count = ReadInt();
+		script->server_params.resize(param_count);
+		for (int i = 0; i < param_count; i++)
+			script->server_params[i] = ReadTag();
+		script->server_core = ReadScriptCore();
+	}
+	int client_param_count = ReadInt();
+	script->client_params.resize(client_param_count);
+	for (int i = 0; i < client_param_count; i++)
+		script->client_params[i] = ReadTag();
+	script->client_core = ReadScriptCore();
 	return script;
 }
 
@@ -609,6 +654,23 @@ Animator* TDBIN::ReadAnimator() {
 	return animator;
 }
 
+Rig* TDBIN::ReadRig() {
+	Rig* rig = new Rig();
+	rig->flags = ReadWord();
+	int loc_count = ReadInt();
+	rig->locations.resize(loc_count);
+	for (int i = 0; i < loc_count; i++) {
+		rig->locations[i].name = ReadString();
+		rig->locations[i].transform = ReadTransform();
+		rig->locations[i].unk1 = ReadBool();
+	}
+	rig->transform = ReadTransform();
+	rig->unk1 = ReadBool();
+	rig->unk2 = ReadInt();
+	rig->unk3 = ReadInt();
+	return rig;
+}
+
 void* TDBIN::ReadEntityType(uint8_t type) {
 	switch (type) {
 	case Entity::Body:
@@ -635,6 +697,8 @@ void* TDBIN::ReadEntityType(uint8_t type) {
 		return ReadScript();
 	case Entity::Animator:
 		return ReadAnimator();
+	case Entity::Rig:
+		return ReadRig();
 	default:
 		printf("[ERROR] Invalid entity type: %d\n", (uint8_t)type);
 		exit(EXIT_FAILURE);
@@ -651,20 +715,43 @@ void TDBIN::ReadPostProcessing() {
 	postpro->bloom = ReadFloat();
 }
 
-void TDBIN::ReadPlayer() {
-	Player* player = &scene.player;
-	player->transform = ReadTransform();
-	player->pitch = ReadFloat();
-	player->yaw = ReadFloat();
-	player->orientation = ReadQuat();
-	player->camera_orientation = ReadQuat();
-	player->velocity = ReadVec3();
-	player->health = ReadFloat();
-	player->transition_timer = ReadFloat();
-	player->time_underwater = ReadFloat();
-	player->bluetide_timer = ReadFloat();
-	player->bluetide_power = ReadFloat();
-	player->animator = ReadFloat();
+void TDBIN::ReadPlayers() {
+	int entries = ReadInt();
+	scene.player_ids.resize(entries);
+	for (int i = 0; i < entries; i++)
+		scene.player_ids[i] = ReadInt();
+	
+	for (int i = 0; i < entries; i++) {
+		Player player;
+		player.transform = ReadTransform();
+		player.pitch = ReadFloat();
+		player.yaw = ReadFloat();
+		player.orientation = ReadQuat();
+		player.camera_orientation = ReadQuat();
+		player.velocity = ReadVec3();
+		player.health = ReadFloat();
+		for (int j = 0; j < 2; j++)
+			player.unk1[j] = ReadInt();
+		player.driven_vehicle = ReadInt();
+		player.flashlight1 = ReadInt();
+		player.flashlight2 = ReadInt();
+		for (int j = 0; j < 4; j++)
+			player.unk3[j] = ReadInt();
+		player.animator1 = ReadInt();
+		player.unk4 = ReadInt();
+		player.animator2 = ReadInt();
+		for (int j = 0; j < 17; j++) {
+			player.tool_info[j].enabled = ReadByte();
+			player.tool_info[j].id = ReadString();
+			player.tool_info[j].name = ReadString();
+			player.tool_info[j].transform = ReadTransform();
+			player.tool_info[j].max_ammo = ReadFloat();
+			player.tool_info[j].ammo = ReadInt();
+		}
+		player.unk5 = ReadInt();
+		player.current_tool = ReadString();
+		scene.players.push_back(player);
+	}
 }
 
 void TDBIN::ReadEnvironment() {
@@ -732,20 +819,20 @@ void TDBIN::parse() {
 #ifdef _WIN32
 	if (tdbin_version < VERSION_2_0_0) {
 		MessageBox(nullptr, "The map you're trying to convert is too old, make sure to delete old .tdbin files",
-				   "Map version too old", MB_OK | MB_ICONERROR);
+							"Map version too old", MB_OK | MB_ICONERROR);
 		exit(EXIT_FAILURE);
 	} else if (tdbin_version > LAST_VERSION) {
 		int selection = MessageBox(nullptr,
-								   "The map you're trying to convert is too new, and may cause this application to "
-								   "crash. Do you want to continue?",
-								   "Check for updates in Github", MB_YESNO | MB_ICONWARNING);
+							"The map you're trying to convert is too new, and may cause this application to "
+							"crash. Do you want to continue?",
+							"Check for updates in Github", MB_YESNO | MB_ICONWARNING);
 		if (selection != IDYES)
 			exit(EXIT_FAILURE);
 	} else if (tdbin_version < LAST_VERSION) {
 		int selection = MessageBox(nullptr,
-								   "The map you're trying to convert is not from the latest compatible version, make "
-								   "sure to delete old .tdbin files. Do you want to continue?",
-								   "Map version not the latest", MB_YESNO | MB_ICONWARNING);
+							"The map you're trying to convert is not from the latest compatible version, make "
+							"sure to delete old .tdbin files. Do you want to continue?",
+							"Map version not the latest", MB_YESNO | MB_ICONWARNING);
 		if (selection != IDYES)
 			exit(EXIT_FAILURE);
 	}
@@ -755,6 +842,8 @@ void TDBIN::parse() {
 	scene.level_path = ReadString();
 	scene.layers = ReadString();
 	scene.mod = ReadString();
+
+	scene.unk1 = ReadInt();
 	scene.aaa1 = ReadInt();
 	if (scene.aaa1 != 0xAAA1) {
 		printf("[ERROR] Failed to parse file, invalid 0xAAA1 marker.");
@@ -762,27 +851,26 @@ void TDBIN::parse() {
 	}
 
 	int entries = ReadInt();
-	scene.enabled_mods.resize(entries);
+	scene.active_mods.resize(entries);
 	for (int i = 0; i < entries; i++)
-		scene.enabled_mods[i] = ReadTag();
+		scene.active_mods[i] = ReadTag();
 
 	entries = ReadInt();
-	scene.spawned_mods.resize(entries);
+	scene.spawn_mods.resize(entries);
 	for (int i = 0; i < entries; i++)
-		scene.spawned_mods[i] = ReadTag();
+		scene.spawn_mods[i] = ReadTag();
 
-	scene.driven_vehicle = ReadInt();
 	scene.shadow_volume = ReadVec3();
 	scene.gravity = ReadVec3();
 	scene.spawnpoint = ReadTransform();
+
 	scene.world_body = ReadInt();
-	scene.flashlight = ReadInt();
-	scene.explosion_lua = ReadInt();
-	scene.achievements_lua = ReadInt();
+	scene.explosionclient_lua = ReadInt();
 	scene.characters_lua = ReadInt();
+	scene.achievements_lua = ReadInt();
 
 	ReadPostProcessing();
-	ReadPlayer();
+	ReadPlayers();
 	ReadEnvironment();
 
 	Boundary* boundary = &scene.boundary;
@@ -796,10 +884,23 @@ void TDBIN::parse() {
 	boundary->padbottom = ReadFloat();
 	boundary->maxheight = ReadFloat();
 
+	entries = ReadInt();
+	scene.projectiles.resize(entries);
+	for (int i = 0; i < entries; i++) {
+		scene.projectiles[i].origin = ReadVec3();
+		scene.projectiles[i].direction = ReadVec3();
+		scene.projectiles[i].dist = ReadFloat();
+		scene.projectiles[i].max_dist = ReadFloat();
+		scene.projectiles[i].type = ReadInt();
+		scene.projectiles[i].strength = ReadFloat();
+	}
+
 	int fire_count = ReadInt();
 	scene.fires.resize(fire_count);
 	for (int i = 0; i < fire_count; i++)
 		scene.fires[i] = ReadFire();
+
+	scene.unk2 = ReadInt();
 
 	int palette_count = ReadInt();
 	scene.palettes.resize(palette_count);
@@ -817,18 +918,6 @@ void TDBIN::parse() {
 		scene.entities[i] = ReadEntity();
 		scene.entities[i]->parent = nullptr;
 	}
-
-	/*entries = ReadInt();
-	scene.projectiles.resize(entries);
-	for (int i = 0; i < entries; i++) {
-		scene.projectiles[i].origin = ReadVec3();
-		scene.projectiles[i].direction = ReadVec3();
-		scene.projectiles[i].dist = ReadFloat();
-		scene.projectiles[i].max_dist = ReadFloat();
-		scene.projectiles[i].type = ReadInt();
-		scene.projectiles[i].strength = ReadFloat();
-	}*/
-
 	printf("File parsed successfully!\n");
 }
 

@@ -1,5 +1,3 @@
-#include <assert.h>
-
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -58,7 +56,7 @@ double FileReader::ReadDouble() {
 
 bool Reader::ReadBool() {
 	uint8_t b = ReadByte();
-	assert(b == 0 || b == 1);
+	if (b > 1) printf("[Warning] ReadBool encountered non-bool value: %d\n", b);
 	return b != 0;
 }
 

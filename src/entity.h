@@ -53,14 +53,17 @@ public:
 	}
 };
 
-#define VERSION_2_0_0 200
-#define LAST_VERSION VERSION_2_0_0
-
 template <typename T>
 using SmallVec = Vec<T>;
 
+template <typename T>
+using MediumVec = Vec<T>;
+
 extern const char* EntityName[];
 extern const char* LightName[];
+
+#define VERSION_2_0_0 200
+#define LAST_VERSION VERSION_2_0_0
 
 struct Vec2 {
 	float x, y;
@@ -74,12 +77,8 @@ struct Vec4 {
 	Vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
 };
 
-typedef Vec2 Vertex;
-
-struct Registry {
-	string key;
-	string value;
-	bool sync;
+struct Color {
+	float r, g, b, a;
 };
 
 struct Tag {
@@ -87,8 +86,10 @@ struct Tag {
 	string value;
 };
 
-struct Color {
-	float r, g, b, a;
+struct Registry {
+	string key;
+	string value;
+	bool sync;
 };
 
 struct Sound {
@@ -176,7 +177,6 @@ enum ShapeOrigin : uint8_t {
 	Spawn = 5,
 };
 */
-
 struct Texture {
 	uint16_t tile;
 	float weight;
@@ -203,10 +203,6 @@ struct Shape {
 	uint8_t collision_mask;
 	float density;				// density
 	float strength;				// strength
-	/*uint16_t texture_tile;		// texture
-	uint16_t blendtexture_tile;	// blendtexture
-	float texture_weight;		// texture
-	float blendtexture_weight;	// blendtexture*/
 	Texture texture; // Order: tile, tile, weight, weight
 	Texture blendtexture;
 	Vec3 texture_offset;
@@ -227,7 +223,7 @@ struct Light {
 	static const uint8_t Cone = 3;
 	static const uint8_t Area = 4;
 
-	bool enabled;
+	bool is_on;
 	uint8_t type;		// type
 	Transform transform;
 	Color color;		// color = pow(this, 1 / 2.2)
@@ -264,7 +260,7 @@ struct Water {
 	float foam;			// foam
 	Color color; 		// color
 	float visibility;	// visibility
-	Vec<Vertex> vertices;
+	Vec<Vec2> vertices;
 };
 
 struct Segment {
@@ -346,6 +342,11 @@ struct VehicleLocation {
 	uint32_t handle;
 };
 
+struct VehiclePassenger {
+	uint32_t unk1[3];
+	bool unk2;
+};
+
 struct Vehicle {
 	uint16_t flags;
 	uint32_t body;
@@ -355,8 +356,9 @@ struct Vehicle {
 	VehicleProperties properties;
 	Vec3 camera;			// camera
 	Vec3 player;			// player
-	Vec3 exit;			// exit
-	Vec3 propeller;		// propeller
+	Vec3 exit;				// exit
+	Vec3 propeller;			// propeller
+	Vec3 passenger_exit;
 	float difflock;			// difflock
 	float health;
 	uint32_t main_voxel_count;
@@ -366,6 +368,7 @@ struct Vehicle {
 	Vec<Exhaust> exhausts;	// exhaust
 	Vec<Vital> vitals;		// vital
 	Vec<VehicleLocation> locations;
+	Vec<VehiclePassenger> passengers;
 	float bounds_dist;
 	bool noroll;
 	float brokenthreshold;
@@ -433,7 +436,7 @@ struct Trigger {
 	float sphere_size;			// size
 	Vec3 box_size;				// size = 2.0 * this
 	float polygon_size;			// size
-	Vec<Vertex> polygon_vertices;
+	Vec<Vec2> polygon_vertices;
 	TriggerSound sound;
 };
 /*
@@ -468,17 +471,42 @@ struct ValueTransition {
 	float target_value;
 };
 
-struct Script {
-	uint16_t flags;
-	string file;			// file
-	Vec<Tag> params;	// param%d
+struct ScriptSprite {
+	uint32_t handle;
+	string path;
+};
+
+struct IntPair {
+	uint32_t first;
+	uint32_t second;
+};
+
+struct ScriptCore {
 	float tick_time;
 	float update_time;
+	bool unk1;
+	bool unk2;
 	uint32_t variables_count;
 	LuaTable* variables;
 	Vec<uint32_t> entities;
 	Vec<ScriptSound> sounds;
 	Vec<ValueTransition> transitions;
+	Vec<ScriptSprite> unk3;
+	MediumVec<IntPair> unk4;
+};
+
+struct Script {
+	uint16_t flags;
+	uint32_t unk1;
+	string file;
+	string unk2;
+	bool unk3;
+	bool unk4;
+	bool has_server;
+	Vec<Tag> server_params;
+	ScriptCore server_core;
+	Vec<Tag> client_params;
+	ScriptCore client_core;
 	~Script();
 };
 /*
@@ -513,8 +541,19 @@ struct Animator {
 	// ...
 };
 
+struct RigLoc {
+	string name;
+	Transform transform;
+	bool unk1;
+};
+
 struct Rig {
-	
+	uint16_t flags;
+	Vec<RigLoc> locations;
+	Transform transform;
+	bool unk1;
+	uint32_t unk2;
+	uint32_t unk3;
 };
 
 #endif
