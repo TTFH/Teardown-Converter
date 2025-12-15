@@ -32,6 +32,7 @@ private:
 	void WriteTrigger(XMLElement* element, const Trigger* trigger);
 	void WriteScript(const Script* script);
 	void WriteAnimator(XMLElement* element, const Animator* animator);
+	void WriteRig(XMLElement* element, const Rig* rig, const Entity* parent);
 
 	void WriteEntity2ndPass(const Entity* entity);
 	void WriteEntity(XMLElement* parent, const Entity* entity);

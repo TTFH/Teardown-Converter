@@ -813,6 +813,24 @@ void WriteXML::WriteAnimator(XMLElement* element, const Animator* animator) {
 	xml.AddTransformAttribute(element, animator->transform);
 }
 
+void WriteXML::WriteRig(XMLElement* element, const Rig* rig, const Entity* parent) {
+	element->SetName("rig");
+
+	if (parent != nullptr && parent->type == Entity::Body) {
+		Body* body = static_cast<Body*>(parent->self);
+		Transform local_transform = TransformToLocalTransform(GetEntityTransform(parent->parent), body->transform);
+		local_transform = TransformToLocalTransform(local_transform, rig->transform);
+		xml.AddTransformAttribute(element, local_transform);
+	} else
+		xml.AddTransformAttribute(element, rig->transform);
+
+	for (unsigned int i = 0; i < rig->locations.getSize(); i++) {
+		XMLElement* location = xml.AddChildElement(element, "location");
+		xml.AddStringAttribute(location, "tags", rig->locations[i].tags);
+		xml.AddTransformAttribute(location, rig->locations[i].transform);
+	}
+}
+
 void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 	XMLElement* element = xml.CreateDetachedElement("unknown");
 	xml.AddStringAttribute(element, "tags", ConcatTags(entity->tags));
@@ -861,50 +879,25 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 			break;
 		case Entity::Location: {
 			Location* location = static_cast<Location*>(entity->self);
-			Entity* entity_parent = entity->parent;
-			while (entity_parent != nullptr && entity_parent->type != Entity::Vehicle)
-				entity_parent = entity_parent->parent;
 
-			bool generic_location = true;
-			bool inside_vehicle = entity_parent != nullptr;
-			if (entity->parent != nullptr && entity->parent->type == Entity::Joint) { // Rope segment endpoints
-				element = nullptr;
-				generic_location = false;
-			} else if (inside_vehicle) {
-				string tag = entity->tags.getSize() > 0 ? entity->tags[0].name : "";
-				if (tag == "player") {
-					entity_parent = entity->parent;
-					Transform local_transform = location->transform;
-					Entity* entity_gparent = entity_parent->parent;
-					if (entity_gparent != NULL && entity_gparent->type == Entity::Body) {
-						Entity* entity_ggparent = entity_parent->parent;
-						if (entity_ggparent != NULL && entity_ggparent->type == Entity::Vehicle) {
-							Vehicle* ggparent = static_cast<Vehicle*>(entity_ggparent->self);
-							local_transform = TransformToLocalTransform(ggparent->transform, location->transform);
-						}
-						Body* gparent = static_cast<Body*>(entity_gparent->self);
-						local_transform = TransformToLocalTransform(gparent->transform, local_transform);
-					}
-					Shape* parent = static_cast<Shape*>(entity_parent->self);
-					local_transform = TransformToLocalTransform(parent->transform, local_transform);
+			Entity* vehicle_parent = entity->parent;
+			while (vehicle_parent != nullptr && vehicle_parent->type != Entity::Vehicle)
+				vehicle_parent = vehicle_parent->parent;
+			bool inside_vehicle = vehicle_parent != nullptr;
 
-					element->SetName("group");
-					element->DeleteAttribute("tags");
-					xml.AddStringAttribute(element, "name", "ik");
-					xml.AddTransformAttribute(element, local_transform);
-					generic_location = false;
-				} else if (tag == "camera" || tag == "vital" ||
-					tag == "exhaust" || tag == "exit" ||
-					tag == "propeller") {
-					element = nullptr;
-					generic_location = false;
-				}
-			}
-			if (generic_location) {
+			Entity* animator_parent = entity->parent;
+			while (animator_parent != nullptr && animator_parent->type != Entity::Animator)
+				animator_parent = animator_parent->parent;
+			bool inside_animator = animator_parent != nullptr;
+
+			bool inside_rig = entity->parent != nullptr && entity->parent->type == Entity::Rig;
+
+			if (!inside_vehicle && !inside_animator && !inside_rig) {
 				WriteLocation(element, location, entity->parent);
 				if (parent == xml.GetScene())
 					parent = xml.GetGroupElement(LOCATION);
-			}
+			} else
+				element = nullptr;
 		}
 			break;
 		case Entity::Water: {
@@ -954,9 +947,15 @@ void WriteXML::WriteEntity(XMLElement* parent, const Entity* entity) {
 				parent = xml.GetGroupElement(TRIGGER);
 		}
 			break;
-		case Entity::Animator:
+		case Entity::Animator: {
 			Animator* animator = static_cast<Animator*>(entity->self);
 			WriteAnimator(element, animator);
+		}
+			break;
+		case Entity::Rig: {
+			Rig* rig = static_cast<Rig*>(entity->self);
+			WriteRig(element, rig, entity->parent);
+		}
 			break;
 	}
 

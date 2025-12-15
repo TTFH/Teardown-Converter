@@ -15,19 +15,6 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    mac:
-        timeout-minutes: 60
-        runs-on: macos-15
-        steps:
-        - uses: actions/checkout@v4
-
-        - name: Setup
-          run: brew install glfw3 mesa
-
-        - name: Build
-          run: |
-            make -j 2
-
     linux:
         timeout-minutes: 60
         runs-on: ubuntu-22.04
@@ -47,7 +34,7 @@ jobs:
           run: |
             make -j 2
 
-    windows-mingw:
+    windows:
         timeout-minutes: 60
         runs-on: windows-latest
 

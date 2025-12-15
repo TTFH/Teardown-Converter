@@ -353,9 +353,9 @@ Vehicle* TDBIN::ReadVehicle() {
 
 	vehicle->camera = ReadVec3();
 	vehicle->player = ReadVec3();
+	vehicle->driver_seat = ReadVec3();
 	vehicle->exit = ReadVec3();
 	vehicle->propeller = ReadVec3();
-	vehicle->passenger_exit = ReadVec3();
 	vehicle->difflock = ReadFloat();
 	vehicle->health = ReadFloat();
 	vehicle->main_voxel_count = ReadInt();
@@ -660,7 +660,7 @@ Rig* TDBIN::ReadRig() {
 	int loc_count = ReadInt();
 	rig->locations.resize(loc_count);
 	for (int i = 0; i < loc_count; i++) {
-		rig->locations[i].name = ReadString();
+		rig->locations[i].tags = ReadString();
 		rig->locations[i].transform = ReadTransform();
 		rig->locations[i].unk1 = ReadBool();
 	}

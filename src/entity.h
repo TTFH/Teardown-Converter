@@ -356,9 +356,9 @@ struct Vehicle {
 	VehicleProperties properties;
 	Vec3 camera;			// camera
 	Vec3 player;			// player
+	Vec3 driver_seat;		// driver_seat
 	Vec3 exit;				// exit
 	Vec3 propeller;			// propeller
-	Vec3 passenger_exit;
 	float difflock;			// difflock
 	float health;
 	uint32_t main_voxel_count;
@@ -541,15 +541,15 @@ struct Animator {
 	// ...
 };
 
-struct RigLoc {
-	string name;
+struct RigLocation {
+	string tags;
 	Transform transform;
 	bool unk1;
 };
 
 struct Rig {
 	uint16_t flags;
-	Vec<RigLoc> locations;
+	Vec<RigLocation> locations;
 	Transform transform;
 	bool unk1;
 	uint32_t unk2;
