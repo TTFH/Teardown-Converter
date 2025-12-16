@@ -666,8 +666,8 @@ Rig* TDBIN::ReadRig() {
 	}
 	rig->transform = ReadTransform();
 	rig->unk1 = ReadBool();
+	rig->vehicle = ReadInt();
 	rig->unk2 = ReadInt();
-	rig->unk3 = ReadInt();
 	return rig;
 }
 
@@ -715,42 +715,59 @@ void TDBIN::ReadPostProcessing() {
 	postpro->bloom = ReadFloat();
 }
 
+ToolInfo TDBIN::ReadToolInfo() {
+	ToolInfo tool;
+	tool.enabled = ReadBool();
+	tool.id = ReadString();
+	tool.name = ReadString();
+	tool.transform = ReadTransform();
+	tool.ammo_pickup_amount = ReadFloat();
+	if (tool.ammo_pickup_amount > 0)
+		tool.ammo = ReadInt();
+	return tool;
+
+}
+
 void TDBIN::ReadPlayers() {
 	int entries = ReadInt();
 	scene.player_ids.resize(entries);
 	for (int i = 0; i < entries; i++)
 		scene.player_ids[i] = ReadInt();
-	
+
+	scene.players.resize(entries);
 	for (int i = 0; i < entries; i++) {
-		Player player;
-		player.transform = ReadTransform();
-		player.pitch = ReadFloat();
-		player.yaw = ReadFloat();
-		player.orientation = ReadQuat();
-		player.camera_orientation = ReadQuat();
-		player.velocity = ReadVec3();
-		player.health = ReadFloat();
-		for (int j = 0; j < 2; j++)
-			player.unk1[j] = ReadInt();
-		player.driven_vehicle = ReadInt();
-		player.flashlight1 = ReadInt();
-		player.flashlight2 = ReadInt();
-		for (int j = 0; j < 4; j++)
-			player.unk3[j] = ReadInt();
-		player.animator1 = ReadInt();
-		player.unk4 = ReadInt();
-		player.animator2 = ReadInt();
-		for (int j = 0; j < 17; j++) {
-			player.tool_info[j].enabled = ReadByte();
-			player.tool_info[j].id = ReadString();
-			player.tool_info[j].name = ReadString();
-			player.tool_info[j].transform = ReadTransform();
-			player.tool_info[j].max_ammo = ReadFloat();
-			player.tool_info[j].ammo = ReadInt();
+		Player* player = &scene.players[i];
+		player->transform = ReadTransform();
+		player->pitch = ReadFloat();
+		player->yaw = ReadFloat();
+		player->orientation = ReadQuat();
+		player->camera_orientation = ReadQuat();
+		player->velocity = ReadVec3();
+		player->health = ReadFloat();
+		player->bluetide_timer = ReadFloat();
+		player->time_underwater = ReadFloat();
+		player->driven_vehicle = ReadInt();
+		player->flashlight1 = ReadInt();
+		player->flashlight2 = ReadInt();
+		player->unk1 = ReadInt();
+		player->unk2 = ReadInt();
+		player->unk3 = ReadFloat();
+		player->unk4 = ReadFloat();
+		player->animator1 = ReadInt();
+		player->unk5 = ReadInt();
+		player->animator2 = ReadInt();
+		player->tools_info.resize(17);
+		for (int j = 0; j < 17; j++)
+			player->tools_info[j] = ReadToolInfo();
+		int mod_tool_count = ReadInt();
+		player->mod_tools_info.resize(mod_tool_count);
+		for (int j = 0; j < mod_tool_count; j++) {
+			player->mod_tools_info[j].base = ReadToolInfo();
+			player->mod_tools_info[j].path = ReadString();
+			player->mod_tools_info[j].file = ReadString();
+			player->mod_tools_info[j].group = ReadInt();
 		}
-		player.unk5 = ReadInt();
-		player.current_tool = ReadString();
-		scene.players.push_back(player);
+		player->current_tool = ReadString();
 	}
 }
 
@@ -891,8 +908,10 @@ void TDBIN::parse() {
 		scene.projectiles[i].direction = ReadVec3();
 		scene.projectiles[i].dist = ReadFloat();
 		scene.projectiles[i].max_dist = ReadFloat();
-		scene.projectiles[i].type = ReadInt();
 		scene.projectiles[i].strength = ReadFloat();
+		scene.projectiles[i].type = ReadInt();
+		scene.projectiles[i].player_id = ReadInt();
+		scene.projectiles[i].impact = ReadBool();
 	}
 
 	int fire_count = ReadInt();

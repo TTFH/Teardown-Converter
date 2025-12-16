@@ -54,10 +54,13 @@ public:
 };
 
 template <typename T>
-using SmallVec = Vec<T>;
+using SmallVec = Vec<T>; // size uint8_t
 
 template <typename T>
-using MediumVec = Vec<T>;
+using MediumVec = Vec<T>; // size uint16_t
+
+template <typename T>
+using ImplicitVec = Vec<T>; // no size header
 
 extern const char* EntityName[];
 extern const char* LightName[];
@@ -552,8 +555,8 @@ struct Rig {
 	Vec<RigLocation> locations;
 	Transform transform;
 	bool unk1;
+	int vehicle;
 	uint32_t unk2;
-	uint32_t unk3;
 };
 
 #endif

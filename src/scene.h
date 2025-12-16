@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <string>
-#include <vector>
 
 #include "entity.h"
 
@@ -21,12 +20,19 @@ struct PostProcessing {
 };
 
 struct ToolInfo {
-	uint8_t enabled;
+	bool enabled;
 	string id;
 	string name;
 	Transform transform;
-	float max_ammo;
+	float ammo_pickup_amount;
 	uint32_t ammo;
+};
+
+struct ToolInfoExtended {
+	ToolInfo base;
+	string path;
+	string file;
+	uint32_t group;
 };
 
 struct Player {
@@ -37,16 +43,20 @@ struct Player {
 	Quat camera_orientation;
 	Vec3 velocity;
 	float health;
-	uint32_t unk1[2];
+	float bluetide_timer;
+	float time_underwater;
 	int driven_vehicle;
 	int flashlight1;
 	int flashlight2;
-	uint32_t unk3[4];
+	uint32_t unk1;
+	uint32_t unk2;
+	float unk3;
+	float unk4;
 	int animator1;
-	uint32_t unk4;
-	int animator2;
-	ToolInfo tool_info[17];
 	uint32_t unk5;
+	int animator2;
+	ImplicitVec<ToolInfo> tools_info; // size 17
+	Vec<ToolInfoExtended> mod_tools_info;
 	string current_tool;
 };
 
@@ -174,8 +184,8 @@ struct Projectile {
 	float max_dist;
 	float strength;
 	uint32_t type;
-	uint32_t unk1;
-	bool unk2;
+	uint32_t player_id;
+	bool impact;
 };
 
 struct Scene {
@@ -202,12 +212,12 @@ struct Scene {
 
 	PostProcessing postpro;
 	Vec<uint32_t> player_ids;
-	vector<Player> players;
+	ImplicitVec<Player> players;
 	Environment environment;
 	Boundary boundary;
 	Vec<Projectile> projectiles;
 	Vec<Fire> fires;
-	uint32_t unk2;
+	uint32_t unk2; // Vec<pair<int, int>> ?
 	Vec<Palette> palettes;
 	Vec<Registry> registry;
 	Vec<Entity*> entities;

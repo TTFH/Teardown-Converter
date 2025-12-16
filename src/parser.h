@@ -45,6 +45,7 @@ private:
 	Rope* ReadRope();
 	VehicleProperties ReadVehicleProperties();
 	ScriptCore ReadScriptCore();
+	ToolInfo ReadToolInfo();
 	Voxels ReadVoxels();
 	LuaValue ReadLuaValue(LuaType key_type);
 	LuaTable* ReadLuaTable();

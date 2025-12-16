@@ -189,7 +189,7 @@ void WriteXML::WriteEntities() {
 	for (unsigned int i = 0; i < scene.entities.getSize(); i++)
 		WriteEntity2ndPass(scene.entities[i]);
 
-	for (unsigned int i = 0; i < scene.players.size(); i++) {
+	for (unsigned int i = 0; i < scene.players.getSize(); i++) {
 		uint32_t vehicle_handle = scene.players[i].driven_vehicle;
 		XMLElement* vehicle_xml = xml.GetEntityElement(vehicle_handle);
 		if (vehicle_xml != nullptr)
