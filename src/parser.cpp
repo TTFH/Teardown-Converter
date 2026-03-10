@@ -300,6 +300,15 @@ Water* TDBIN::ReadWater() {
 	water->motion = ReadFloat();
 	water->foam = ReadFloat();
 	water->color = ReadColor();
+
+	for (int i = 0; i < 5; i++)
+		water->unk1[i] = ReadFloat();
+	water->drag = ReadFloat();
+	water->unk2 = ReadByte();
+	for (int i = 0; i < 25; i++)
+		water->unk3[i] = ReadFloat();
+	water->unk6 = ReadByte();
+
 	water->visibility = ReadFloat();
 	int vertex_count = ReadInt();
 	water->vertices.resize(vertex_count);
@@ -471,6 +480,11 @@ Trigger* TDBIN::ReadTrigger() {
 
 ScriptCore TDBIN::ReadScriptCore() {
 	ScriptCore core;
+	int param_count = ReadInt();
+	core.params.resize(param_count);
+	for (int i = 0; i < param_count; i++)
+		core.params[i] = ReadTag();
+
 	core.tick_time = ReadFloat();
 	core.update_time = ReadFloat();
 	core.unk1 = ReadBool();
@@ -487,6 +501,7 @@ ScriptCore TDBIN::ReadScriptCore() {
 	core.sounds.resize(sound_count);
 	for (int i = 0; i < sound_count; i++) {
 		core.sounds[i].type = ReadInt();
+		core.sounds[i].path = ReadString();
 		core.sounds[i].name = ReadString();
 	}
 
@@ -526,17 +541,8 @@ Script* TDBIN::ReadScript() {
 	script->unk3 = ReadBool();
 	script->unk4 = ReadBool();
 	script->has_server = ReadBool();
-	if (script->has_server) {
-		int param_count = ReadInt();
-		script->server_params.resize(param_count);
-		for (int i = 0; i < param_count; i++)
-			script->server_params[i] = ReadTag();
+	if (script->has_server)
 		script->server_core = ReadScriptCore();
-	}
-	int client_param_count = ReadInt();
-	script->client_params.resize(client_param_count);
-	for (int i = 0; i < client_param_count; i++)
-		script->client_params[i] = ReadTag();
 	script->client_core = ReadScriptCore();
 	return script;
 }

@@ -260,8 +260,13 @@ struct Water {
 	float wave;			// wave
 	float ripple;		// ripple
 	float motion;		// motion
-	float foam;			// foam
+	float foam;
 	Color color; 		// color
+	float unk1[5];
+    float drag;			// drag
+    uint8_t unk2;
+    float unk3[25];
+    uint8_t unk6;
 	float visibility;	// visibility
 	Vec<Vec2> vertices;
 };
@@ -454,6 +459,7 @@ enum SoundType : uint32_t {
 */
 struct ScriptSound {
 	uint32_t type;
+	string path;
 	string name;
 };
 /*
@@ -485,6 +491,7 @@ struct IntPair {
 };
 
 struct ScriptCore {
+	Vec<Tag> params;
 	float tick_time;
 	float update_time;
 	bool unk1;
@@ -506,9 +513,7 @@ struct Script {
 	bool unk3;
 	bool unk4;
 	bool has_server;
-	Vec<Tag> server_params;
 	ScriptCore server_core;
-	Vec<Tag> client_params;
 	ScriptCore client_core;
 	~Script();
 };

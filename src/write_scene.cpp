@@ -512,8 +512,8 @@ void WriteXML::WriteWater(XMLElement* element, const Water* water) {
 	xml.AddFloatAttribute(element, "wave", water->wave, "0.5");
 	xml.AddFloatAttribute(element, "ripple", water->ripple, "0.5");
 	xml.AddFloatAttribute(element, "motion", water->motion, "0.5");
-	xml.AddFloatAttribute(element, "foam", water->foam, "0.5");
 	xml.AddColorAttribute(element, "color", water->color, "0.01 0.01 0.01");
+	xml.AddFloatAttribute(element, "drag", water->drag, "0.005");
 	xml.AddFloatAttribute(element, "visibility", water->visibility, "3");
 	xml.AddVerticesAttribute(element, water->vertices);
 }
@@ -756,11 +756,11 @@ void WriteXML::WriteScript(const Script* script) {
 
 	XMLElement* script_element = xml.AddChildElement(xml.GetGroupElement(SCRIPT), "script");
 	xml.AddStringAttribute(script_element, "file", script_file);
-	for (unsigned int i = 0; i < script->client_params.getSize(); i++) {
+	for (unsigned int i = 0; i < script->client_core.params.getSize(); i++) {
 		string param_index = "param" + to_string(i);
-		string param = script->client_params[i].name;
-		if (script->client_params[i].value.length() > 0)
-			param += "=" + script->client_params[i].value;
+		string param = script->client_core.params[i].name;
+		if (script->client_core.params[i].value.length() > 0)
+			param += "=" + script->client_core.params[i].value;
 		xml.AddStringAttribute(script_element, param_index.c_str(), param);
 	}
 
