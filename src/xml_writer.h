@@ -18,7 +18,7 @@ private:
 	XMLElement* scene;
 	static const unsigned int GROUP_COUNT = 9;
 	array<XMLElement*, GROUP_COUNT> groups;
-	map<uint32_t, XMLElement*> element_mapping;
+	map<int, XMLElement*> element_mapping;
 	const unsigned int DEFAULT_PRECISION = 2;
 	int precision = DEFAULT_PRECISION;
 	int transform_precision = DEFAULT_PRECISION;
@@ -31,11 +31,11 @@ public:
 
 	XMLElement* GetScene();
 	XMLElement* GetGroupElement(GroupType type);
-	XMLElement* GetEntityElement(uint32_t handle);
+	XMLElement* GetEntityElement(int handle);
 
 	XMLElement* AddChildElement(XMLElement* parent, const char* name);
 	XMLElement* CreateDetachedElement(const char* name);
-	void AddEntityElement(XMLElement* parent, XMLElement* child, uint32_t handle);
+	void AddEntityElement(XMLElement* parent, XMLElement* child, int handle);
 
 	void AddExhaustTagAttribute(XMLElement* element, float strength);
 	void AddTransformAttribute(XMLElement* element, const Transform& tr);

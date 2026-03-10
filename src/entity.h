@@ -342,7 +342,7 @@ struct Vital {
 struct VehicleLocation {
 	string name;
 	Transform transform;
-	uint32_t handle;
+	int handle;
 };
 
 struct VehiclePassenger {
@@ -352,10 +352,10 @@ struct VehiclePassenger {
 
 struct Vehicle {
 	uint16_t flags;
-	uint32_t body;
+	int body;
 	Transform transform;
 	Transform transform2;
-	Vec<uint32_t> wheels;
+	Vec<int> wheels;
 	VehicleProperties properties;
 	Vec3 camera;			// camera
 	Vec3 player;			// player
@@ -367,7 +367,7 @@ struct Vehicle {
 	uint32_t main_voxel_count;
 	bool braking;
 	float passive_brake;
-	Vec<uint32_t> bodies;
+	Vec<int> bodies;
 	Vec<Exhaust> exhausts;	// exhaust
 	Vec<Vital> vitals;		// vital
 	Vec<VehicleLocation> locations;

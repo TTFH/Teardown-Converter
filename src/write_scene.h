@@ -21,7 +21,7 @@ private:
 	map<uint32_t, MV_FILE*> vox_files;
 
 	void WriteBody(XMLElement* element, const Body* body, const Entity* parent);
-	void WriteShape(XMLElement* element, Shape* shape, uint32_t handle);
+	void WriteShape(XMLElement* element, Shape* shape, int handle);
 	void WriteLight(XMLElement* element, const Light* light, const Entity* parent);
 	void WriteLocation(XMLElement* element, const Location* location, const Entity* parent);
 	void WriteWater(XMLElement* element, const Water* water);
@@ -38,10 +38,10 @@ private:
 	void WriteEntity(XMLElement* parent, const Entity* entity);
 
 	void WriteRope(XMLElement* element, const Rope* rope, float size);
-	void WriteVox(XMLElement* element, Shape* shape, uint32_t handle);
+	void WriteVox(XMLElement* element, Shape* shape, int handle);
 	void WriteVoxbox(XMLElement* element, const Shape* shape);
-	void WriteCompound(XMLElement* element, Shape* shape, uint32_t handle);
-	void WriteCompoundShape(XMLElement* parent, const Shape* shape, uint32_t handle, int i, int j, int k);
+	void WriteCompound(XMLElement* element, Shape* shape, int handle);
+	void WriteCompoundShape(XMLElement* parent, const Shape* shape, int handle, int i, int j, int k);
 public:
 	WriteXML(ConverterParams params);
 	~WriteXML();

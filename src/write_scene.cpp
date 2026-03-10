@@ -259,7 +259,7 @@ void WriteXML::WriteBody(XMLElement* element, const Body* body, const Entity* pa
 		xml.GetGroupElement(PROP)->InsertEndChild(element);
 }
 
-void WriteXML::WriteShape(XMLElement* element, Shape* shape, uint32_t handle) {
+void WriteXML::WriteShape(XMLElement* element, Shape* shape, int handle) {
 	int sizex = shape->voxels.sizex;
 	int sizey = shape->voxels.sizey;
 	int sizez = shape->voxels.sizez;
@@ -273,7 +273,7 @@ void WriteXML::WriteShape(XMLElement* element, Shape* shape, uint32_t handle) {
 		WriteCompound(element, shape, handle);
 }
 
-void WriteXML::WriteVox(XMLElement* element, Shape* shape, uint32_t handle) {
+void WriteXML::WriteVox(XMLElement* element, Shape* shape, int handle) {
 	int sizex = shape->voxels.sizex;
 	int sizey = shape->voxels.sizey;
 	int sizez = shape->voxels.sizez;
@@ -367,7 +367,7 @@ void WriteXML::WriteVoxbox(XMLElement* element, const Shape* shape) {
 	xml.AddVec4Attribute(element, "pbr", Vec4(palette_entry.reflectivity, palette_entry.shinyness, palette_entry.metalness, palette_entry.emissive), "0 0 0 0");
 }
 
-void WriteXML::WriteCompound(XMLElement* element, Shape* shape, uint32_t handle) {
+void WriteXML::WriteCompound(XMLElement* element, Shape* shape, int handle) {
 	int sizex = shape->voxels.sizex;
 	int sizey = shape->voxels.sizey;
 	int sizez = shape->voxels.sizez;
@@ -395,7 +395,7 @@ void WriteXML::WriteCompound(XMLElement* element, Shape* shape, uint32_t handle)
 				WriteCompoundShape(element, shape, handle, i, j, k);
 }
 
-void WriteXML::WriteCompoundShape(XMLElement* parent, const Shape* shape, uint32_t handle, int i, int j, int k) {
+void WriteXML::WriteCompoundShape(XMLElement* parent, const Shape* shape, int handle, int i, int j, int k) {
 	int offsetx = 256 * i;
 	int offsety = 256 * j;
 	int offsetz = 256 * k;

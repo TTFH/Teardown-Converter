@@ -58,7 +58,7 @@ XMLElement* XML_Writer::GetGroupElement(GroupType type) {
 	return groups[type];
 }
 
-XMLElement* XML_Writer::GetEntityElement(uint32_t handle) {
+XMLElement* XML_Writer::GetEntityElement(int handle) {
 	if (element_mapping.find(handle) != element_mapping.end())
 		return element_mapping[handle];
 	return nullptr;
@@ -74,7 +74,7 @@ XMLElement* XML_Writer::CreateDetachedElement(const char* name) {
 	return main_xml.NewElement(name);
 }
 
-void XML_Writer::AddEntityElement(XMLElement* parent, XMLElement* child, uint32_t handle) {
+void XML_Writer::AddEntityElement(XMLElement* parent, XMLElement* child, int handle) {
 	parent->InsertEndChild(child);
 	element_mapping[handle] = child;
 }
