@@ -65,9 +65,9 @@ Palette TDBIN::ReadPalette() {
 		p.materials[i].is_tint = ReadBool();
 	}
 	p.has_transparent = ReadBool();
-	ReadBuffer(p.black_tint, 4 * 256);
-	ReadBuffer(p.yellow_tint, 4 * 256);
-	ReadBuffer(p.rgba_tint, 4 * 256);
+	ReadBuffer(p.black_tint, 4 * 256 * sizeof(uint8_t));
+	ReadBuffer(p.yellow_tint, 4 * 256 * sizeof(uint8_t));
+	ReadBuffer(p.rgba_tint, 4 * 256 * sizeof(uint8_t));
 	return p;
 }
 
@@ -731,7 +731,6 @@ ToolInfo TDBIN::ReadToolInfo() {
 	if (tool.ammo_pickup_amount > 0)
 		tool.ammo = ReadInt();
 	return tool;
-
 }
 
 void TDBIN::ReadPlayers() {
@@ -806,7 +805,6 @@ void TDBIN::ReadEnvironment() {
 	fog->type = ReadByte();
 	fog->color = ReadColor();
 	fog->params = ReadVec4();
-
 	fog->height_offset = ReadFloat();
 
 	Environment::Water* water = &environment->water;
@@ -828,7 +826,6 @@ void TDBIN::ReadEnvironment() {
 
 	environment->wind = ReadVec3();
 	environment->waterhurt = ReadFloat();
-
 	environment->lensdirt = ReadString();
 }
 
