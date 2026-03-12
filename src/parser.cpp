@@ -166,12 +166,12 @@ LuaValue TDBIN::ReadLuaValue(LuaType key_type) {
 LuaTable* TDBIN::ReadLuaTable() {
 	LuaTable* table = new LuaTable();
 	do {
-		LuaTableEntry* table_entry = new LuaTableEntry();
-		table_entry->key_type = (LuaType)ReadInt();
-		if (table_entry->key_type == NIL) {
-			table->push_back(table_entry);
+		LuaType key_type = (LuaType)ReadInt();
+		if (key_type == NIL)
 			break;
-		}
+
+		LuaTableEntry* table_entry = new LuaTableEntry();
+		table_entry->key_type = key_type;
 		table_entry->key = ReadLuaValue(table_entry->key_type);
 		table_entry->value_type = (LuaType)ReadInt();
 		table_entry->value = ReadLuaValue(table_entry->value_type);
@@ -392,9 +392,9 @@ Vehicle* TDBIN::ReadVehicle() {
 		vehicle->vitals[i].nearby_voxels = ReadInt();
 	}
 
-	int anim_count = ReadInt();
-	vehicle->locations.resize(anim_count);
-	for (int i = 0; i < anim_count; i++) {
+	int loc_count = ReadInt();
+	vehicle->locations.resize(loc_count);
+	for (int i = 0; i < loc_count; i++) {
 		vehicle->locations[i].name = ReadString();
 		vehicle->locations[i].transform = ReadTransform();
 		vehicle->locations[i].handle = ReadInt();
@@ -523,6 +523,7 @@ ScriptCore TDBIN::ReadScriptCore() {
 		core.unk3[i].path = ReadString();
 	}
 
+	// Note: vector size type is uint16_t
 	int unk4_count = ReadWord();
 	core.unk4.resize(unk4_count);
 	for (int i = 0; i < unk4_count; i++) {

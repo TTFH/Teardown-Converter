@@ -184,7 +184,7 @@ void MV_FILE::WriteIMAP() {
 	try {
 		FIX_PALETTE_MAPPING();
 	} catch (logic_error& e) {
-		printf("[ERROR] Could not fix palette mapping for file %s: %s\n", filename.c_str(), e.what());
+		printf("[Warning] Could not fix palette mapping for file %s: %s\n", filename.c_str(), e.what());
 	}
 	int i = 0;
 	bool is_mapped = false;

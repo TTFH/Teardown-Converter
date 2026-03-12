@@ -6,6 +6,7 @@
 
 using namespace std;
 
+// defined in <lua/lua.h>
 enum LuaType : uint32_t {
 	NIL = 0,
 	Boolean = 1,
@@ -29,6 +30,8 @@ union LuaValue {
 	LuaTable* Table;
 	uint32_t Reference;
 };
+
+static_assert(sizeof(LuaValue) <= sizeof(void*), "LuaValue too big");
 
 struct LuaTableEntry {
 	LuaType key_type;

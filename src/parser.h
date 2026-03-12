@@ -41,12 +41,12 @@ protected:
 	map<uint32_t, Entity*> entity_mapping;
 private:
 	Fire ReadFire();
-	Palette ReadPalette();
 	Rope* ReadRope();
-	VehicleProperties ReadVehicleProperties();
-	ScriptCore ReadScriptCore();
-	ToolInfo ReadToolInfo();
 	Voxels ReadVoxels();
+	Palette ReadPalette();
+	ToolInfo ReadToolInfo();
+	ScriptCore ReadScriptCore();
+	VehicleProperties ReadVehicleProperties();
 	LuaValue ReadLuaValue(LuaType key_type);
 	LuaTable* ReadLuaTable();
 
