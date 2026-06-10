@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
 	ConverterParams* params = new ConverterParams();
 
 	string selected_category = "Sandbox";
-	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Art Vandals", "Time Campers", "Folkrace", "The Greenwash Gambit", "Relic Hunters", "Others" };
+	vector<string> categories = { "Sandbox", "Challenges", "Hub", "Missions", "Art Vandals", "Time Campers", "Folkrace", "The Greenwash Gambit", "Relics of Barkuna", "Others" };
 	vector<LevelInfo> levels = LoadLevels(selected_category);
 	vector<LevelInfo>::iterator selected_level = levels.begin();
 
@@ -295,7 +295,7 @@ int main(int argc, char* argv[]) {
 
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80 * scale);
-			ImGui::Combo("##gameversion", &game_version, " 2.0.0\0");
+			ImGui::Combo("##gameversion", &game_version, " 2.0.3\0");
 			ImGui::PopItemWidth();
 
 			ImGui::Spacing();
@@ -396,7 +396,7 @@ int main(int argc, char* argv[]) {
 					params->dlc_id = "folkrace";
 				else if (selected_category == "The Greenwash Gambit")
 					params->dlc_id = "space";
-				else if (selected_category == "Relic Hunters")
+				else if (selected_category == "Relics of Barkuna")
 					params->dlc_id = "relichunters";
 
 				if (!params->dlc_id.empty()) {

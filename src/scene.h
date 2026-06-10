@@ -10,6 +10,7 @@ using namespace std;
 
 extern const char* MaterialName[];
 extern const char* FogType[];
+extern const char* FoamMode[];
 
 struct PostProcessing {
 	float brightness;	// brightness

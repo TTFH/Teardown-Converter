@@ -11,7 +11,7 @@ double rad(double deg) {
 	return deg * (PI / 180.0);
 }
 
-bool CompareFloat(float a, float b) {
+bool FloatEquals(float a, float b) {
 	return fabs(a - b) < 0.0001;
 }
 
@@ -30,7 +30,7 @@ Vec3 Vec3::normalize() const {
 }
 
 bool Vec3::operator==(const Vec3& v) const {
-	return CompareFloat(x, v.x) && CompareFloat(y, v.y) && CompareFloat(z, v.z);
+	return FloatEquals(x, v.x) && FloatEquals(y, v.y) && FloatEquals(z, v.z);
 }
 
 bool Vec3::operator!=(const Vec3& v) const {
@@ -132,7 +132,7 @@ Transform TransformToLocalTransform(const Transform& parent, const Transform& ch
 }
 
 bool Transform::isDefault() {
-	return pos.isZero() && CompareFloat(rot.x, 0) && CompareFloat(rot.y, 0) && CompareFloat(rot.z, 0) && CompareFloat(rot.w, 1);
+	return pos.isZero() && FloatEquals(rot.x, 0) && FloatEquals(rot.y, 0) && FloatEquals(rot.z, 0) && FloatEquals(rot.w, 1);
 }
 
 Tensor3D::Tensor3D() : sizex(0), sizey(0), sizez(0) {}

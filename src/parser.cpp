@@ -301,13 +301,40 @@ Water* TDBIN::ReadWater() {
 	water->foam = ReadFloat();
 	water->color = ReadColor();
 
-	for (int i = 0; i < 5; i++)
-		water->unk1[i] = ReadFloat();
+	water->ringheight = ReadFloat();
+	water->pbr = ReadVec4();
 	water->drag = ReadFloat();
-	water->unk2 = ReadByte();
-	for (int i = 0; i < 25; i++)
-		water->unk3[i] = ReadFloat();
-	water->unk6 = ReadByte();
+
+	water->foam_props.colormode = ReadWord();
+	water->foam_props.emitmode = ReadWord();
+	//assert(water->foam_props.colormode < 4); // can be 6 for some reason
+	//assert(water->foam_props.emitmode < 4);
+
+	water->foam_props.texture = ReadString();
+	water->foam_props.scale = ReadFloat();
+	water->foam_props.scalelarge = ReadFloat();
+	water->foam_props.scalesmall = ReadFloat();
+
+	water->splashtexture = ReadInt();
+	water->splash_particle.color_a = ReadColor();
+	water->splash_particle.color_b = ReadColor();
+	water->splash_particle.alpha_a = ReadFloat();
+	water->splash_particle.alpha_b = ReadFloat();
+	water->splash_particle.emissive_a = ReadFloat();
+	water->splash_particle.emissive_b = ReadFloat();
+	water->splash_particle.drag = ReadFloat();
+	water->splash_particle.stretch = ReadFloat();
+	water->splash_particle.lifetime = ReadFloat();
+	water->splash_particle.lifetime_rnd = ReadFloat();
+	water->splash_particle.gravity = ReadFloat();
+	water->splash_particle.gravity_rnd = ReadFloat();
+	water->splash_particle.velocityscale = ReadFloat();
+
+	water->sound.splash_small = ReadString();
+	water->sound.splash_medium = ReadString();
+	water->sound.splash_large = ReadString();
+	water->sound.do_float = ReadString();
+	water->sound.underwater = ReadString();
 
 	water->visibility = ReadFloat();
 	int vertex_count = ReadInt();
@@ -838,7 +865,7 @@ void TDBIN::parse() {
 	tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
 
 #ifdef _WIN32
-	if (tdbin_version < VERSION_2_0_0) {
+	if (tdbin_version < VERSION_2_0_3) {
 		MessageBox(nullptr, "The map you're trying to convert is too old, make sure to delete old .tdbin files",
 							"Map version too old", MB_OK | MB_ICONERROR);
 		exit(EXIT_FAILURE);

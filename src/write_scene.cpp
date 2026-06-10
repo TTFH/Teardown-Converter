@@ -264,7 +264,7 @@ void WriteXML::WriteShape(XMLElement* element, Shape* shape, int handle) {
 	int sizey = shape->voxels.sizey;
 	int sizez = shape->voxels.sizez;
 	shape->original_tr = shape->transform;
-	bool is_scaled = !CompareFloat(shape->voxels.scale, 0.1f);
+	bool is_scaled = !FloatEquals(shape->voxels.scale, 0.1f);
 	if (params.use_voxbox && !is_scaled && shape->decoded_voxels.IsFilledSingleColor())
 		WriteVoxbox(element, shape);
 	else if (sizex <= 256 && sizey <= 256 && sizez <= 256)
@@ -495,7 +495,7 @@ void WriteXML::WriteLight(XMLElement* element, const Light* light, const Entity*
 	xml.AddFloatAttribute(element, "fogiter", light->fogiter, "1");
 	xml.AddSoundAttribute(element, "sound", light->sound, "");
 	xml.AddFloatAttribute(element, "glare", light->glare, "0");
-	xml.AddStringAttribute(element, "breaksound", light->breaksound, "");
+	xml.AddStringAttribute(element, "breaksound", light->breaksound);
 }
 
 void WriteXML::WriteLocation(XMLElement* element, const Location* location, const Entity* parent) {
@@ -511,9 +511,41 @@ void WriteXML::WriteWater(XMLElement* element, const Water* water) {
 	xml.AddFloatAttribute(element, "depth", water->depth, "10");
 	xml.AddFloatAttribute(element, "wave", water->wave, "0.5");
 	xml.AddFloatAttribute(element, "ripple", water->ripple, "0.5");
+	xml.AddFloatAttribute(element, "ringheight", water->ringheight, "0.8");
 	xml.AddFloatAttribute(element, "motion", water->motion, "0.5");
 	xml.AddColorAttribute(element, "color", water->color, "0.01 0.01 0.01");
+	xml.AddVec4Attribute(element, "pbr", Vec4(water->pbr), "0.02 1 0 0");
 	xml.AddFloatAttribute(element, "drag", water->drag, "0.005");
+
+	xml.AddFloatAttribute(element, "foam", water->foam, "0.5");
+	xml.AddFloatAttribute(element, "foamscale", water->foam_props.scale, "0.13");
+	xml.AddFloatAttribute(element, "foamscalelarge", water->foam_props.scalelarge, "0.009");
+	xml.AddFloatAttribute(element, "foamscalesmall", water->foam_props.scalesmall, "0.52");
+	xml.AddStringAttribute(element, "foamtexture", water->foam_props.texture);
+	//xml.AddStringAttribute(element, "foamcolormode", FoamMode[water->foam_props.colormode], "add");
+	//xml.AddStringAttribute(element, "foamemitmode", FoamMode[water->foam_props.emitmode], "off");
+	xml.AddIntAttribute(element, "splashtexture", water->splashtexture, 0);
+
+	xml.AddColorAttribute(element, "sp_color_a", water->splash_particle.color_a, "1 1 1 1");
+	xml.AddColorAttribute(element, "sp_color_b", water->splash_particle.color_b, "1 1 1 1");
+	xml.AddFloatAttribute(element, "sp_alpha_a", water->splash_particle.alpha_a, "0.5");
+	xml.AddFloatAttribute(element, "sp_alpha_b", water->splash_particle.alpha_b, "0");
+	xml.AddFloatAttribute(element, "sp_emissive_a", water->splash_particle.emissive_a, "0");
+	xml.AddFloatAttribute(element, "sp_emissive_b", water->splash_particle.emissive_b, "0");
+	xml.AddFloatAttribute(element, "sp_drag", water->splash_particle.drag, "0.1");
+	xml.AddFloatAttribute(element, "sp_stretch", water->splash_particle.stretch, "10");
+	xml.AddFloatAttribute(element, "sp_lifetime", water->splash_particle.lifetime, "1.5");
+	xml.AddFloatAttribute(element, "sp_lifetime_rnd", water->splash_particle.lifetime_rnd, "0.5");
+	xml.AddFloatAttribute(element, "sp_gravity", water->splash_particle.gravity, "-7.5");
+	xml.AddFloatAttribute(element, "sp_gravity_rnd", water->splash_particle.gravity_rnd, "2.5");
+	xml.AddFloatAttribute(element, "sp_velocityscale", water->splash_particle.velocityscale, "1");
+
+	xml.AddStringAttribute(element, "snd_splash_small", water->sound.splash_small);
+	xml.AddStringAttribute(element, "snd_splash_medium", water->sound.do_float);
+	xml.AddStringAttribute(element, "snd_splash_large", water->sound.splash_large);
+	xml.AddStringAttribute(element, "snd_float", water->sound.do_float);
+	xml.AddStringAttribute(element, "snd_underwater", water->sound.underwater);
+
 	xml.AddFloatAttribute(element, "visibility", water->visibility, "3");
 	xml.AddVerticesAttribute(element, water->vertices);
 }

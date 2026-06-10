@@ -57,7 +57,7 @@ public:
 
 double deg(double rad);
 double rad(double deg);
-bool CompareFloat(float a, float b);
+bool FloatEquals(float a, float b);
 Quat QuatEuler(double roll, double yaw, double pitch);
 Quat QuatEulerRad(double roll, double yaw, double pitch);
 Vec3 QuatToEuler(Quat q);

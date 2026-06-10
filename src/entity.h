@@ -65,8 +65,8 @@ using ImplicitVec = Vec<T>; // no size header
 extern const char* EntityName[];
 extern const char* LightName[];
 
-#define VERSION_2_0_0 200
-#define LAST_VERSION VERSION_2_0_0
+#define VERSION_2_0_3 203
+#define LAST_VERSION VERSION_2_0_3
 
 struct Vec2 {
 	float x, y;
@@ -253,6 +253,39 @@ struct Location {
 	Transform transform;
 };
 
+struct Foam {
+	uint16_t colormode; // foamcolormode: add, mul, blend, off
+	uint16_t emitmode;	// foamemitmode: add, mul, off
+	string texture;		// foamtexture
+	float scale;		// foamscale
+	float scalelarge;	// foamscalelarge
+	float scalesmall;	// foamscalesmall
+};
+
+struct SplashParticle {
+	Color color_a;
+	Color color_b;
+	float alpha_a;
+	float alpha_b;
+	float emissive_a;
+	float emissive_b;
+	float drag;
+	float stretch;
+	float lifetime;
+	float lifetime_rnd;
+	float gravity;
+	float gravity_rnd;
+	float velocityscale;
+};
+
+struct WaterSound {
+	string splash_small;
+	string splash_medium;
+	string splash_large;
+	string do_float;
+	string underwater;
+};
+
 struct Water {
 	uint16_t flags;
 	Transform transform;
@@ -260,13 +293,15 @@ struct Water {
 	float wave;			// wave
 	float ripple;		// ripple
 	float motion;		// motion
-	float foam;
+	float foam;			// foam
 	Color color; 		// color
-	float unk1[5];
-    float drag;			// drag
-    uint8_t unk2;
-    float unk3[25];
-    uint8_t unk6;
+	float ringheight;	// ringheight
+	Vec4 pbr;			// pbr
+	float drag;			// drag
+	Foam foam_props;	// foam*
+	uint32_t splashtexture;	// splashtexture
+	SplashParticle splash_particle; //sp_*
+	WaterSound sound;	// snd_*
 	float visibility;	// visibility
 	Vec<Vec2> vertices;
 };

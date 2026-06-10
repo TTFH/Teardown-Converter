@@ -291,9 +291,26 @@ vector<LevelInfo> LoadLevels(string filter) {
 			LevelInfo info = { "hub_space", hub_id, "The Shuttle v" + to_string(i + 1), "Lurking in space at a safe distance from the S.C.C.L." };
 			levels.push_back(info);
 		}
-	} else if (filter == "Relic Hunters") {
+	} else if (filter == "Relics of Barkuna") {
 		const char* dlc_missions[][4] = {
-			{ "map_id", "filename", "title", "description" },
+			{ "menu", "main", "Main", "" },
+			{ "credits", "credits", "Credits", "" },
+
+			{ "beach_map", "beach_map", "Beach", "" },
+			{ "beach_map", "beach_map_ending_all_relics", "Beach (Ending all relics)", "" },
+			{ "beach_map", "beach_map_gate_broken", "Beach (Gate broken)", "" },
+
+			{ "temple_map", "temple_map", "Barkuna Temple", "" },
+			{ "temple_map", "temple_map_ending1", "Barkuna Temple (Ending 1)", "" },
+			{ "temple_map", "temple_map_ending2", "Barkuna Temple (Ending 2)", "" },
+
+			{ "cavern_map", "cavern_map", "Serpent's Hollow", "Home of the Serpent Tribe. Where the purest of gold was processed and turned into the Gold Eggs used throughout Barkuna." },
+			{ "cliffs_map", "cliffs_map", "Eagle's Perch", "Home of the Eagle Tribe. A holy city in the clouds dedicated to the care of both life and death." },
+			{ "jungle_map", "jungle_map", "Jaguar's Haven", "Home of the Jaguar Tribe. Their ancient trading plaza and harbor still stand mostly intact after all these years." },
+
+			{ "cavern_map", "sandbox_cavern", "Serpent's Hollow - Sandbox", "Home of the Serpent Tribe. Where the purest of gold was processed and turned into the Gold Eggs used throughout Barkuna." },
+			{ "cliffs_map", "sandbox_cliffs", "Eagle's Perch - Sandbox", "Home of the Eagle Tribe. A holy city in the clouds dedicated to the care of both life and death." },
+			{ "jungle_map", "sandbox_jungle", "Jaguar's Haven - Sandbox", "Home of the Jaguar Tribe. Their ancient trading plaza and harbor still stand mostly intact after all these years." },
 		};
 		int dlc_missions_count = sizeof(dlc_missions) / sizeof(dlc_missions[0]);
 		for (int i = 0; i < dlc_missions_count; i++) {

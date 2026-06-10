@@ -109,6 +109,11 @@ void XML_Writer::AddTextureAttribute(XMLElement* element, const char* name, Text
 		element->SetAttribute(name, buffer.c_str());
 }
 
+void XML_Writer::AddIntAttribute(XMLElement* element, const char* name, int value, int default_value) {
+	if (value != default_value)
+		element->SetAttribute(name, value);
+}
+
 void XML_Writer::AddBoolAttribute(XMLElement* element, const char* name, bool value, bool default_value) {
 	if (value != default_value)
 		element->SetAttribute(name, value);

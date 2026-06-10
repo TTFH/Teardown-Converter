@@ -26,3 +26,10 @@ const char* FogType[] = {
 	"exp",
 	"exp2"
 };
+
+const char* FoamMode[] = {
+	"off"
+	"add",
+	"mul",
+	"blend",
+};

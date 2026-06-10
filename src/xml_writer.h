@@ -19,7 +19,7 @@ private:
 	static const unsigned int GROUP_COUNT = 9;
 	array<XMLElement*, GROUP_COUNT> groups;
 	map<int, XMLElement*> element_mapping;
-	const unsigned int DEFAULT_PRECISION = 2;
+	const unsigned int DEFAULT_PRECISION = 3;
 	int precision = DEFAULT_PRECISION;
 	int transform_precision = DEFAULT_PRECISION;
 	string FloatToString(float value);
@@ -41,6 +41,7 @@ public:
 	void AddTransformAttribute(XMLElement* element, const Transform& tr);
 	void AddVerticesAttribute(XMLElement* element, const Vec<Vec2>& vertices);
 	void AddTextureAttribute(XMLElement* element, const char* name, Texture value);
+	void AddIntAttribute(XMLElement* element, const char* name, int value, int default_value);
 	void AddBoolAttribute(XMLElement* element, const char* name, bool value, bool default_value);
 	void AddVec2Attribute(XMLElement* element, const char* name, Vec2 value, string default_value);
 	void AddVec3Attribute(XMLElement* element, const char* name, Vec3 value, string default_value);
