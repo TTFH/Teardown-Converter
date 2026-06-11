@@ -324,7 +324,7 @@ int main(int argc, char* argv[]) {
 			ImGui::Text("Selected Level:");
 			ImGui::SameLine();
 			ImGui::TextUnformatted(selected_level->title.c_str());
-			ImGui::BeginChild("LevelDesc", ImVec2(0, 50 * scale), ImGuiChildFlags_Border);
+			ImGui::BeginChild("LevelDesc", ImVec2(0, 50 * scale), ImGuiChildFlags_Borders);
 			ImGui::TextWrapped("%s", selected_level->description.c_str());
 			ImGui::EndChild();
 			ImGui::Dummy(ImVec2(0, 10 * scale));
