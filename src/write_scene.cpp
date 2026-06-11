@@ -64,7 +64,7 @@ static string ConcatTags(const SmallVec<Tag>& tags) {
 }
 
 WriteXML::WriteXML(ConverterParams params) : params(params) {
-	InitScene(params.bin_path.c_str());
+	InitScene(params.bin_path);
 	xml.SetTransformPrecision(params.transform_precision);
 }
 
@@ -474,7 +474,7 @@ void WriteXML::WriteLight(XMLElement* element, const Light* light, const Entity*
 	if (parent == nullptr || (parent->type != Entity::Screen && parent->type != Entity::Light))
 		xml.AddTransformAttribute(element, GetLocalTransform(parent, light->transform));
 	xml.AddStringAttribute(element, "type", LightName[light->type], "sphere");
-	xml.AddColorAttribute(element, "color", light_color, "1 1 1 1");
+	xml.AddColorAttribute(element, "color", light_color, "1 1 1");
 	xml.AddFloatAttribute(element, "scale", light->scale, "1");
 
 	if (light->type == Light::Cone) {
@@ -522,12 +522,26 @@ void WriteXML::WriteWater(XMLElement* element, const Water* water) {
 	xml.AddFloatAttribute(element, "foamscalelarge", water->foam_props.scalelarge, "0.009");
 	xml.AddFloatAttribute(element, "foamscalesmall", water->foam_props.scalesmall, "0.52");
 	xml.AddStringAttribute(element, "foamtexture", water->foam_props.texture);
-	//xml.AddStringAttribute(element, "foamcolormode", FoamMode[water->foam_props.colormode], "add");
-	//xml.AddStringAttribute(element, "foamemitmode", FoamMode[water->foam_props.emitmode], "off");
+
+	static const char* colorModes[] = {
+		"off", "add", "mul", "blend"
+	};
+	static const char* emitModes[] = {
+		"off", "add", "mul"
+	};
+	int coloremitmode = water->foam_props.coloremitmode;
+	if (coloremitmode < 12) {
+		string foamcolormode = colorModes[coloremitmode % 4];
+		string foamemitmode  = emitModes[coloremitmode / 4];
+		xml.AddStringAttribute(element, "foamcolormode", foamcolormode, "add");
+		xml.AddStringAttribute(element, "foamemitmode", foamemitmode, "off");
+	} else {
+		printf("[WARNING] Unsupported foam color/emit mode %d\n", coloremitmode);
+	}
 	xml.AddIntAttribute(element, "splashtexture", water->splashtexture, 0);
 
-	xml.AddColorAttribute(element, "sp_color_a", water->splash_particle.color_a, "1 1 1 1");
-	xml.AddColorAttribute(element, "sp_color_b", water->splash_particle.color_b, "1 1 1 1");
+	xml.AddColorAttribute(element, "sp_color_a", water->splash_particle.color_a, "1 1 1");
+	xml.AddColorAttribute(element, "sp_color_b", water->splash_particle.color_b, "1 1 1");
 	xml.AddFloatAttribute(element, "sp_alpha_a", water->splash_particle.alpha_a, "0.5");
 	xml.AddFloatAttribute(element, "sp_alpha_b", water->splash_particle.alpha_b, "0");
 	xml.AddFloatAttribute(element, "sp_emissive_a", water->splash_particle.emissive_a, "0");

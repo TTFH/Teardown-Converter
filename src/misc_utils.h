@@ -14,7 +14,7 @@ void create_folder(string name);
 string GetUsername();
 string GetMyDocuments();
 string GetAppDataLocal();
-string GetFilename(const char* path);
+string GetFilename(string path);
 
 GLFWwindow* InitOpenGL(const char* window_title, int width, int height);
 GLuint LoadTexture(const char* path);

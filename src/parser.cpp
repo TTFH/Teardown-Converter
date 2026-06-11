@@ -15,25 +15,19 @@
 
 TDBIN::TDBIN() {}
 
-void TDBIN::InitScene(const char* input) {
-	int len = strlen(input) + 3; // for "td\0" in ".tdbin"
-	char* filename = new char[len];
-	strcpy(filename, input);
-	if (IsFileCompressed(input)) {
+void TDBIN::InitScene(string input) {
+	string filename = GetFilename(input);
+	string decompressed_path = filename + ".tdbin";
+	FILE* already_decompressed = fopen(decompressed_path.c_str(), "rb");
+	if (already_decompressed != nullptr) {
+		printf("A decompressed file was found for the current level.\n");
+		fclose(already_decompressed);
+	} else {
 		printf("Unzipping file...\n");
-		char* output = new char[len];
-		strcpy(output, input);
-		char* pos = strstr(output, ".bin");
-		if (pos != nullptr)
-			*pos = '\0';
-		strcat(output, ".tdbin");
-		UncompressFile(input, output);
-		strcpy(filename, output);
-		delete[] output;
+		UncompressFile(input.c_str(), decompressed_path.c_str());
 	}
-	InitReader(filename);
+	InitReader(decompressed_path.c_str());
 	printf("Parsing file...\n");
-	delete[] filename;
 }
 
 TDBIN::~TDBIN() {
@@ -305,11 +299,7 @@ Water* TDBIN::ReadWater() {
 	water->pbr = ReadVec4();
 	water->drag = ReadFloat();
 
-	water->foam_props.colormode = ReadWord();
-	water->foam_props.emitmode = ReadWord();
-	//assert(water->foam_props.colormode < 4); // can be 6 for some reason
-	//assert(water->foam_props.emitmode < 4);
-
+	water->foam_props.coloremitmode = ReadInt();
 	water->foam_props.texture = ReadString();
 	water->foam_props.scale = ReadFloat();
 	water->foam_props.scalelarge = ReadFloat();

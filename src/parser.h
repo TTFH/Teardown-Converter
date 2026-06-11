@@ -71,7 +71,7 @@ private:
 	void* ReadEntityType(uint8_t type);
 public:
 	TDBIN();
-	void InitScene(const char* input);
+	void InitScene(string input);
 	~TDBIN();
 	void parse();
 };

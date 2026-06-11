@@ -123,7 +123,7 @@ void MV_FILE::WriteTDCZ(const MV_Shape& shape) {
 		WriteInt(shape.voxels.sizez);
 		fwrite(compressed_data.data(), sizeof(uint8_t), compressed_data.size(), vox_file);
 	} else
-		printf("[Warning] Failed to compress shape %s\n", shape.name.c_str());
+		printf("[WARNING] Failed to compress shape %s\n", shape.name.c_str());
 	delete[] voxel_array;
 }
 
@@ -184,7 +184,7 @@ void MV_FILE::WriteIMAP() {
 	try {
 		FIX_PALETTE_MAPPING();
 	} catch (logic_error& e) {
-		printf("[Warning] Could not fix palette mapping for file %s: %s\n", filename.c_str(), e.what());
+		printf("[WARNING] Could not fix palette mapping for file %s: %s\n", filename.c_str(), e.what());
 	}
 	int i = 0;
 	bool is_mapped = false;

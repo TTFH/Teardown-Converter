@@ -13,9 +13,9 @@ void FileReader::InitReader(const char* path) {
 	file = fopen(path, "rb");
 	if (file == nullptr) {
 	#ifdef _WIN32
-		MessageBoxA(nullptr, "Could not open map file, check the game path", "File not found", MB_OK | MB_ICONERROR);
+		MessageBoxA(nullptr, "Could not open map file, check the game path.", "File not found", MB_OK | MB_ICONERROR);
 	#endif
-		printf("[ERROR] Could not open %s for reading\n", path);
+		printf("[ERROR] Could not open %s for reading.\n", path);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -56,7 +56,7 @@ double FileReader::ReadDouble() {
 
 bool Reader::ReadBool() {
 	uint8_t b = ReadByte();
-	if (b > 1) printf("[Warning] ReadBool encountered non-bool value: %d\n", b);
+	if (b > 1) printf("[WARNING] ReadBool encountered non-bool value: %d\n", b);
 	return b != 0;
 }
 

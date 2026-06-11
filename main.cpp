@@ -407,7 +407,7 @@ int main(int argc, char* argv[]) {
 					params->script_folder += "/data/level/";
 				}
 
-				if (selected_level->filename == "quicksave") {
+				if (selected_level->filename.find("quicksave") != string::npos) {
 					params->bin_path = quicksave_folder;
 					params->bin_path += "/";
 				} else if (!params->dlc_id.empty()) {
@@ -417,16 +417,7 @@ int main(int argc, char* argv[]) {
 					params->bin_path = game_folder;
 					params->bin_path += "/data/bin/";
 				}
-				params->bin_path += selected_level->filename;
-
-				string tdbin = params->bin_path + ".tdbin";
-				FILE* already_decompressed = fopen(tdbin.c_str(), "rb");
-				if (already_decompressed != nullptr) {
-					printf("A decompressed file was found for the current level.\n");
-					params->bin_path += ".tdbin";
-					fclose(already_decompressed);
-				} else
-					params->bin_path += ".bin";
+				params->bin_path += selected_level->filename + ".bin";
 
 				params->map_folder = mods_folder;
 				params->map_folder += "/";

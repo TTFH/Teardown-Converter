@@ -77,7 +77,7 @@ string GetAppDataLocal() {
 #endif
 }
 
-string GetFilename(const char* path) {
+string GetFilename(string path) {
 	string filename = path;
 	size_t slash = filename.find_last_of("\\/");
 	if (slash != string::npos)
@@ -116,6 +116,10 @@ GLuint LoadTexture(const char* path) {
 	GLuint texture_id;
 	int width, height, channels;
 	uint8_t* data = stbi_load(path, &width, &height, &channels, STBI_rgb_alpha);
+	if (data == nullptr) {
+		const char* default_texture = "preview/preview.png";
+		data = stbi_load(default_texture, &width, &height, &channels, STBI_rgb_alpha);
+	}
 	if (data == nullptr) {
 		printf("[WARNING] Image %s not found.\n", path);
 		return 0;

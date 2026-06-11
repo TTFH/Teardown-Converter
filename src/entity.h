@@ -254,8 +254,7 @@ struct Location {
 };
 
 struct Foam {
-	uint16_t colormode; // foamcolormode: add, mul, blend, off
-	uint16_t emitmode;	// foamemitmode: add, mul, off
+	uint32_t coloremitmode; // foamcolormode, foamemitmode: off, add, mul, blend (only for color)
 	string texture;		// foamtexture
 	float scale;		// foamscale
 	float scalelarge;	// foamscalelarge
