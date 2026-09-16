@@ -116,7 +116,7 @@ void WriteXML::WriteEnvironment() {
 	xml.AddColorAttribute(environment, "constant", skybox->constant, "0.003 0.003 0.003");
 	xml.AddFloatAttribute(environment, "ambient", skybox->ambient, "1");
 	xml.AddFloatAttribute(environment, "ambientexponent", skybox->ambientexponent, "1.3");
-	xml.AddStringAttribute(environment, "fog", FogType[fog->type], "classic");
+	xml.AddStringAttribute(environment, "fogType", FogType[fog->type], "classic");
 	xml.AddColorAttribute(environment, "fogColor", fog->color, "1 1 1");
 	xml.AddVec4Attribute(environment, "fogParams", fog->params, "40 100 0.9 4");
 	xml.AddFloatAttribute(environment, "fogHeightOffset", fog->height_offset, "0");
