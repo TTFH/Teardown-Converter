@@ -55,6 +55,9 @@ struct Player {
 	int animator1;
 	uint32_t unk5;
 	int animator2;
+	uint8_t unk6[2];
+	float unk7;
+	uint8_t unk8[4];
 	ImplicitVec<ToolInfo> tools_info; // size 17
 	Vec<ToolInfoExtended> mod_tools_info;
 	string current_tool;

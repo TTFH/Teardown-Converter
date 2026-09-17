@@ -295,7 +295,7 @@ int main(int argc, char* argv[]) {
 
 			ImGui::SameLine();
 			ImGui::PushItemWidth(80 * scale);
-			ImGui::Combo("##gameversion", &game_version, " 2.0.3\0");
+			ImGui::Combo("##gameversion", &game_version, " 2.1.0\0");
 			ImGui::PopItemWidth();
 
 			ImGui::Spacing();

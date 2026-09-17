@@ -779,6 +779,11 @@ void TDBIN::ReadPlayers() {
 		player->animator1 = ReadInt();
 		player->unk5 = ReadInt();
 		player->animator2 = ReadInt();
+		for (int j = 0; j < 2; j++)
+			player->unk6[j] = ReadByte();
+		player->unk7 = ReadFloat();
+		for (int j = 0; j < 4; j++)
+			player->unk8[j] = ReadByte();
 		player->tools_info.resize(17);
 		for (int j = 0; j < 17; j++)
 			player->tools_info[j] = ReadToolInfo();
@@ -855,7 +860,7 @@ void TDBIN::parse() {
 	tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
 
 #ifdef _WIN32
-	if (tdbin_version < VERSION_2_0_3) {
+	if (tdbin_version < VERSION_2_1_0) {
 		MessageBox(nullptr, "The map you're trying to convert is too old, make sure to delete old .tdbin files",
 							"Map version too old", MB_OK | MB_ICONERROR);
 		exit(EXIT_FAILURE);
