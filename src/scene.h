@@ -223,6 +223,7 @@ struct Scene {
 	uint32_t unk2; // Vec<pair<int, int>> ?
 	Vec<Palette> palettes;
 	Vec<Registry> registry;
+	uint32_t unk3; // -1
 	Vec<Entity*> entities;
 	// ...
 };

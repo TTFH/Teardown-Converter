@@ -65,8 +65,8 @@ using ImplicitVec = Vec<T>; // no size header
 extern const char* EntityName[];
 extern const char* LightName[];
 
-#define VERSION_2_1_0 210
-#define LAST_VERSION VERSION_2_1_0
+#define VERSION_2_2_0 220
+#define LAST_VERSION VERSION_2_2_0
 
 struct Vec2 {
 	float x, y;

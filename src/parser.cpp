@@ -860,22 +860,18 @@ void TDBIN::parse() {
 	tdbin_version = scene.version[0] * 100 + scene.version[1] * 10 + scene.version[2];
 
 #ifdef _WIN32
-	if (tdbin_version < VERSION_2_1_0) {
-		MessageBox(nullptr, "The map you're trying to convert is too old, make sure to delete old .tdbin files",
-							"Map version too old", MB_OK | MB_ICONERROR);
-		exit(EXIT_FAILURE);
+	if (tdbin_version < LAST_VERSION) {
+		int selection = MessageBox(nullptr,
+							"The map you're trying to convert is not from the latest version, make "
+							"sure to delete old .tdbin files. Do you want to continue?",
+							"Map version not the latest", MB_YESNO | MB_ICONWARNING);
+		if (selection != IDYES)
+			exit(EXIT_FAILURE);
 	} else if (tdbin_version > LAST_VERSION) {
 		int selection = MessageBox(nullptr,
 							"The map you're trying to convert is too new, and may cause this application to "
 							"crash. Do you want to continue?",
 							"Check for updates in Github", MB_YESNO | MB_ICONWARNING);
-		if (selection != IDYES)
-			exit(EXIT_FAILURE);
-	} else if (tdbin_version < LAST_VERSION) {
-		int selection = MessageBox(nullptr,
-							"The map you're trying to convert is not from the latest compatible version, make "
-							"sure to delete old .tdbin files. Do you want to continue?",
-							"Map version not the latest", MB_YESNO | MB_ICONWARNING);
 		if (selection != IDYES)
 			exit(EXIT_FAILURE);
 	}
@@ -946,12 +942,12 @@ void TDBIN::parse() {
 		scene.fires[i] = ReadFire();
 
 	scene.unk2 = ReadInt();
-
 	int palette_count = ReadInt();
 	scene.palettes.resize(palette_count);
 	for (int i = 0; i < palette_count; i++)
 		scene.palettes[i] = ReadPalette();
 
+	scene.unk3 = ReadInt();
 	entries = ReadInt();
 	scene.registry.resize(entries);
 	for (int i = 0; i < entries; i++)
